@@ -1,11 +1,11 @@
 "use client";
 
-import { ThemeToggle, ThemeToggleIcon } from "./components/ThemeToggle";
-import { DesignSystemExample } from "./components/DesignSystemExample";
-import ClientOnly from "./components/ClientOnly";
-import Link from "next/link";
-
 export default function Home() {
+  const handleKakaoLogin = () => {
+    // Next.js API 라우트로 리다이렉트
+    window.location.href = "/kakao-login";
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-between bg-white max-w-[430px] w-full mx-auto ">
       {/* 중앙 컨텐츠 */}
@@ -40,8 +40,8 @@ export default function Home() {
       </div>
       {/* 하단 카카오 버튼 */}
       <div className="w-full flex flex-col items-center gap-4 justify-center pb-8">
-        <Link
-          href="/signup"
+        <button
+          onClick={handleKakaoLogin}
           className="w-[90%] max-w-[340px] h-12 bg-[#FFE812] rounded-xl flex items-center shadow font-semibold text-main2 text-base"
         >
           <svg
@@ -58,7 +58,7 @@ export default function Home() {
             />
           </svg>
           <span className="flex-1 text-center">카카오로 계속하기</span>
-        </Link>
+        </button>
       </div>
     </div>
   );
