@@ -1,9 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 export default function Home() {
+  const router = useRouter();
+
   const handleKakaoLogin = () => {
     // Next.js API 라우트로 리다이렉트
-    window.location.href = "/kakao-login";
+    router.push("/kakao-login");
   };
 
   return (

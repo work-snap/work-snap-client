@@ -1,12 +1,77 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleUserTypeSelect = async (
+    userType: "BUSINESS_OWNER" | "PART_TIME_WORKER"
+  ) => {
+    try {
+      setIsLoading(true);
+
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        alert("로그인이 필요합니다.");
+        router.push("/");
+        return;
+      }
+
+      const API_URL = "http://localhost:8080";
+
+      await axios.post(
+        `${API_URL}/api/users/me/select-type`,
+        { userType },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      // 사용자 정보 업데이트
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        user.userType = userType;
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      console.log("✅ 사용자 타입 선택 완료:", userType);
+
+      // 타입에 따른 환영 페이지로 이동
+      if (userType === "BUSINESS_OWNER") {
+        router.push("/signup/business");
+      } else {
+        router.push("/signup/ptjob");
+      }
+    } catch (error) {
+      console.error("❌ 사용자 타입 선택 실패:", error);
+      alert("사용자 타입 선택에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    alert("로그아웃되었습니다.");
+    router.push("/");
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white max-w-[430px] w-full mx-auto">
       {/* 상단 뒤로가기 */}
-      <div className="flex items-center h-12 px-2 py-8">
+      <div className="flex items-center justify-between h-12 px-2 py-8">
         <Link href="/" className="">
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
             <path
@@ -18,6 +83,13 @@ export default function SignupPage() {
             />
           </svg>
         </Link>
+        {/* 임시 로그아웃 버튼 */}
+        <button
+          onClick={handleLogout}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          로그아웃
+        </button>
       </div>
       {/* 본문 */}
       <div className="flex flex-col items-start px-4 pt-2 w-full">
@@ -32,9 +104,10 @@ export default function SignupPage() {
         </div>
         {/* 선택 버튼 */}
         <div className="w-full flex flex-col gap-4">
-          <Link
-            href="/signup/ptjob"
-            className="w-full bg-gray2 rounded-xl py-7 flex flex-col items-center justify-center hover:bg-gray3 transition-colors"
+          <button
+            onClick={() => handleUserTypeSelect("PART_TIME_WORKER")}
+            disabled={isLoading}
+            className="w-full bg-gray2 rounded-xl py-7 flex flex-col items-center justify-center hover:bg-gray3 transition-colors disabled:opacity-50"
           >
             <svg width="40" height="40" fill="none" viewBox="0 0 40 40">
               <path
@@ -52,8 +125,12 @@ export default function SignupPage() {
               />
             </svg>
             <span className="mt-2 text-gray5 font-semibold">알바님</span>
-          </Link>
-          <button className="w-full bg-gray2 rounded-xl py-7 flex flex-col items-center justify-center  hover:bg-gray3 transition-colors">
+          </button>
+          <button
+            onClick={() => handleUserTypeSelect("BUSINESS_OWNER")}
+            disabled={isLoading}
+            className="w-full bg-gray2 rounded-xl py-7 flex flex-col items-center justify-center hover:bg-gray3 transition-colors disabled:opacity-50"
+          >
             <svg width="40" height="40" fill="none" viewBox="0 0 40 40">
               <rect
                 x="6"
@@ -76,6 +153,12 @@ export default function SignupPage() {
             <span className="mt-2 text-gray5 font-semibold">사장님</span>
           </button>
         </div>
+
+        {isLoading && (
+          <div className="w-full text-center mt-4">
+            <span className="text-gray-500">처리 중...</span>
+          </div>
+        )}
       </div>
     </div>
   );
