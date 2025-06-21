@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider } from "./ThemeProvider";
 
 export default function CustomProvider({
@@ -22,8 +23,10 @@ export default function CustomProvider({
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>{children}</ThemeProvider>
-    </QueryClientProvider>
+    <HeroUIProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </QueryClientProvider>
+    </HeroUIProvider>
   );
 }
