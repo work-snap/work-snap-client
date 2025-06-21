@@ -16,13 +16,11 @@ export default function SignupPtjobPage() {
           </div>
         </div>
       </div>
-      {/* 하단 버튼 */}
-      <div className="w-full flex justify-center pb-8">
-        <Link
-          href="/user/ptjob"
-          className="w-[90%] max-w-[340px] h-12 bg-main rounded-xl flex items-center justify-center font-semibold text-white text-base"
-        >
-          메인으로
+      <div className="fixed bottom-0 left-0 right-0 p-4">
+        <Link href="/user/ptjob/mainpage">
+          <button className="w-full py-5 rounded-xl bg-main text-white">
+            메인으로
+          </button>
         </Link>
       </div>
     </div>

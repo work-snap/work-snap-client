@@ -1,3 +1,66 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+}
+
+/* TimePicker Custom Styles */
+.custom-time-picker {
+  background-color: transparent !important;
+  border: none !important;
+  font-family: inherit !important;
+}
+
+.custom-time-picker .react-time-picker__wrapper {
+  border: none !important;
+  background: transparent !important;
+}
+
+.custom-time-picker .react-time-picker__inputGroup {
+  font-size: 1rem !important;
+  color: #6b7280 !important;
+  text-align: right !important;
+}
+
+.custom-time-picker .react-time-picker__inputGroup__input {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+}
+
+.custom-time-picker .react-time-picker__inputGroup__divider {
+  color: #6b7280 !important;
+  padding: 0 2px !important;
+}
+
+.custom-time-picker .react-time-picker__clock {
+  display: none !important;
+}
+
+.custom-time-picker .react-time-picker__inputGroup__input:focus {
+  outline: none !important;
+  background: transparent !important;
+}
+
+.custom-time-picker .react-time-picker__button {
+  display: none !important;
+}
+
+.custom-time-picker .react-time-picker__inputGroup__leadingZero {
+  display: none !important;
+}

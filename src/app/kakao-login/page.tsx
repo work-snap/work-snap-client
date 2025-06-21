@@ -41,7 +41,8 @@ export default function KakaoLogin() {
         userId: data.user.id,
         nickname: data.user.nickname,
       });
-
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
       // RefreshToken은 HTTP-only 쿠키로 자동 설정됨 (서버에서 처리)
       console.log("🍪 RefreshToken이 HTTP-only 쿠키로 자동 설정되었습니다.");
 
@@ -51,7 +52,7 @@ export default function KakaoLogin() {
         router.push("/signup");
       } else {
         console.log("👤 기존 사용자 - 메인 페이지로 이동");
-        router.push("/");
+        router.push("/user/ptjob/mainpage");
       }
     },
     onError: (error: AxiosError) => {

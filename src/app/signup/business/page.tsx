@@ -17,13 +17,11 @@ export default function SignupBusinessPage() {
         </div>
       </div>
       {/* 하단 버튼 */}
-      <div className="w-full flex justify-center pb-8">
-        <Link
-          href="/user/business"
-          className="w-[90%] max-w-[340px] h-12 bg-main rounded-xl flex items-center justify-center font-semibold text-white text-base"
-        >
+
+      <div className="fixed bottom-0 left-0 right-0 p-4">
+        <button className="w-full py-5 rounded-lg bg-main text-white">
           메인으로
-        </Link>
+        </button>
       </div>
     </div>
   );
