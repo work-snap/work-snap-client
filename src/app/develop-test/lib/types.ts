@@ -15,7 +15,13 @@ export interface AuthTokens {
 }
 
 // 탭 타입 정의
-export type TabType = "auth" | "user" | "business" | "workplace";
+export type TabType =
+  | "auth"
+  | "user"
+  | "business"
+  | "workplace"
+  | "schedule"
+  | "parttime";
 
 // 사업자 등록 폼 인터페이스 (업데이트됨)
 export interface BusinessOwnerRegistrationForm {
@@ -58,6 +64,17 @@ export type LoadingState =
   | "workplace-update"
   | "workplace-delete"
   | "workplace-statistics"
+  | "fetch-workplaces"
+  | "fetch-schedules"
+  | "create-schedule-batch"
+  | "update-schedule"
+  | "delete-schedule"
+  | "generate-invite-code"
+  | "fetch-my-parttime"
+  | "fetch-parttime-by-code"
+  | "fetch-my-schedules"
+  | "fetch-workplace-employees"
+  | "fetch-employee-schedule-detail"
   | null;
 
 // 탭 정보 타입
@@ -65,6 +82,8 @@ export interface TabInfo {
   id: TabType;
   name: string;
   description: string;
+  icon: string;
+  color: string;
 }
 
 // API 응답 공통 타입
@@ -249,14 +268,6 @@ export type DayOfWeek =
   | "SATURDAY"
   | "SUNDAY";
 
-export interface WorkScheduleCreateForm {
-  workplaceId: number;
-  inviteCode: string;
-  dayOfWeek: DayOfWeek;
-  startTime: string; // "HH:mm" 형식
-  endTime: string; // "HH:mm" 형식
-}
-
 export interface WorkScheduleUpdateForm {
   dayOfWeek: DayOfWeek;
   startTime: string;
@@ -327,11 +338,7 @@ export const DAY_OF_WEEK_OPTIONS = [
 export const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const hour = Math.floor(i / 2);
   const minute = i % 2 === 0 ? "00" : "30";
-  const timeString = `${hour.toString().padStart(2, "0")}:${minute}`;
-  return {
-    value: timeString,
-    label: timeString,
-  };
+  return `${hour.toString().padStart(2, "0")}:${minute}`;
 });
 
 // 요일을 한국어로 변환하는 함수
@@ -347,3 +354,95 @@ export const getDayOfWeekKorean = (dayOfWeek: DayOfWeek): string => {
   };
   return dayMap[dayOfWeek];
 };
+
+// PartTime 관련 타입들 (새로 추가)
+export interface InviteCodeResponse {
+  inviteCode: string;
+  partTimeId?: number;
+  createdAt?: string;
+  expiresAt?: string;
+}
+
+export interface PartTimeInfo {
+  id: number;
+  inviteCode: string;
+  businessOwnerId: number;
+  workplaceId?: number;
+  workplaceName?: string;
+  title?: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 배치 생성을 위한 단일 스케줄 정보
+export interface WorkScheduleItem {
+  dayOfWeek: DayOfWeek;
+  startTime: string; // "HH:mm" 형식
+  endTime: string; // "HH:mm" 형식
+}
+
+// 배치 생성 폼
+export interface WorkScheduleBatchCreateForm {
+  workplaceId: number;
+  inviteCode: string;
+  schedules: WorkScheduleItem[];
+}
+
+// 배치 생성 응답
+export interface WorkScheduleBatchCreateResponse {
+  successSchedules: WorkSchedule[];
+  failedSchedules: WorkScheduleFailure[];
+  totalCount: number;
+  successCount: number;
+  failureCount: number;
+  allSuccess: boolean;
+}
+
+// 배치 생성 실패 정보
+export interface WorkScheduleFailure {
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  errorMessage: string;
+}
+
+// 사업장 파트타임 직원 정보 (새로 추가)
+export interface WorkplaceEmployee {
+  userId: number;
+  nickname: string;
+  profileImageUrl?: string;
+  inviteCode?: string;
+  scheduleCount: number;
+  weeklyWorkingHours: number;
+  registeredAt: string;
+}
+
+// 파트타임 직원 근무 스케줄 상세 (새로 추가)
+export interface EmployeeScheduleDetail {
+  employee: WorkplaceEmployee;
+  schedules: WorkSchedule[];
+  statistics: {
+    totalSchedules: number;
+    weeklyWorkingHours: number;
+    schedulesByDay: Record<string, number>;
+    averageWorkingHoursPerDay: number;
+    registeredAt: string;
+  };
+}
+
+// 사업장 직원 목록 응답
+export interface WorkplaceEmployeeResponse {
+  success: boolean;
+  data: WorkplaceEmployee[];
+  totalCount: number;
+  error?: string;
+}
+
+// 직원 스케줄 상세 응답
+export interface EmployeeScheduleDetailResponse {
+  success: boolean;
+  data: EmployeeScheduleDetail;
+  error?: string;
+}

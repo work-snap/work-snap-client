@@ -1,33 +1,50 @@
 import axios from "axios";
 import {
-  BusinessOwnerRegistrationForm,
-  UserUpdateForm,
+  TestResult,
+  AuthTokens,
   LoginRequest,
+  LoginResponse,
+  UserUpdateForm,
+  DevTokenRequest,
+  ApiResponse,
+  BusinessOwnerRegistrationForm,
   BusinessOwnerTestRequest,
+  BusinessOwnerInfo,
+  FileUploadResponse,
+  VerificationStatusResponse,
   WorkplaceRegistrationForm,
-  WorkScheduleCreateForm,
+  Workplace,
+  InviteCodeResponse,
+  PartTimeInfo,
   WorkScheduleUpdateForm,
+  WorkScheduleBatchCreateForm,
 } from "./types";
 
 // API 클라이언트 설정
 const api = axios.create({
   baseURL: "http://localhost:8080",
-  timeout: 10000,
+  timeout: 30000, // 30초로 증가
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: false, // CORS 설정 명시
 });
 
 // 토큰 interceptor 설정
 api.interceptors.request.use(
   (config) => {
+    console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.url}`);
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log("🔑 Authorization 헤더 추가됨");
+    } else {
+      console.log("⚠️ 토큰이 없습니다");
     }
     return config;
   },
   (error) => {
+    console.error("❌ 요청 인터셉터 에러:", error);
     return Promise.reject(error);
   }
 );
@@ -35,14 +52,36 @@ api.interceptors.request.use(
 // 응답 interceptor 설정
 api.interceptors.response.use(
   (response) => {
+    console.log(
+      `✅ API 응답 성공: ${response.config.method?.toUpperCase()} ${
+        response.config.url
+      }`
+    );
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    const config = error.config;
+    const method = config?.method?.toUpperCase() || "UNKNOWN";
+    const url = config?.url || "unknown";
+
+    if (error.code === "NETWORK_ERROR" || !error.response) {
+      console.error(`🌐 네트워크 에러: ${method} ${url}`, {
+        message: error.message,
+        code: error.code,
+        stack: error.stack?.split("\n").slice(0, 3).join("\n"),
+      });
+    } else if (error.response?.status === 401) {
+      console.warn("🔐 인증 만료 - 로그아웃 처리");
       // 토큰 만료 시 로그아웃 처리
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       window.location.href = "/";
+    } else {
+      console.error(`❌ API 에러: ${method} ${url}`, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+      });
     }
     return Promise.reject(error);
   }
@@ -217,10 +256,10 @@ export const workplaceTestApis = {
   },
 };
 
-// Work Schedule API (새로 추가)
+// Work Schedule API
 export const workScheduleTestApis = {
-  // 근무 스케줄 등록
-  create: (data: WorkScheduleCreateForm) => {
+  // 근무 스케줄 배치 등록
+  create: (data: WorkScheduleBatchCreateForm) => {
     return api.post("/api/business-owner/work-schedules", data);
   },
 
@@ -252,28 +291,40 @@ export const workScheduleTestApis = {
       `/api/business-owner/work-schedules/workplace/${workplaceId}/statistics`
     );
   },
+
+  // 사업장별 파트타임 직원 목록 조회 (새로 추가)
+  getWorkplaceEmployees: (workplaceId: number) => {
+    return api.get(`/api/business-owner/workplaces/${workplaceId}/employees`);
+  },
+
+  // 특정 직원의 근무 스케줄 상세 조회 (새로 추가)
+  getEmployeeScheduleDetail: (workplaceId: number, employeeUserId: number) => {
+    return api.get(
+      `/api/business-owner/workplaces/${workplaceId}/employees/${employeeUserId}`
+    );
+  },
 };
 
-// PartTime API (기존 코드 개선)
+// PartTime API (최신 인증 기반 API)
 export const partTimeTestApis = {
-  // 초대 코드 생성
+  // 초대 코드 생성/갱신 (인증된 사용자 기준)
   generateInviteCode: () => {
     return api.post("/api/parttime/invite-code");
   },
 
-  // 초대 코드 갱신
-  refreshInviteCode: (partTimeId: number) => {
-    return api.put(`/api/parttime/${partTimeId}/invite-code`);
-  },
-
-  // 파트타임 정보 조회
-  getPartTime: (partTimeId: number) => {
-    return api.get(`/api/parttime/${partTimeId}`);
+  // 내 파트타임 정보 조회 (인증된 사용자 기준)
+  getMyPartTimeInfo: () => {
+    return api.get("/api/parttime/my-info");
   },
 
   // 초대 코드로 파트타임 조회
   getByInviteCode: (inviteCode: string) => {
     return api.get(`/api/parttime/invite-code/${inviteCode}`);
+  },
+
+  // 내 근무 일정 조회 (인증된 아르바이트 기준)
+  getMyWorkSchedules: () => {
+    return api.get("/api/parttime/my-work-schedules");
   },
 };
 
@@ -285,6 +336,37 @@ export const testApis = {
   workplace: workplaceTestApis,
   workSchedule: workScheduleTestApis,
   partTime: partTimeTestApis,
+};
+
+// 네트워크 연결 테스트 유틸리티 (간소화)
+export const networkUtils = {
+  // 간단한 서버 연결 확인
+  checkConnection: async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      // 기존 API 엔드포인트로 간단한 연결 테스트
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      // 400, 401 등의 응답도 연결 성공으로 간주
+      return {
+        success: true,
+        message: `서버 연결 확인 (상태: ${response.status})`,
+      };
+    } catch (error: any) {
+      let message = "서버 연결 실패";
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        message = "네트워크 연결 오류 - 서버가 실행되지 않았을 수 있습니다";
+      }
+
+      return {
+        success: false,
+        message,
+      };
+    }
+  },
 };
 
 export default api;
