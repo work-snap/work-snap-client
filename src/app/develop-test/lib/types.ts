@@ -15,7 +15,7 @@ export interface AuthTokens {
 }
 
 // 탭 타입 정의
-export type TabType = "auth" | "user" | "business";
+export type TabType = "auth" | "user" | "business" | "workplace";
 
 // 사업자 등록 폼 인터페이스 (업데이트됨)
 export interface BusinessOwnerRegistrationForm {
@@ -51,6 +51,13 @@ export type LoadingState =
   | "notifications"
   | "settings"
   | "business-registration"
+  | "workplace-register"
+  | "workplace-list"
+  | "workplace-detail"
+  | "workplace-main"
+  | "workplace-update"
+  | "workplace-delete"
+  | "workplace-statistics"
   | null;
 
 // 탭 정보 타입
@@ -202,3 +209,141 @@ export interface VerificationStatusResponse {
   verificationStatus: string;
   canRegister: boolean;
 }
+
+// 사업장 관련 타입들 (새로 추가)
+export interface WorkplaceRegistrationForm {
+  name: string;
+  address: string;
+  detailAddress?: string;
+  phoneNumber?: string;
+  description?: string;
+  isMain?: boolean;
+}
+
+export interface WorkplaceInfo {
+  id: number;
+  name: string;
+  address: string;
+  detailAddress?: string;
+  phoneNumber?: string;
+  description?: string;
+  isMain: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkplaceStatistics {
+  totalCount: number;
+  activeCount: number;
+  mainWorkplaceId?: number;
+}
+
+// 근무 스케줄 관련 타입들 (새로 추가)
+export type DayOfWeek =
+  | "MONDAY"
+  | "TUESDAY"
+  | "WEDNESDAY"
+  | "THURSDAY"
+  | "FRIDAY"
+  | "SATURDAY"
+  | "SUNDAY";
+
+export interface WorkScheduleCreateForm {
+  workplaceId: number;
+  inviteCode: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string; // "HH:mm" 형식
+  endTime: string; // "HH:mm" 형식
+}
+
+export interface WorkScheduleUpdateForm {
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+}
+
+export interface WorkSchedule {
+  id: number;
+  workplaceId: number;
+  workplaceName?: string;
+  partTimeWorkerId: number;
+  inviteCode?: string;
+  dayOfWeek: DayOfWeek;
+  dayOfWeekKorean: string;
+  startTime: string;
+  endTime: string;
+  workingHours: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkScheduleStatistics {
+  totalSchedules: number;
+  activeSchedules: number;
+  totalPartTimeWorkers: number;
+  totalWeeklyHours: number;
+  schedulesByDay: Record<string, number>;
+}
+
+// 사업장 정보 타입 (기존 코드와 호환성 위해)
+export interface Workplace {
+  id: number;
+  businessOwnerId: number;
+  workplaceName: string;
+  workplaceType?: string;
+  workplaceAddress: string;
+  workplacePhone?: string;
+  workplaceEmail?: string;
+  workplaceDescription?: string;
+  employeeCount?: number;
+  operatingHours?: string;
+  businessLicenseNumber?: string;
+  isMainWorkplace: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// API 응답 타입들
+export interface WorkScheduleResponse {
+  schedules: WorkSchedule[];
+  statistics: WorkScheduleStatistics;
+}
+
+// 요일 옵션들
+export const DAY_OF_WEEK_OPTIONS = [
+  { value: "MONDAY" as const, label: "월요일" },
+  { value: "TUESDAY" as const, label: "화요일" },
+  { value: "WEDNESDAY" as const, label: "수요일" },
+  { value: "THURSDAY" as const, label: "목요일" },
+  { value: "FRIDAY" as const, label: "금요일" },
+  { value: "SATURDAY" as const, label: "토요일" },
+  { value: "SUNDAY" as const, label: "일요일" },
+];
+
+// 시간 옵션들 (30분 단위)
+export const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const hour = Math.floor(i / 2);
+  const minute = i % 2 === 0 ? "00" : "30";
+  const timeString = `${hour.toString().padStart(2, "0")}:${minute}`;
+  return {
+    value: timeString,
+    label: timeString,
+  };
+});
+
+// 요일을 한국어로 변환하는 함수
+export const getDayOfWeekKorean = (dayOfWeek: DayOfWeek): string => {
+  const dayMap: Record<DayOfWeek, string> = {
+    MONDAY: "월요일",
+    TUESDAY: "화요일",
+    WEDNESDAY: "수요일",
+    THURSDAY: "목요일",
+    FRIDAY: "금요일",
+    SATURDAY: "토요일",
+    SUNDAY: "일요일",
+  };
+  return dayMap[dayOfWeek];
+};

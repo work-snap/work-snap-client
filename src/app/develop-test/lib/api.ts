@@ -4,6 +4,9 @@ import {
   UserUpdateForm,
   LoginRequest,
   BusinessOwnerTestRequest,
+  WorkplaceRegistrationForm,
+  WorkScheduleCreateForm,
+  WorkScheduleUpdateForm,
 } from "./types";
 
 // API 클라이언트 설정
@@ -157,11 +160,131 @@ export const businessOwnerTestApis = {
   },
 };
 
+// Workplace API (새로 추가)
+export const workplaceTestApis = {
+  // 사업장 등록
+  register: (data: WorkplaceRegistrationForm) => {
+    // 클라이언트 필드명을 서버 필드명으로 매핑
+    const requestData = {
+      workplaceName: data.name,
+      workplaceAddress: data.address,
+      workplacePhone: data.phoneNumber || null,
+      workplaceDescription: data.description || null,
+      isMainWorkplace: data.isMain || false,
+    };
+    return api.post("/api/business-owner/workplaces", requestData);
+  },
+
+  // 사업장 목록 조회
+  getWorkplaces: () => {
+    return api.get("/api/business-owner/workplaces");
+  },
+
+  // 사업장 상세 조회
+  getWorkplace: (workplaceId: number) => {
+    return api.get(`/api/business-owner/workplaces/${workplaceId}`);
+  },
+
+  // 메인 사업장 조회
+  getMainWorkplace: () => {
+    return api.get("/api/business-owner/workplaces/main");
+  },
+
+  // 사업장 정보 수정
+  updateWorkplace: (workplaceId: number, data: WorkplaceRegistrationForm) => {
+    // 클라이언트 필드명을 서버 필드명으로 매핑
+    const requestData = {
+      workplaceName: data.name,
+      workplaceAddress: data.address,
+      workplacePhone: data.phoneNumber || null,
+      workplaceDescription: data.description || null,
+      isMainWorkplace: data.isMain || false,
+    };
+    return api.put(
+      `/api/business-owner/workplaces/${workplaceId}`,
+      requestData
+    );
+  },
+
+  // 사업장 삭제
+  deleteWorkplace: (workplaceId: number) => {
+    return api.delete(`/api/business-owner/workplaces/${workplaceId}`);
+  },
+
+  // 사업장 통계 조회
+  getStatistics: () => {
+    return api.get("/api/business-owner/workplaces/statistics");
+  },
+};
+
+// Work Schedule API (새로 추가)
+export const workScheduleTestApis = {
+  // 근무 스케줄 등록
+  create: (data: WorkScheduleCreateForm) => {
+    return api.post("/api/business-owner/work-schedules", data);
+  },
+
+  // 사업장별 근무 스케줄 목록 조회
+  getByWorkplace: (workplaceId: number) => {
+    return api.get(
+      `/api/business-owner/work-schedules/workplace/${workplaceId}`
+    );
+  },
+
+  // 근무 스케줄 상세 조회
+  getById: (scheduleId: number) => {
+    return api.get(`/api/business-owner/work-schedules/${scheduleId}`);
+  },
+
+  // 근무 스케줄 수정
+  update: (scheduleId: number, data: WorkScheduleUpdateForm) => {
+    return api.put(`/api/business-owner/work-schedules/${scheduleId}`, data);
+  },
+
+  // 근무 스케줄 삭제
+  delete: (scheduleId: number) => {
+    return api.delete(`/api/business-owner/work-schedules/${scheduleId}`);
+  },
+
+  // 사업장별 근무 스케줄 통계 조회
+  getStatistics: (workplaceId: number) => {
+    return api.get(
+      `/api/business-owner/work-schedules/workplace/${workplaceId}/statistics`
+    );
+  },
+};
+
+// PartTime API (기존 코드 개선)
+export const partTimeTestApis = {
+  // 초대 코드 생성
+  generateInviteCode: () => {
+    return api.post("/api/parttime/invite-code");
+  },
+
+  // 초대 코드 갱신
+  refreshInviteCode: (partTimeId: number) => {
+    return api.put(`/api/parttime/${partTimeId}/invite-code`);
+  },
+
+  // 파트타임 정보 조회
+  getPartTime: (partTimeId: number) => {
+    return api.get(`/api/parttime/${partTimeId}`);
+  },
+
+  // 초대 코드로 파트타임 조회
+  getByInviteCode: (inviteCode: string) => {
+    return api.get(`/api/parttime/invite-code/${inviteCode}`);
+  },
+};
+
 // 통합 API 객체
 export const testApis = {
   auth: authTestApis,
   user: userTestApis,
   businessOwner: businessOwnerTestApis,
+  workplace: workplaceTestApis,
+  workSchedule: workScheduleTestApis,
+  partTime: partTimeTestApis,
 };
 
 export default api;

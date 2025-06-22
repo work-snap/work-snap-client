@@ -7,6 +7,7 @@ export { TabNavigation } from "./TabNavigation";
 export { AuthTab } from "./tabs/AuthTab";
 export { UserTab } from "./tabs/UserTab";
 export { BusinessTab } from "./tabs/BusinessTab";
+export { WorkplaceTab } from "./tabs/WorkplaceTab";
 
 // 폼 컴포넌트들
 export { BusinessRegistrationForm } from "./forms/BusinessRegistrationForm";

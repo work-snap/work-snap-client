@@ -10,6 +10,7 @@ import {
   AuthTab,
   UserTab,
   BusinessTab,
+  WorkplaceTab,
 } from "./components";
 
 export default function DevelopTestPage() {
@@ -45,6 +46,14 @@ export default function DevelopTestPage() {
       case "business":
         return (
           <BusinessTab
+            loading={loading}
+            onLoadingChange={setLoadingState}
+            onTestResult={addTestResult}
+          />
+        );
+      case "workplace":
+        return (
+          <WorkplaceTab
             loading={loading}
             onLoadingChange={setLoadingState}
             onTestResult={addTestResult}

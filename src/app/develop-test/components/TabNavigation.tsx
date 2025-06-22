@@ -22,6 +22,11 @@ const tabs: TabInfo[] = [
     name: "🏢 사업자",
     description: "사업자 전용 기능",
   },
+  {
+    id: "workplace",
+    name: "🏪 사업장",
+    description: "사업장 관리 API",
+  },
 ];
 
 export const TabNavigation: React.FC<TabNavigationProps> = ({
