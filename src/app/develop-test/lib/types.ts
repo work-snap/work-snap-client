@@ -21,7 +21,9 @@ export type TabType =
   | "business"
   | "workplace"
   | "schedule"
-  | "parttime";
+  | "parttime"
+  | "attendance"
+  | "attendance-card";
 
 // 사업자 등록 폼 인터페이스 (업데이트됨)
 export interface BusinessOwnerRegistrationForm {
@@ -75,6 +77,17 @@ export type LoadingState =
   | "fetch-my-schedules"
   | "fetch-workplace-employees"
   | "fetch-employee-schedule-detail"
+  | "create-today-attendance"
+  | "create-daily-attendance"
+  | "clock-in"
+  | "clock-out"
+  | "create-additional-work"
+  | "fetch-daily-attendance"
+  | "fetch-attendance-period"
+  | "fetch-monthly-statistics"
+  | "fetch-active-attendance"
+  | "delete-additional-work"
+  | "fetch-workplace-daily-attendance"
   | null;
 
 // 탭 정보 타입
@@ -445,4 +458,78 @@ export interface EmployeeScheduleDetailResponse {
   success: boolean;
   data: EmployeeScheduleDetail;
   error?: string;
+}
+
+// Attendance 관련 타입들
+export type AttendanceStatus =
+  | "SCHEDULED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "ABSENT";
+
+export interface AttendanceRes {
+  id: number;
+  workScheduleId?: number;
+  userId: number;
+  workplaceId: number;
+  workDate: string;
+  scheduledStartTime: string;
+  scheduledEndTime: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  attendanceTypes: string[];
+  attendanceTypesKorean: string;
+  status: AttendanceStatus;
+  statusKorean: string;
+  isAdditionalWork: boolean;
+  isOvernightWork: boolean;
+  scheduledWorkingMinutes: number;
+  actualWorkingMinutes?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClockInReq {
+  actualTime?: string;
+  notes?: string;
+}
+
+export interface ClockOutReq {
+  actualTime?: string;
+  notes?: string;
+}
+
+export interface AdditionalWorkCreateReq {
+  workDate: string;
+  workplaceId: number;
+  startTime: string;
+  endTime: string;
+  notes?: string;
+}
+
+export interface DailyAttendanceRes {
+  date: string;
+  attendances: AttendanceRes[];
+  totalCount: number;
+  completedCount: number;
+  inProgressCount: number;
+  additionalWorkCount: number;
+}
+
+export interface MonthlyAttendanceStatistics {
+  yearMonth: string;
+  totalDays: number;
+  workDays: number;
+  absentDays: number;
+  additionalWorkDays: number;
+  attendanceRate: number;
+  totalWorkingMinutes: number;
+}
+
+export interface AttendanceSearchReq {
+  startDate?: string;
+  endDate?: string;
+  status?: AttendanceStatus;
+  additionalWorkOnly?: boolean;
 }

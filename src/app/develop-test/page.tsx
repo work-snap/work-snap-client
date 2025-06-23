@@ -13,6 +13,8 @@ import {
   WorkplaceTab,
   WorkScheduleTab,
   PartTimeTab,
+  AttendanceTab,
+  AttendanceCardTab,
 } from "./components";
 
 export default function DevelopTestPage() {
@@ -45,11 +47,15 @@ export default function DevelopTestPage() {
     workplace: () => <WorkplaceTab {...commonTabProps} />,
     schedule: () => <WorkScheduleTab {...commonTabProps} />,
     parttime: () => <PartTimeTab {...commonTabProps} />,
+    attendance: () => <AttendanceTab {...commonTabProps} />,
+    "attendance-card": () => <AttendanceCardTab {...commonTabProps} />,
   };
 
   // 탭 컨텐츠 렌더링 함수
   const renderTabContent = () => {
+    console.log("🔍 현재 활성 탭:", activeTab);
     const TabComponent = tabComponents[activeTab];
+    console.log("🔍 TabComponent:", TabComponent);
     return TabComponent ? TabComponent() : null;
   };
 

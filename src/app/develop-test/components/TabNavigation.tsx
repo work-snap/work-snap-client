@@ -55,6 +55,20 @@ const tabs: TabInfo[] = [
     icon: "💼",
     color: "from-teal-500 to-cyan-600",
   },
+  {
+    id: "attendance",
+    name: "출근 관리",
+    description: "출근/퇴근 및 근무 기록 관리",
+    icon: "🕐",
+    color: "from-violet-500 to-purple-600",
+  },
+  {
+    id: "attendance-card",
+    name: "출근 카드",
+    description: "모바일 출근 카드 UI",
+    icon: "📱",
+    color: "from-orange-500 to-red-500",
+  },
 ];
 
 export const TabNavigation: React.FC<TabNavigationProps> = ({

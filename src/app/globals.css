@@ -64,3 +64,8 @@ body {
 .custom-time-picker .react-time-picker__inputGroup__leadingZero {
   display: none !important;
 }
+
+/* 기본 input 텍스트 및 placeholder 색상 지정 */
+input {
+  @apply text-gray-900 placeholder-gray-400;
+}
