@@ -1,6 +1,6 @@
 "use client";
 
-import Navigation from "../../components/navigation";
+import Navigation from "../../../components/navigation";
 import { useState } from "react";
 
 export default function PtJobPage() {
@@ -16,10 +16,41 @@ export default function PtJobPage() {
         <div className="flex items-center gap-2">
           <span className="text-[18px] font-bold text-gray5">SOO</span>
           <span className="bg-main2 text-gray1 text-xs font-semibold rounded-full px-2 py-1">
-            알바생
+            알바님
           </span>
         </div>
       </header>
+
+      {/* 인증코드 */}
+      <div className="px-4 mt-2">
+        <div className="flex items-center w-full">
+          <span className="text-m text-gray4 font-bold mr-2 whitespace-nowrap">
+            인증코드
+          </span>
+          <div className="flex-1 flex items-center rounded-lg px-3 py-2 shadow-sm border border-gray2">
+            <span className="flex-1 text-2xl  text-gray3 text-center select-all">
+              23F7KW
+            </span>
+            <button className="ml-2">
+              <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+                <rect
+                  x="5.5"
+                  y="3.5"
+                  width="11"
+                  height="13"
+                  rx="2.5"
+                  stroke="#AAAAAA"
+                />
+                <path
+                  d="M3.5 6.5v8A2.5 2.5 0 0 0 6 17h6.5"
+                  stroke="#AAAAAA"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
       {/* 배너 */}
       <div className="px-4 mt-4">
         <div className="rounded-xl bg-sub1/20 p-4 flex items-center gap-4">
@@ -58,37 +89,6 @@ export default function PtJobPage() {
           </div>
         </div>
       </div>
-      {/* 인증코드 */}
-      <div className="px-4 mt-2">
-        <div className="flex items-center w-full">
-          <span className="text-m text-gray4 font-bold mr-2 whitespace-nowrap">
-            인증코드
-          </span>
-          <div className="flex-1 flex items-center rounded-lg px-3 py-2 shadow-sm border border-gray2">
-            <span className="flex-1 text-2xl  text-gray3 text-center select-all">
-              23F7KW
-            </span>
-            <button className="ml-2">
-              <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-                <rect
-                  x="5.5"
-                  y="3.5"
-                  width="11"
-                  height="13"
-                  rx="2.5"
-                  stroke="#AAAAAA"
-                />
-                <path
-                  d="M3.5 6.5v8A2.5 2.5 0 0 0 6 17h6.5"
-                  stroke="#AAAAAA"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* 대기 메시지 */}
       <div className="px-4 mt-4 flex flex-col items-center justify-center py-8 waiting-message">
         <div className="text-gray4 text-base font-medium text-center mb-4">

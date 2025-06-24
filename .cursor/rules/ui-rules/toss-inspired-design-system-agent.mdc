@@ -1,0 +1,393 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Toss-Inspired Design System with Hero UI & Tailwind CSS
+
+## Critical Rules
+
+### 1. Color System Management 🎨
+- **Always define custom colors in tailwind.config.js** following Toss Bank's color palette
+- Use semantic color naming (primary, secondary, success, warning, error, neutral)
+- Implement both light and dark theme variants
+- Maintain consistent color contrast ratios for accessibility (WCAG AA)
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f0f9ff',
+          500: '#3b82f6',
+          600: '#2563eb',
+          900: '#1e3a8a'
+        },
+        toss: {
+          blue: '#0061ff',
+          navy: '#191f28',
+          gray: {
+            50: '#f8fafc',
+            100: '#f1f5f9',
+            900: '#0f172a'
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 2. Typography System 📝
+- **Define custom font families and sizes in Tailwind config**
+- Use Toss Bank's typography hierarchy (Display, Headline, Title, Label, Body)
+- Implement responsive typography with fluid scaling
+- Prioritize readability with optimal line-height and letter-spacing
+
+```javascript
+// tailwind.config.js typography extension
+fontFamily: {
+  'toss': ['Toss Product Sans', 'system-ui', 'sans-serif'],
+  'display': ['SF Pro Display', 'system-ui', 'sans-serif']
+},
+fontSize: {
+  'toss-display': ['32px', { lineHeight: '40px', fontWeight: '700' }],
+  'toss-headline': ['24px', { lineHeight: '32px', fontWeight: '600' }],
+  'toss-title': ['18px', { lineHeight: '24px', fontWeight: '600' }],
+  'toss-body': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+  'toss-label': ['14px', { lineHeight: '20px', fontWeight: '500' }]
+}
+```
+
+### 3. Hero UI Integration 🛠️
+- **Always use Hero UI components as base building blocks**
+- Customize Hero UI components with Tailwind classes, never override with custom CSS
+- Follow Hero UI's component composition patterns
+- Maintain Hero UI's accessibility standards and ARIA attributes
+
+```tsx
+// Example: Custom button using Hero UI + Tailwind
+import { Button } from '@heroui/react'
+
+const TossButton = ({ variant = 'primary', children, ...props }) => (
+  <Button
+    className={`
+      font-toss-label rounded-xl transition-all duration-200
+      ${variant === 'primary' && 'bg-toss-blue hover:bg-blue-600 text-white'}
+      ${variant === 'secondary' && 'bg-toss-gray-100 hover:bg-gray-200 text-toss-navy'}
+    `}
+    {...props}
+  >
+    {children}
+  </Button>
+)
+```
+
+### 4. Component Architecture 🏗️
+- **Create reusable component variants with consistent API**
+- Use compound component patterns for complex UI elements
+- Implement proper component composition with slots/children
+- Follow mobile-first responsive design principles
+
+### 5. Layout and Spacing System 📐
+- **Define custom spacing scale in Tailwind config**
+- Use consistent spacing multiples (4px base unit: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64)
+- Implement responsive spacing with breakpoint-specific values
+- Follow Toss Bank's generous whitespace and breathing room principles
+
+```javascript
+// tailwind.config.js spacing extension
+spacing: {
+  'toss-xs': '4px',
+  'toss-sm': '8px',
+  'toss-md': '16px',
+  'toss-lg': '24px',
+  'toss-xl': '32px',
+  'toss-2xl': '48px',
+  'toss-3xl': '64px'
+}
+```
+
+### 6. Form Design Standards 📋
+- **Use Hero UI form components with Toss-inspired styling**
+- Implement clear label hierarchy and helper text
+- Use consistent validation states (success, warning, error)
+- Follow progressive disclosure for complex forms
+- Ensure mobile-optimized input sizing and touch targets
+
+### 7. Card and Container Patterns 🃏
+- **Standardize card designs with consistent elevation and borders**
+- Use subtle shadows and rounded corners following Toss aesthetic
+- Implement hover and focus states for interactive cards
+- Maintain consistent padding and content hierarchy
+
+```javascript
+// tailwind.config.js card utilities
+boxShadow: {
+  'toss-card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  'toss-card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+},
+borderRadius: {
+  'toss': '12px',
+  'toss-lg': '16px',
+  'toss-xl': '20px'
+}
+```
+
+### 8. Animation and Transitions 🎬
+- **Define custom animation curves in Tailwind config**
+- Use subtle, purposeful animations that enhance UX
+- Implement consistent transition durations (150ms, 200ms, 300ms)
+- Follow Toss Bank's smooth and natural motion principles
+
+```javascript
+// tailwind.config.js animation extension
+transitionTimingFunction: {
+  'toss': 'cubic-bezier(0.4, 0, 0.2, 1)',
+  'toss-bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+},
+animation: {
+  'fade-in': 'fadeIn 200ms ease-toss',
+  'slide-up': 'slideUp 300ms ease-toss'
+}
+```
+
+### 9. Responsive Design Strategy 📱
+- **Implement mobile-first breakpoint system**
+- Use Toss Bank's responsive patterns for navigation and content
+- Ensure touch-friendly interface elements (minimum 44px touch targets)
+- Optimize for thumb navigation and one-handed use
+
+### 10. Accessibility Standards ♿
+- **Maintain WCAG AA compliance in all components**
+- Use semantic HTML with proper ARIA labels
+- Ensure keyboard navigation support
+- Test with screen readers and assistive technologies
+- Implement focus management for complex interactions
+
+### 11. Folder Architecture Standards 📁
+- **Follow the `develop-test` folder structure pattern** for feature-based organization
+- Use consistent naming conventions across all directories
+- Implement barrel exports (`index.ts`) for clean imports
+- Separate concerns with dedicated folders for different types of code
+
+```
+feature-folder/
+├── page.tsx                    # Main page component
+├── lib/                        # Utility functions and business logic
+│   ├── api.ts                 # API calls and endpoints
+│   ├── hooks.ts               # Custom tanstackQuery hooks
+│   ├── types.ts               # TypeScript type definitions
+│   └── utils.ts               # Utility functions and helpers
+└── components/                 # UI components
+    ├── index.ts               # Barrel export file
+    ├── ComponentName.tsx      # Individual components
+    ├── tabs/                  # Grouped related components
+    │   ├── AuthTab.tsx
+    │   ├── UserTab.tsx
+    │   └── BusinessTab.tsx
+    └── forms/                 # Form-specific components
+        └── FormName.tsx
+```
+
+### 12. File Naming Conventions 📝
+- **Use PascalCase for component files** (e.g., `UserProfile.tsx`)
+- **Use camelCase for utility files** (e.g., `api.ts`, `hooks.ts`)
+- **Use kebab-case for page routes** (e.g., `user-profile/page.tsx`)
+- **Use descriptive, meaningful names** that clearly indicate purpose
+- **Group related files in subdirectories** (tabs/, forms/, modals/)
+
+### 13. Import/Export Patterns 🔄
+- **Use barrel exports** in `index.ts` files for clean imports
+- **Implement absolute imports** with `@/` prefix for better maintainability
+- **Group imports logically**: React hooks, external libraries, internal components
+- **Use named exports** for better tree-shaking and refactoring
+
+```tsx
+// ✅ Good: Barrel export pattern
+// components/index.ts
+export { UserProfile } from './UserProfile';
+export { UserSettings } from './UserSettings';
+export { UserTabs } from './tabs/UserTabs';
+
+// ✅ Good: Clean imports in page
+import { UserProfile, UserSettings, UserTabs } from '@/components';
+```
+
+### 14. State Management Architecture 🎯
+- **Use custom hooks** for complex state logic and side effects
+- **Implement single responsibility principle** for each hook
+- **Create typed interfaces** for all state objects
+- **Use callback memoization** for performance optimization
+- **Separate concerns**: UI state vs business logic state
+
+```tsx
+// ✅ Good: Custom hook pattern
+export const useUserProfile = () => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(false);
+  
+  const updateProfile = useCallback((updates: Partial<UserProfile>) => {
+    setProfile(prev => prev ? { ...prev, ...updates } : null);
+  }, []);
+  
+  return { profile, loading, updateProfile };
+};
+```
+
+## Examples
+
+<example>
+  ```tsx
+  // Toss-inspired login form component
+  import { Card, Input, Button } from '@heroui/react'
+  
+  const LoginForm = () => (
+    <Card className="w-full max-w-md p-toss-xl bg-white shadow-toss-card rounded-toss-lg">
+      <div className="space-y-toss-lg">
+        <div className="text-center">
+          <h1 className="text-toss-headline font-toss text-toss-navy">
+            Welcome Back
+          </h1>
+          <p className="text-toss-body text-toss-gray-600 mt-toss-sm">
+            Sign in to your account
+          </p>
+        </div>
+        
+        <div className="space-y-toss-md">
+          <Input
+            label="Email"
+            placeholder="Enter your email"
+            className="font-toss-body"
+            classNames={{
+              input: "text-toss-body",
+              label: "text-toss-label font-medium text-toss-navy"
+            }}
+          />
+          
+          <Input
+            type="password"
+            label="Password"
+            placeholder="Enter your password"
+            className="font-toss-body"
+          />
+        </div>
+        
+        <Button
+          className="w-full bg-toss-blue hover:bg-blue-600 text-white font-toss-label py-toss-md rounded-toss transition-all duration-200"
+          size="lg"
+        >
+          Sign In
+        </Button>
+      </div>
+    </Card>
+  )
+  ```
+</example>
+
+<example>
+  ```tsx
+  // ✅ Good: Proper folder architecture and component organization
+  
+  // File: src/app/user-dashboard/page.tsx
+  "use client";
+  import { useState } from 'react';
+  import { TabType } from './lib/types';
+  import { useUserState, useLoadingState } from './lib/hooks';
+  import { 
+    UserProfile, 
+    UserSettings, 
+    TabNavigation,
+    ProfileTab,
+    SettingsTab 
+  } from './components';
+  
+  export default function UserDashboardPage() {
+    const [activeTab, setActiveTab] = useState<TabType>('profile');
+    const { userProfile, updateProfile } = useUserState();
+    const { loading, setLoadingState } = useLoadingState();
+    
+    return (
+      <div className="min-h-screen bg-toss-gray-50 p-toss-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white shadow-toss-card rounded-toss-lg p-toss-xl">
+            <h1 className="text-toss-headline font-toss text-toss-navy mb-toss-lg">
+              User Dashboard
+            </h1>
+            
+            <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+            
+            {activeTab === 'profile' && (
+              <ProfileTab 
+                profile={userProfile}
+                loading={loading}
+                onUpdate={updateProfile}
+                onLoadingChange={setLoadingState}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // File: src/app/user-dashboard/lib/types.ts
+  export interface UserProfile {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  }
+  
+  export type TabType = 'profile' | 'settings' | 'billing';
+  
+  export interface LoadingState {
+    profile: boolean;
+    settings: boolean;
+  }
+  
+  // File: src/app/user-dashboard/components/index.ts
+  export { UserProfile } from './UserProfile';
+  export { TabNavigation } from './TabNavigation';
+  export { ProfileTab } from './tabs/ProfileTab';
+  export { SettingsTab } from './tabs/SettingsTab';
+  ```
+</example>
+
+<example type="invalid">
+  ```tsx
+  // ❌ Invalid: Poor folder structure and organization
+  
+  // File: src/app/userDashboard.tsx (wrong naming, wrong location)
+  import React from 'react';
+  import './userDashboard.css'; // Custom CSS file
+  import UserProfileComponent from '../components/userProfile'; // No barrel exports
+  import { getUserProfile } from '../api/userApi'; // Mixed concerns
+  
+  const UserDashboard = () => {
+    // ❌ No custom hooks, logic mixed in component
+    const [user, setUser] = useState(null);
+    
+    useEffect(() => {
+      getUserProfile().then(setUser); // No error handling
+    }, []);
+    
+    return (
+      <div className="user-dashboard"> {/* No design system classes */}
+        <h1 style={{ color: '#0066ff' }}> {/* Inline styles */}
+          User Dashboard
+        </h1>
+        <UserProfileComponent user={user} />
+      </div>
+    );
+  };
+  
+  // ❌ Invalid: No proper file organization
+  // All code in one file, no separation of concerns
+  // No TypeScript types
+  // Inconsistent naming conventions
+  // No barrel exports
+  ```
+</example>

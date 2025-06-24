@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export default function SignupPtjobPage() {
+export default function SignupBusinessPage() {
   return (
     <div className="min-h-screen flex flex-col justify-between items-center bg-white max-w-[430px] w-full mx-auto">
       {/* 중앙 환영 메시지 */}
@@ -12,16 +12,16 @@ export default function SignupPtjobPage() {
             Work Snap
           </div>
           <div className="text-gray5 text-xl font-extrabold">
-            가입을 환영합니다!
+            사장님, 가입을 환영합니다!
           </div>
         </div>
       </div>
+      {/* 하단 버튼 */}
+
       <div className="fixed bottom-0 left-0 right-0 p-4">
-        <Link href="/user/ptjob/mainpage">
-          <button className="w-full py-5 rounded-xl bg-main text-white">
-            메인으로
-          </button>
-        </Link>
+        <button className="w-full py-5 rounded-lg bg-main text-white">
+          메인으로
+        </button>
       </div>
     </div>
   );
