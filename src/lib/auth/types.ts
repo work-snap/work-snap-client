@@ -4,12 +4,30 @@ export interface KakaoLoginRequest {
   userType?: string;
 }
 
+export const UserType = {
+  BUSINESS_OWNER: "BUSINESS_OWNER",
+  PART_TIME_WORKER: "PART_TIME_WORKER",
+  PENDING: "PENDING",
+} as const;
+
+export type UserType = (typeof UserType)[keyof typeof UserType];
+
+export const UserRoleType = {
+  USER: "USER",
+  ADMIN: "ADMIN",
+  SUPER_ADMIN: "SUPER_ADMIN",
+  BUSINESS_OWNER: "BUSINESS_OWNER",
+} as const;
+
+export type UserRoleType = (typeof UserRoleType)[keyof typeof UserRoleType];
+
 // 사용자 정보 타입
 export interface User {
   id: number;
   nickname: string;
   profileImageUrl?: string;
-  userType: "BUSINESS_OWNER" | "PART_TIME_WORKER" | "PENDING";
+  userType: UserType;
+  userRole: UserRoleType;
   createdAt: string;
   updatedAt: string;
 }
