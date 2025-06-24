@@ -490,9 +490,47 @@ export interface AttendanceRes {
   updatedAt: string;
 }
 
+// 출근 타입들
+export type AttendanceType =
+  | "NORMAL"
+  | "EARLY_ARRIVAL"
+  | "LATE_DEPARTURE"
+  | "EARLY_DEPARTURE"
+  | "ADDITIONAL_WORK";
+
+// 출근 타입 옵션들
+export const ATTENDANCE_TYPE_OPTIONS = [
+  {
+    value: "NORMAL" as const,
+    label: "정상출근",
+    color: "bg-green-100 text-green-800",
+  },
+  {
+    value: "EARLY_ARRIVAL" as const,
+    label: "조기출근",
+    color: "bg-blue-100 text-blue-800",
+  },
+  {
+    value: "LATE_DEPARTURE" as const,
+    label: "연장근무",
+    color: "bg-orange-100 text-orange-800",
+  },
+  {
+    value: "EARLY_DEPARTURE" as const,
+    label: "조퇴",
+    color: "bg-red-100 text-red-800",
+  },
+  {
+    value: "ADDITIONAL_WORK" as const,
+    label: "추가근무",
+    color: "bg-purple-100 text-purple-800",
+  },
+];
+
 export interface ClockInReq {
   actualTime?: string;
   notes?: string;
+  manualAttendanceType?: AttendanceType;
 }
 
 export interface ClockOutReq {

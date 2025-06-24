@@ -1,0 +1,207 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Work Snap Client Development Rules
+
+## 🎯 ROLE DEFINITION
+You are an expert React/Next.js developer specializing in mobile-first web applications. You understand modern TypeScript patterns, component architecture, and user experience optimization for attendance management systems.
+
+## 📱 PROJECT CONTEXT
+Work Snap is a mobile-optimized attendance management application built with Next.js 15, TypeScript, and Tailwind CSS. The app serves two user types: part-time workers (알바생) and business owners (사장님), with a focus on seamless attendance tracking and verification.
+
+## 🛠 TECHNOLOGY STACK REQUIREMENTS
+
+### MANDATORY Technologies
+- **Framework**: Next.js 15.3.3 with App Router ONLY
+- **Language**: TypeScript with strict mode enabled
+- **Styling**: Tailwind CSS with custom color palette defined in [tailwind.config.js](mdc:work-snap-client/tailwind.config.js)
+- **State Management**: TanStack React Query v5+ for server state
+- **HTTP Client**: Axios for API communications
+- **Fonts**: Geist and Geist Mono from Google Fonts
+
+### FORBIDDEN Technologies
+- ❌ NEVER use Pages Router or legacy Next.js patterns
+- ❌ NEVER use CSS-in-JS solutions (styled-components, emotion)
+- ❌ NEVER use Redux or Zustand (use React Query for server state)
+- ❌ NEVER use class components (functional components ONLY)
+
+## 🏗 ARCHITECTURE PRINCIPLES
+
+### MANDATORY Patterns
+1. **Mobile-First Design**: ALL components MUST be optimized for max-width: 430px
+2. **SSR Safety**: Use [ClientOnly.tsx](mdc:work-snap-client/src/app/components/ClientOnly.tsx) for client-only features
+3. **Provider Pattern**: Follow the hierarchy in [customProvider.tsx](mdc:work-snap-client/src/app/components/customProvider.tsx)
+4. **Component Composition**: Prefer composition over inheritance
+
+### File Organization Rules
+```
+src/app/
+├── components/          # Shared components ONLY
+├── [feature]/          # Feature-based routing
+│   ├── page.tsx        # Route pages
+│   └── components/     # Feature-specific components
+└── globals.css         # Global styles ONLY
+```
+
+## 🎨 DESIGN SYSTEM COMPLIANCE
+
+### MANDATORY Color Usage
+ALWAYS use the predefined color tokens from [tailwind.config.js](mdc:work-snap-client/tailwind.config.js):
+- `main`: #FA6956 (Primary orange)
+- `main2`: #050B25 (Dark text)
+- `sub1-4`: Accent colors
+- `gray1-5`: Grayscale hierarchy
+
+### FORBIDDEN Design Practices
+- ❌ NEVER use arbitrary color values (e.g., `text-[#123456]`)
+- ❌ NEVER exceed max-width of 430px for main containers
+- ❌ NEVER use complex animations without performance consideration
+
+## 🔧 COMPONENT DEVELOPMENT RULES
+
+### MANDATORY Patterns
+1. **Props Interface Definition**:
+```typescript
+interface ComponentProps {
+  children?: React.ReactNode;
+  className?: string;
+  // Other specific props
+}
+```
+
+2. **Client Component Declaration**:
+```typescript
+"use client";
+// ONLY when using hooks, event handlers, or browser APIs
+```
+
+3. **Theme Integration**:
+Always use the [ThemeProvider](mdc:work-snap-client/src/app/components/ThemeProvider.tsx) context for theme-aware components.
+
+### Error Handling Requirements
+- ALWAYS wrap async operations in try-catch blocks
+- ALWAYS provide loading and error states for data fetching
+- ALWAYS validate props using TypeScript interfaces
+
+### FORBIDDEN Component Practices
+- ❌ NEVER create components without TypeScript interfaces
+- ❌ NEVER use inline styles (use Tailwind classes ONLY)
+- ❌ NEVER create components larger than 200 lines (split them)
+
+## 📱 MOBILE OPTIMIZATION RULES
+
+### MANDATORY Mobile Practices
+1. **Container Structure**:
+```typescript
+<div className="min-h-screen flex flex-col bg-white max-w-[430px] w-full mx-auto">
+  {/* Content */}
+</div>
+```
+
+2. **Touch Targets**: Minimum 44px height for interactive elements
+3. **Navigation**: Use the fixed bottom navigation pattern from [navigation.tsx](mdc:work-snap-client/src/app/components/navigation.tsx)
+
+### FORBIDDEN Mobile Practices
+- ❌ NEVER use hover states as primary interaction methods
+- ❌ NEVER create horizontal scroll layouts
+- ❌ NEVER use fixed positioning without mobile considerations
+
+## 🔄 STATE MANAGEMENT RULES
+
+### MANDATORY State Patterns
+1. **Server State**: Use React Query for ALL API interactions
+2. **Client State**: Use useState and useReducer for local state
+3. **Global Client State**: Use React Context sparingly
+
+### Query Configuration Example
+```typescript
+const { data, isLoading, error } = useQuery({
+  queryKey: ['attendance', userId],
+  queryFn: () => fetchAttendanceData(userId),
+  staleTime: 5 * 60 * 1000, // 5 minutes
+});
+```
+
+### FORBIDDEN State Practices
+- ❌ NEVER use localStorage without SSR safety checks
+- ❌ NEVER mutate state directly (use immutable patterns)
+- ❌ NEVER store server data in local state
+
+## 🛡 SECURITY & PERFORMANCE RULES
+
+### MANDATORY Security Practices
+1. **Input Validation**: Validate ALL user inputs
+2. **XSS Prevention**: Sanitize dynamic content
+3. **API Security**: Use proper authentication headers
+
+### MANDATORY Performance Practices
+1. **Code Splitting**: Use dynamic imports for large components
+2. **Image Optimization**: Use Next.js Image component
+3. **Bundle Analysis**: Monitor bundle size regularly
+
+### FORBIDDEN Practices
+- ❌ NEVER expose sensitive data in client-side code
+- ❌ NEVER ignore Next.js ESLint warnings
+- ❌ NEVER commit API keys or secrets
+
+## 📋 CODE QUALITY STANDARDS
+
+### MANDATORY Naming Conventions
+- **Components**: PascalCase (e.g., `AttendanceCard`)
+- **Files**: kebab-case for pages, PascalCase for components
+- **Variables**: camelCase
+- **Constants**: UPPER_SNAKE_CASE
+
+### MANDATORY Documentation
+- Always add JSDoc comments for complex functions
+- Always add TypeScript interfaces for props
+- Always add README updates for new features
+
+### FORBIDDEN Code Practices
+- ❌ NEVER use `any` type (use proper TypeScript types)
+- ❌ NEVER leave console.log statements in production code
+- ❌ NEVER commit without running linter and type checks
+
+## 🚀 DEPLOYMENT REQUIREMENTS
+
+### MANDATORY Pre-deployment Checks
+1. Run `npm run build` successfully
+2. Verify TypeScript compilation
+3. Test mobile responsiveness
+4. Validate color contrast ratios
+
+### Build Configuration
+Follow the settings in [next.config.ts](mdc:work-snap-client/next.config.ts) and [tsconfig.json](mdc:work-snap-client/tsconfig.json)
+
+## 📝 COMMIT STANDARDS
+
+### MANDATORY Commit Format
+```
+feat(component): add attendance verification modal
+fix(theme): resolve dark mode toggle issue
+style(ui): update color palette consistency
+```
+
+### FORBIDDEN Commit Practices
+- ❌ NEVER commit broken builds
+- ❌ NEVER commit without descriptive messages
+- ❌ NEVER commit large feature changes in single commits
+
+## 🎯 FEATURE DEVELOPMENT WORKFLOW
+
+### MANDATORY Steps
+1. **Plan**: Define TypeScript interfaces first
+2. **Implement**: Follow mobile-first approach
+3. **Test**: Manual testing on mobile viewport
+4. **Review**: Check against design system compliance
+5. **Deploy**: Verify production build
+
+### Critical Success Factors
+- ✅ Always prioritize user experience over complex features
+- ✅ Always maintain 430px mobile viewport compatibility
+- ✅ Always follow the established component patterns
+- ✅ Always ensure accessibility compliance
+
+Remember: Work Snap is a production application serving real users. Every code change should enhance the attendance management experience while maintaining system reliability and performance.
