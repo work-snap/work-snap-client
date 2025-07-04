@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
+import {
+  useTodayAttendance,
+  useClockIn,
+  useClockOut,
+  useRefreshAttendance,
+} from "../../../work-attendance/lib/hooks/use-attendance";
+import { attendanceApi } from "../../../work-attendance/lib/api/attendance.api";
+import { ClockInType, ClockOutType } from "../../../work-attendance/lib/types";
 import { testApis } from "../../lib/api";
 import { createTestResult } from "../../lib/utils";
-import {
-  LoadingState,
-  ClockInReq,
-  ClockOutReq,
-  AdditionalWorkCreateReq,
-} from "../../lib/types";
+import { LoadingState } from "../../lib/types";
 
 interface AttendanceTabProps {
-  loading: LoadingState;
-  onLoadingChange: (state: LoadingState) => void;
-  onTestResult: (result: any) => void;
+  loading?: LoadingState;
+  onLoadingChange?: (state: LoadingState) => void;
+  onTestResult?: (result: any) => void;
 }
 
 export const AttendanceTab: React.FC<AttendanceTabProps> = ({
@@ -21,587 +24,377 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
   onLoadingChange,
   onTestResult,
 }) => {
-  // 디버깅: 컴포넌트 렌더링 확인
-  console.log("🎯 AttendanceTab 렌더링됨");
-
-  const [attendanceId, setAttendanceId] = useState("1");
-  const [queryDate, setQueryDate] = useState(
+  const [testResult, setTestResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [workplaceId, setWorkplaceId] = useState("1");
-  const [yearMonth, setYearMonth] = useState(
-    new Date().toISOString().slice(0, 7)
-  );
+  const [attendanceId, setAttendanceId] = useState<number>(1);
 
-  const [clockInData, setClockInData] = useState<ClockInReq>({
-    actualTime: "09:00", // 기본값 설정
-    notes: "",
-  });
+  const {
+    data: todayAttendance,
+    isLoading: isLoadingToday,
+    error,
+  } = useTodayAttendance();
+  const { refreshToday } = useRefreshAttendance();
+  const clockInMutation = useClockIn();
+  const clockOutMutation = useClockOut();
 
-  // 디버깅용 로그 추가
-  console.log("🔍 AttendanceTab State Debug:", {
-    clockInData,
-    attendanceId,
-  });
+  const runTest = async (testName: string, testFn: () => Promise<any>) => {
+    setIsLoading(true);
+    try {
+      const result = await testFn();
+      setTestResult({
+        success: true,
+        testName,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+      if (onTestResult) {
+        onTestResult({
+          success: true,
+          testName,
+          data: result,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      const errorResult = {
+        success: false,
+        testName,
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      };
+      setTestResult(errorResult);
+      if (onTestResult) {
+        onTestResult(errorResult);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const [clockOutData, setClockOutData] = useState<ClockOutReq>({
-    actualTime: "18:00", // 기본값 설정
-    notes: "",
-  });
-
-  const [additionalWorkData, setAdditionalWorkData] =
-    useState<AdditionalWorkCreateReq>({
-      workDate: new Date().toISOString().split("T")[0],
-      workplaceId: 1,
-      startTime: "19:00",
-      endTime: "22:00",
-      notes: "",
+  const testGetTodayAttendance = () => {
+    if (onLoadingChange) onLoadingChange("get-today-attendance");
+    return runTest("오늘의 출근 기록 조회", async () => {
+      const result = await testApis.attendance.getTodayAttendance();
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
     });
-
-  // 오늘 출근 기록 생성
-  const handleCreateTodayAttendance = async () => {
-    onLoadingChange("create-today-attendance");
-    try {
-      const response = await testApis.attendance.createTodayAttendance();
-      onTestResult(createTestResult("/api/attendance/today", "POST", response));
-    } catch (error) {
-      onTestResult(
-        createTestResult("/api/attendance/today", "POST", null, error)
-      );
-    } finally {
-      onLoadingChange(null);
-    }
   };
 
-  // 특정 날짜 출근 기록 생성
-  const handleCreateDailyAttendance = async () => {
-    onLoadingChange("create-daily-attendance");
-    try {
-      const response = await testApis.attendance.createDailyAttendance(
-        queryDate
-      );
-      onTestResult(
-        createTestResult(`/api/attendance/date/${queryDate}`, "POST", response)
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/date/${queryDate}`,
-          "POST",
-          null,
-          error
-        )
-      );
-    } finally {
-      onLoadingChange(null);
-    }
+  const testCreateTodayAttendance = () => {
+    if (onLoadingChange) onLoadingChange("create-today-attendance");
+    return runTest("오늘의 출근 기록 생성", async () => {
+      const result = await testApis.attendance.createTodayAttendance();
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 출근 처리
-  const handleClockIn = async () => {
-    onLoadingChange("clock-in");
-    try {
-      const data = {
-        actualTime: clockInData.actualTime || undefined,
-        notes: clockInData.notes || undefined,
-      };
-      const response = await testApis.attendance.clockIn(
-        parseInt(attendanceId),
-        data
+  const testCreateDailyAttendance = () => {
+    if (onLoadingChange) onLoadingChange("create-daily-attendance");
+    return runTest("특정 날짜 출근 기록 생성", async () => {
+      const result = await testApis.attendance.createDailyAttendance(
+        selectedDate
       );
-      onTestResult(
-        createTestResult(
-          `/api/attendance/${attendanceId}/clock-in`,
-          "POST",
-          response
-        )
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/${attendanceId}/clock-in`,
-          "POST",
-          null,
-          error
-        )
-      );
-    } finally {
-      onLoadingChange(null);
-    }
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 퇴근 처리
-  const handleClockOut = async () => {
-    onLoadingChange("clock-out");
-    try {
-      const data = {
-        actualTime: clockOutData.actualTime || undefined,
-        notes: clockOutData.notes || undefined,
-      };
-      const response = await testApis.attendance.clockOut(
-        parseInt(attendanceId),
-        data
-      );
-      onTestResult(
-        createTestResult(
-          `/api/attendance/${attendanceId}/clock-out`,
-          "POST",
-          response
-        )
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/${attendanceId}/clock-out`,
-          "POST",
-          null,
-          error
-        )
-      );
-    } finally {
-      onLoadingChange(null);
-    }
+  const testGetDailyAttendance = () => {
+    if (onLoadingChange) onLoadingChange("fetch-daily-attendance");
+    return runTest("일별 출근 현황 조회", async () => {
+      const result = await testApis.attendance.getDailyAttendance(selectedDate);
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 추가 근무 등록
-  const handleCreateAdditionalWork = async () => {
-    onLoadingChange("create-additional-work");
-    try {
-      const response = await testApis.attendance.createAdditionalWork(
-        additionalWorkData
-      );
-      onTestResult(
-        createTestResult("/api/attendance/additional-work", "POST", response)
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult("/api/attendance/additional-work", "POST", null, error)
-      );
-    } finally {
-      onLoadingChange(null);
-    }
+  const testGetActiveAttendance = () => {
+    if (onLoadingChange) onLoadingChange("fetch-active-attendance");
+    return runTest("진행중인 근무 조회", async () => {
+      const result = await testApis.attendance.getActiveAttendance();
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 일별 출근 현황 조회
-  const handleGetDailyAttendance = async () => {
-    onLoadingChange("fetch-daily-attendance");
-    try {
-      const response = await testApis.attendance.getDailyAttendance(queryDate);
-      onTestResult(
-        createTestResult(`/api/attendance/daily/${queryDate}`, "GET", response)
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/daily/${queryDate}`,
-          "GET",
-          null,
-          error
-        )
-      );
-    } finally {
-      onLoadingChange(null);
-    }
+  const testGetMonthlyStatistics = () => {
+    if (onLoadingChange) onLoadingChange("fetch-monthly-statistics");
+    const yearMonth = selectedDate.substring(0, 7);
+    return runTest("월별 출근 통계 조회", async () => {
+      const result = await testApis.attendance.getMonthlyStatistics(yearMonth);
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 진행중인 근무 조회
-  const handleGetActiveAttendance = async () => {
-    onLoadingChange("fetch-active-attendance");
-    try {
-      const response = await testApis.attendance.getActiveAttendance();
-      onTestResult(createTestResult("/api/attendance/active", "GET", response));
-    } catch (error) {
-      onTestResult(
-        createTestResult("/api/attendance/active", "GET", null, error)
-      );
-    } finally {
-      onLoadingChange(null);
+  const testClockIn = () => {
+    if (!attendanceId) {
+      setTestResult({
+        success: false,
+        testName: "출근 처리",
+        error: "출근 기록 ID를 입력해주세요",
+        timestamp: new Date().toISOString(),
+      });
+      return;
     }
+
+    if (onLoadingChange) onLoadingChange("clock-in");
+    return runTest("출근 처리", async () => {
+      const result = await testApis.attendance.clockIn(attendanceId, {
+        notes: "개발 테스트 출근",
+        manualClockInType: ClockInType.NORMAL,
+      });
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 월별 통계 조회
-  const handleGetMonthlyStatistics = async () => {
-    onLoadingChange("fetch-monthly-statistics");
-    try {
-      const response = await testApis.attendance.getMonthlyStatistics(
-        yearMonth
-      );
-      onTestResult(
-        createTestResult(
-          `/api/attendance/statistics/${yearMonth}`,
-          "GET",
-          response
-        )
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/statistics/${yearMonth}`,
-          "GET",
-          null,
-          error
-        )
-      );
-    } finally {
-      onLoadingChange(null);
+  const testClockOut = () => {
+    if (!attendanceId) {
+      setTestResult({
+        success: false,
+        testName: "퇴근 처리",
+        error: "출근 기록 ID를 입력해주세요",
+        timestamp: new Date().toISOString(),
+      });
+      return;
     }
+
+    if (onLoadingChange) onLoadingChange("clock-out");
+    return runTest("퇴근 처리", async () => {
+      const result = await testApis.attendance.clockOut(attendanceId, {
+        notes: "개발 테스트 퇴근",
+        manualClockOutType: ClockOutType.NORMAL,
+      });
+      if (onLoadingChange) onLoadingChange(null);
+      return result;
+    });
   };
 
-  // 사업장 일별 출근 현황 조회
-  const handleGetWorkplaceDailyAttendance = async () => {
-    onLoadingChange("fetch-workplace-daily-attendance");
-    try {
-      const response = await testApis.attendance.getWorkplaceDailyAttendance(
-        parseInt(workplaceId),
-        queryDate
-      );
-      onTestResult(
-        createTestResult(
-          `/api/attendance/workplace/${workplaceId}/daily/${queryDate}`,
-          "GET",
-          response
-        )
-      );
-    } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/workplace/${workplaceId}/daily/${queryDate}`,
-          "GET",
-          null,
-          error
-        )
-      );
-    } finally {
-      onLoadingChange(null);
-    }
+  const testConnectionCheck = () => {
+    return runTest("API 연결 확인", () => attendanceApi.checkConnection());
   };
 
-  // 추가 근무 삭제
-  const handleDeleteAdditionalWork = async () => {
-    onLoadingChange("delete-additional-work");
+  const handleRefresh = async () => {
+    setIsLoading(true);
     try {
-      const response = await testApis.attendance.deleteAdditionalWork(
-        parseInt(attendanceId)
-      );
-      onTestResult(
-        createTestResult(
-          `/api/attendance/${attendanceId}/additional-work`,
-          "DELETE",
-          response
-        )
-      );
+      await refreshToday();
+      setTestResult({
+        success: true,
+        testName: "데이터 새로고침",
+        data: "새로고침 완료",
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
-      onTestResult(
-        createTestResult(
-          `/api/attendance/${attendanceId}/additional-work`,
-          "DELETE",
-          null,
-          error
-        )
-      );
+      setTestResult({
+        success: false,
+        testName: "데이터 새로고침",
+        error: error instanceof Error ? error.message : "새로고침 실패",
+        timestamp: new Date().toISOString(),
+      });
     } finally {
-      onLoadingChange(null);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          🕐 출근 관리 API 테스트
-        </h2>
-        <p className="text-gray-600">
-          아르바이트생 출근/퇴근 관리 시스템을 테스트하세요
-        </p>
-      </div>
-
-      {/* 출근 기록 생성 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-sm mr-3">
-            📝
-          </span>
-          출근 기록 생성
-        </h3>
-
+    <div className="space-y-6">
+      <div className="backdrop-blur-xl bg-gradient-to-br from-blue-50/80 to-cyan-50/80 border border-blue-200/50 rounded-2xl p-6 shadow-xl shadow-blue-500/10">
+        <h4 className="text-xl font-bold text-blue-700 mb-4">🔧 테스트 설정</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <button
-              onClick={handleCreateTodayAttendance}
-              disabled={loading === "create-today-attendance"}
-              className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              {loading === "create-today-attendance"
-                ? "생성 중..."
-                : "오늘 출근 기록 생성"}
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={queryDate}
-                onChange={(e) => setQueryDate(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <button
-                onClick={handleCreateDailyAttendance}
-                disabled={loading === "create-daily-attendance"}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-              >
-                {loading === "create-daily-attendance"
-                  ? "생성 중..."
-                  : "특정일 생성"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 출근/퇴근 처리 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-sm mr-3">
-            ⏰
-          </span>
-          출근/퇴근 처리
-        </h3>
-
-        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              테스트 날짜
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-blue-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               출근 기록 ID
             </label>
             <input
               type="number"
               value={attendanceId}
-              onChange={(e) => setAttendanceId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="출근 기록 ID"
+              onChange={(e) => setAttendanceId(Number(e.target.value))}
+              className="w-full px-3 py-2 rounded-lg border border-blue-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              placeholder="출근 기록 ID 입력"
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <h4 className="font-medium text-gray-900">출근 처리</h4>
-              <input
-                type="time"
-                value={clockInData.actualTime}
-                onChange={(e) => {
-                  console.log("🔍 ClockIn Time Change:", e.target.value);
-                  setClockInData({
-                    ...clockInData,
-                    actualTime: e.target.value,
-                  });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="실제 출근 시간"
-              />
-              <input
-                type="text"
-                value={clockInData.notes || ""}
-                onChange={(e) => {
-                  console.log("🔍 ClockIn Notes Change:", e.target.value);
-                  setClockInData({ ...clockInData, notes: e.target.value });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="메모"
-              />
-              <button
-                onClick={handleClockIn}
-                disabled={loading === "clock-in"}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              >
-                {loading === "clock-in" ? "처리 중..." : "출근 처리"}
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-medium text-gray-900">퇴근 처리</h4>
-              <input
-                type="time"
-                value={clockOutData.actualTime}
-                onChange={(e) => {
-                  console.log("🔍 ClockOut Time Change:", e.target.value);
-                  setClockOutData({
-                    ...clockOutData,
-                    actualTime: e.target.value,
-                  });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="실제 퇴근 시간"
-              />
-              <input
-                type="text"
-                value={clockOutData.notes || ""}
-                onChange={(e) => {
-                  console.log("🔍 ClockOut Notes Change:", e.target.value);
-                  setClockOutData({ ...clockOutData, notes: e.target.value });
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="메모"
-              />
-              <button
-                onClick={handleClockOut}
-                disabled={loading === "clock-out"}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {loading === "clock-out" ? "처리 중..." : "퇴근 처리"}
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* 추가 근무 등록 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm mr-3">
-            ➕
-          </span>
-          추가 근무 등록
-        </h3>
+      <div className="bg-white rounded-lg p-6 shadow-sm border">
+        <h3 className="text-lg font-semibold mb-4">📊 출근기록 API 테스트</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="date"
-            value={additionalWorkData.workDate}
-            onChange={(e) =>
-              setAdditionalWorkData({
-                ...additionalWorkData,
-                workDate: e.target.value,
-              })
-            }
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            placeholder="근무 날짜"
-          />
-          <input
-            type="number"
-            value={additionalWorkData.workplaceId}
-            onChange={(e) =>
-              setAdditionalWorkData({
-                ...additionalWorkData,
-                workplaceId: parseInt(e.target.value),
-              })
-            }
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            placeholder="사업장 ID"
-          />
-          <input
-            type="time"
-            value={additionalWorkData.startTime}
-            onChange={(e) =>
-              setAdditionalWorkData({
-                ...additionalWorkData,
-                startTime: e.target.value,
-              })
-            }
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            placeholder="시작 시간"
-          />
-          <input
-            type="time"
-            value={additionalWorkData.endTime}
-            onChange={(e) =>
-              setAdditionalWorkData({
-                ...additionalWorkData,
-                endTime: e.target.value,
-              })
-            }
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-            placeholder="종료 시간"
-          />
-          <div className="md:col-span-2">
-            <button
-              onClick={handleCreateAdditionalWork}
-              disabled={loading === "create-additional-work"}
-              className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-            >
-              {loading === "create-additional-work"
-                ? "등록 중..."
-                : "추가 근무 등록"}
-            </button>
-          </div>
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-medium mb-2">현재 상태</h4>
+          {isLoadingToday ? (
+            <p className="text-blue-600">로딩 중...</p>
+          ) : error ? (
+            <p className="text-red-600">에러: {error.message}</p>
+          ) : todayAttendance ? (
+            <div className="space-y-2 text-sm">
+              <p>
+                <strong>ID:</strong> {todayAttendance.id}
+              </p>
+              <p>
+                <strong>날짜:</strong> {todayAttendance.workDate}
+              </p>
+              <p>
+                <strong>상태:</strong> {todayAttendance.statusKorean}
+              </p>
+              <p>
+                <strong>예정 시간:</strong> {todayAttendance.scheduledStartTime}{" "}
+                ~ {todayAttendance.scheduledEndTime}
+              </p>
+              {todayAttendance.actualStartTime && (
+                <p>
+                  <strong>실제 출근:</strong> {todayAttendance.actualStartTime}
+                </p>
+              )}
+              {todayAttendance.actualEndTime && (
+                <p>
+                  <strong>실제 퇴근:</strong> {todayAttendance.actualEndTime}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-600">오늘의 출근 기록이 없습니다</p>
+          )}
         </div>
-      </div>
 
-      {/* 조회 기능들 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <span className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-sm mr-3">
-            📊
-          </span>
-          출근 현황 조회
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="flex gap-2">
-            <input
-              type="date"
-              value={queryDate}
-              onChange={(e) => setQueryDate(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
-            <button
-              onClick={handleGetDailyAttendance}
-              disabled={loading === "fetch-daily-attendance"}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              일별 조회
-            </button>
-          </div>
-
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           <button
-            onClick={handleGetActiveAttendance}
-            disabled={loading === "fetch-active-attendance"}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            onClick={testConnectionCheck}
+            disabled={isLoading || loading === "fetch-active-attendance"}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
-            진행중인 근무
+            연결 확인
           </button>
 
-          <div className="flex gap-2">
-            <input
-              type="month"
-              value={yearMonth}
-              onChange={(e) => setYearMonth(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
-            <button
-              onClick={handleGetMonthlyStatistics}
-              disabled={loading === "fetch-monthly-statistics"}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              월별 통계
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="number"
-              value={workplaceId}
-              onChange={(e) => setWorkplaceId(e.target.value)}
-              className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-              placeholder="사업장ID"
-            />
-            <button
-              onClick={handleGetWorkplaceDailyAttendance}
-              disabled={loading === "fetch-workplace-daily-attendance"}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              사업장 현황
-            </button>
-          </div>
+          <button
+            onClick={testGetTodayAttendance}
+            disabled={isLoading || loading === "get-today-attendance"}
+            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50"
+          >
+            {loading === "get-today-attendance"
+              ? "조회 중..."
+              : "오늘 기록 조회"}
+          </button>
 
           <button
-            onClick={handleDeleteAdditionalWork}
-            disabled={loading === "delete-additional-work"}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+            onClick={testCreateTodayAttendance}
+            disabled={isLoading || loading === "create-today-attendance"}
+            className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:opacity-50"
           >
-            추가 근무 삭제
+            {loading === "create-today-attendance"
+              ? "생성 중..."
+              : "오늘 기록 생성"}
+          </button>
+
+          <button
+            onClick={testCreateDailyAttendance}
+            disabled={isLoading || loading === "create-daily-attendance"}
+            className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 disabled:opacity-50"
+          >
+            {loading === "create-daily-attendance"
+              ? "생성 중..."
+              : "일별 기록 생성"}
+          </button>
+
+          <button
+            onClick={testGetDailyAttendance}
+            disabled={isLoading || loading === "fetch-daily-attendance"}
+            className="bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 disabled:opacity-50"
+          >
+            {loading === "fetch-daily-attendance"
+              ? "조회 중..."
+              : "일별 현황 조회"}
+          </button>
+
+          <button
+            onClick={testGetActiveAttendance}
+            disabled={isLoading || loading === "fetch-active-attendance"}
+            className="bg-cyan-500 text-white px-4 py-2 rounded-lg hover:bg-cyan-600 disabled:opacity-50"
+          >
+            {loading === "fetch-active-attendance"
+              ? "조회 중..."
+              : "진행중 근무"}
+          </button>
+
+          <button
+            onClick={testGetMonthlyStatistics}
+            disabled={isLoading || loading === "fetch-monthly-statistics"}
+            className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 disabled:opacity-50"
+          >
+            {loading === "fetch-monthly-statistics"
+              ? "조회 중..."
+              : "월별 통계"}
+          </button>
+
+          <button
+            onClick={testClockIn}
+            disabled={isLoading || loading === "clock-in" || !attendanceId}
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+          >
+            {loading === "clock-in" ? "출근 중..." : "출근 처리"}
+          </button>
+
+          <button
+            onClick={testClockOut}
+            disabled={isLoading || loading === "clock-out" || !attendanceId}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50"
+          >
+            {loading === "clock-out" ? "퇴근 중..." : "퇴근 처리"}
           </button>
         </div>
+
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 mb-4"
+        >
+          새로고침
+        </button>
+
+        {isLoading && (
+          <div className="text-center py-4">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <p className="text-sm text-gray-600 mt-2">테스트 실행 중...</p>
+          </div>
+        )}
       </div>
+
+      {testResult && (
+        <div className="bg-white rounded-lg p-6 shadow-sm border">
+          <h4 className="text-lg font-semibold mb-4">
+            {testResult.success ? "✅" : "❌"} {testResult.testName}
+          </h4>
+          <div className="text-sm text-gray-600 mb-2">
+            {testResult.timestamp}
+          </div>
+          {testResult.success ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <pre className="text-sm text-green-800 overflow-x-auto">
+                {JSON.stringify(testResult.data, null, 2)}
+              </pre>
+            </div>
+          ) : (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800">{testResult.error}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

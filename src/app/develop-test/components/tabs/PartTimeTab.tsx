@@ -25,14 +25,24 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
   const [searchInviteCode, setSearchInviteCode] = useState<string>("");
   const [partTimeInfo, setPartTimeInfo] = useState<PartTimeInfo | null>(null);
   const [workSchedules, setWorkSchedules] = useState<WorkSchedule[]>([]);
+  const [workplaceId, setWorkplaceId] = useState<number>(1);
+  const [expiresInHours, setExpiresInHours] = useState<number>(24);
+  const [maxUsageCount, setMaxUsageCount] = useState<number>(10);
+  const [memo, setMemo] = useState<string>("");
+  const [registerInviteCode, setRegisterInviteCode] = useState<string>("");
+  const [preferredStartDate, setPreferredStartDate] = useState<string>("");
 
-  // 초대코드 생성
   const handleGenerateInviteCode = async () => {
     onLoadingChange("generate-invite-code");
     try {
-      const response = await testApis.partTime.generateInviteCode();
+      const response = await testApis.partTime.generateInviteCode(
+        workplaceId,
+        expiresInHours,
+        maxUsageCount,
+        memo || undefined
+      );
       onTestResult(
-        createTestResult("/api/parttime/invite-code", "POST", response)
+        createTestResult("/api/v1/part-time/invite-code", "POST", response)
       );
 
       if (response.data && response.data.inviteCode) {
@@ -40,19 +50,20 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
       }
     } catch (error) {
       onTestResult(
-        createTestResult("/api/parttime/invite-code", "POST", null, error)
+        createTestResult("/api/v1/part-time/invite-code", "POST", null, error)
       );
     } finally {
       onLoadingChange(null);
     }
   };
 
-  // 내 파트타임 정보 조회 (인증된 사용자)
   const handleGetMyPartTimeInfo = async () => {
     onLoadingChange("fetch-my-parttime");
     try {
       const response = await testApis.partTime.getMyPartTimeInfo();
-      onTestResult(createTestResult("/api/parttime/my-info", "GET", response));
+      onTestResult(
+        createTestResult("/api/v1/part-time/schedule", "GET", response)
+      );
 
       if (response.data) {
         setPartTimeInfo(response.data);
@@ -62,14 +73,13 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
       }
     } catch (error) {
       onTestResult(
-        createTestResult("/api/parttime/my-info", "GET", null, error)
+        createTestResult("/api/v1/part-time/schedule", "GET", null, error)
       );
     } finally {
       onLoadingChange(null);
     }
   };
 
-  // 초대코드로 아르바이트 정보 조회
   const handleSearchByInviteCode = async () => {
     if (!searchInviteCode.trim()) {
       alert("초대코드를 입력해주세요.");
@@ -82,11 +92,7 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
         searchInviteCode.trim()
       );
       onTestResult(
-        createTestResult(
-          `/api/parttime/invite-code/${searchInviteCode.trim()}`,
-          "GET",
-          response
-        )
+        createTestResult(`/api/v1/part-time/invite-codes`, "GET", response)
       );
 
       if (response.data) {
@@ -94,25 +100,19 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
       }
     } catch (error) {
       onTestResult(
-        createTestResult(
-          `/api/parttime/invite-code/${searchInviteCode.trim()}`,
-          "GET",
-          null,
-          error
-        )
+        createTestResult(`/api/v1/part-time/invite-codes`, "GET", null, error)
       );
     } finally {
       onLoadingChange(null);
     }
   };
 
-  // 내 근무 일정 조회
   const handleGetMyWorkSchedules = async () => {
     onLoadingChange("fetch-my-schedules");
     try {
       const response = await testApis.partTime.getMyWorkSchedules();
       onTestResult(
-        createTestResult("/api/parttime/my-work-schedules", "GET", response)
+        createTestResult("/api/v1/part-time/schedule", "GET", response)
       );
 
       if (response.data) {
@@ -120,7 +120,53 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
       }
     } catch (error) {
       onTestResult(
-        createTestResult("/api/parttime/my-work-schedules", "GET", null, error)
+        createTestResult("/api/v1/part-time/schedule", "GET", null, error)
+      );
+    } finally {
+      onLoadingChange(null);
+    }
+  };
+
+  const handleRegisterPartTime = async () => {
+    if (!registerInviteCode.trim()) {
+      alert("초대코드를 입력해주세요.");
+      return;
+    }
+
+    onLoadingChange("parttime-register");
+    try {
+      const response = await testApis.partTime.registerWithInviteCode(
+        registerInviteCode.trim(),
+        preferredStartDate || undefined
+      );
+      onTestResult(
+        createTestResult("/api/v1/part-time/register", "POST", response)
+      );
+
+      if (response.data) {
+        setPartTimeInfo(response.data);
+      }
+    } catch (error) {
+      onTestResult(
+        createTestResult("/api/v1/part-time/register", "POST", null, error)
+      );
+    } finally {
+      onLoadingChange(null);
+    }
+  };
+
+  const handleGetPartTimeWorkers = async () => {
+    onLoadingChange("parttime-workers");
+    try {
+      const response = await testApis.partTime.getPartTimeWorkers(
+        workplaceId || undefined
+      );
+      onTestResult(
+        createTestResult("/api/v1/part-time/workers", "GET", response)
+      );
+    } catch (error) {
+      onTestResult(
+        createTestResult("/api/v1/part-time/workers", "GET", null, error)
       );
     } finally {
       onLoadingChange(null);
@@ -129,9 +175,79 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* 초대코드 관리 섹션 (통합) */}
+      <div className="backdrop-blur-xl bg-gradient-to-br from-blue-50/80 to-indigo-50/80 border border-blue-200/50 rounded-2xl p-6 shadow-xl shadow-blue-500/10 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-24 h-24 bg-blue-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-indigo-400/20 rounded-full blur-2xl"></div>
+
+        <div className="relative">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-2xl">⚙️</span>
+            </div>
+            <div>
+              <h4 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                초대코드 생성 설정
+              </h4>
+              <p className="text-blue-600/80 mt-1">
+                초대코드 생성에 필요한 파라미터들을 설정하세요
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                사업장 ID
+              </label>
+              <input
+                type="number"
+                value={workplaceId}
+                onChange={(e) => setWorkplaceId(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-lg border border-blue-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                placeholder="사업장 ID"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                유효 시간 (시간)
+              </label>
+              <input
+                type="number"
+                value={expiresInHours}
+                onChange={(e) => setExpiresInHours(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-lg border border-blue-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                placeholder="24"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                최대 사용 횟수
+              </label>
+              <input
+                type="number"
+                value={maxUsageCount}
+                onChange={(e) => setMaxUsageCount(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-lg border border-blue-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                placeholder="10"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                메모 (선택사항)
+              </label>
+              <input
+                type="text"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-blue-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                placeholder="초대코드 메모"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="backdrop-blur-xl bg-gradient-to-br from-green-50/80 to-emerald-50/80 border border-green-200/50 rounded-2xl p-6 shadow-xl shadow-green-500/10 relative overflow-hidden">
-        {/* 배경 장식 */}
         <div className="absolute -top-8 -right-8 w-24 h-24 bg-green-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-emerald-400/20 rounded-full blur-2xl"></div>
 
@@ -151,7 +267,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
           </div>
 
           <div className="space-y-6">
-            {/* 생성된 초대코드 표시 */}
             {generatedInviteCode && (
               <div className="bg-green-50/50 border border-green-200/50 rounded-xl p-5">
                 <div className="flex items-center space-x-3 mb-3">
@@ -185,8 +300,7 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
               </div>
             )}
 
-            {/* 초대코드 관리 버튼들 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <button
                 onClick={handleGenerateInviteCode}
                 disabled={loading === "generate-invite-code"}
@@ -195,16 +309,12 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
                 {loading === "generate-invite-code" ? (
                   <span className="flex items-center justify-center space-x-3">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>처리 중...</span>
+                    <span>생성 중...</span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center space-x-3">
-                    <span>✨</span>
-                    <span>
-                      {generatedInviteCode
-                        ? "새 초대코드 생성"
-                        : "초대코드 생성"}
-                    </span>
+                    <span>🎫</span>
+                    <span>초대코드 생성</span>
                   </span>
                 )}
               </button>
@@ -221,49 +331,102 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
                   </span>
                 ) : (
                   <span className="flex items-center justify-center space-x-3">
-                    <span>🔄</span>
-                    <span>내 정보 새로고침</span>
+                    <span>📋</span>
+                    <span>내 정보 조회</span>
                   </span>
                 )}
               </button>
-            </div>
 
-            {/* 사용 안내 */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-xl p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-xs">✨</span>
-                  </div>
-                  <div>
-                    <strong className="text-green-900">초대코드 생성:</strong>
-                    <p className="text-green-700 mt-1">
-                      새로운 초대코드를 발급받아 사업주와 공유
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-xs">🔄</span>
-                  </div>
-                  <div>
-                    <strong className="text-green-900">
-                      내 정보 새로고침:
-                    </strong>
-                    <p className="text-green-700 mt-1">
-                      기존 초대코드와 최신 정보를 다시 불러오기
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={handleGetPartTimeWorkers}
+                disabled={loading === "parttime-workers"}
+                className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed transform hover:scale-105"
+              >
+                {loading === "parttime-workers" ? (
+                  <span className="flex items-center justify-center space-x-3">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>조회 중...</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center space-x-3">
+                    <span>👥</span>
+                    <span>근무자 목록</span>
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 아르바이트 정보 조회 섹션 */}
+      <div className="backdrop-blur-xl bg-gradient-to-br from-orange-50/80 to-red-50/80 border border-orange-200/50 rounded-2xl p-6 shadow-xl shadow-orange-500/10 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-24 h-24 bg-orange-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-red-400/20 rounded-full blur-2xl"></div>
+
+        <div className="relative">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-2xl">📝</span>
+            </div>
+            <div>
+              <h4 className="text-2xl font-bold bg-gradient-to-r from-orange-700 to-red-700 bg-clip-text text-transparent">
+                파트타임 등록
+              </h4>
+              <p className="text-orange-600/80 mt-1">
+                초대코드를 사용하여 파트타임 근무에 등록하세요
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  등록용 초대코드
+                </label>
+                <input
+                  type="text"
+                  value={registerInviteCode}
+                  onChange={(e) => setRegisterInviteCode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-orange-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  placeholder="등록할 초대코드 입력"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  희망 시작일 (선택사항)
+                </label>
+                <input
+                  type="date"
+                  value={preferredStartDate}
+                  onChange={(e) => setPreferredStartDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-orange-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleRegisterPartTime}
+              disabled={loading === "parttime-register"}
+              className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+            >
+              {loading === "parttime-register" ? (
+                <span className="flex items-center justify-center space-x-3">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>등록 중...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center space-x-3">
+                  <span>📝</span>
+                  <span>파트타임 등록</span>
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="backdrop-blur-xl bg-gradient-to-br from-purple-50/80 to-pink-50/80 border border-purple-200/50 rounded-2xl p-6 shadow-xl shadow-purple-500/10 relative overflow-hidden">
-        {/* 배경 장식 */}
         <div className="absolute -top-8 -right-8 w-24 h-24 bg-purple-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-pink-400/20 rounded-full blur-2xl"></div>
 
@@ -283,7 +446,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 내 정보 조회 (새로운 API) */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
@@ -319,7 +481,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
               </div>
             </div>
 
-            {/* 초대코드로 조회 */}
             <div className="space-y-4">
               <h6 className="text-lg font-bold text-purple-800">
                 초대코드로 조회
@@ -350,7 +511,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
             </div>
           </div>
 
-          {/* 조회 결과 표시 */}
           {partTimeInfo && (
             <div className="mt-6 bg-white/70 rounded-xl p-5 border border-purple-100 shadow-inner">
               <h6 className="text-lg font-bold text-purple-800 mb-4">
@@ -433,9 +593,7 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
         </div>
       </div>
 
-      {/* 내 근무 일정 조회 섹션 */}
       <div className="backdrop-blur-xl bg-gradient-to-br from-amber-50/80 to-orange-50/80 border border-amber-200/50 rounded-2xl p-6 shadow-xl shadow-amber-500/10 relative overflow-hidden">
-        {/* 배경 장식 */}
         <div className="absolute -top-8 -right-8 w-24 h-24 bg-amber-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-orange-400/20 rounded-full blur-2xl"></div>
 
@@ -455,7 +613,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
           </div>
 
           <div className="space-y-6">
-            {/* 근무 일정 조회 버튼 */}
             <div className="flex space-x-4">
               <button
                 onClick={handleGetMyWorkSchedules}
@@ -476,7 +633,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
               </button>
             </div>
 
-            {/* 근무 일정 결과 표시 */}
             {workSchedules.length > 0 && (
               <div className="bg-white/70 rounded-xl p-5 border border-amber-100 shadow-inner">
                 <div className="flex items-center justify-between mb-4">
@@ -559,7 +715,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
               </div>
             )}
 
-            {/* 근무 일정이 없을 때 */}
             {workSchedules.length === 0 && loading !== "fetch-my-schedules" && (
               <div className="bg-amber-50/50 border border-amber-200/50 rounded-xl p-5 text-center">
                 <div className="text-6xl mb-3">📅</div>
@@ -573,7 +728,6 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
               </div>
             )}
 
-            {/* 안내 메시지 */}
             <div className="bg-amber-50/50 border border-amber-200/50 rounded-xl p-4">
               <p className="text-sm text-amber-700 text-center">
                 💡 <strong>참고:</strong> 모든 사업장에서 등록된 근무 일정을
@@ -584,12 +738,11 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
         </div>
       </div>
 
-      {/* 사용 안내 */}
       <div className="backdrop-blur-xl bg-gradient-to-br from-gray-50/80 to-slate-50/80 border border-gray-200/50 rounded-2xl p-6 shadow-xl shadow-gray-500/10 relative overflow-hidden">
         <div className="relative">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white text-xl">💡</span>
+              <span className="text-white text-xl">��</span>
             </div>
             <h4 className="text-xl font-bold text-gray-800">파트타임 가이드</h4>
           </div>

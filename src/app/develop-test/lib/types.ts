@@ -14,6 +14,23 @@ export interface AuthTokens {
   userId: string | null;
 }
 
+// ✅ 추가: 카카오 로그인 요청 타입
+export interface KakaoLoginReq {
+  code: string;
+  userType: string;
+}
+
+// ✅ 추가: 카카오 로그인 응답 타입
+export interface KakaoLoginRes {
+  accessToken: string;
+  user: {
+    id: number;
+    nickname: string;
+    userType: string;
+  };
+  isNewUser: boolean;
+}
+
 // 탭 타입 정의
 export type TabType =
   | "auth"
@@ -42,9 +59,10 @@ export interface DevTokenRequest {
   nickname?: string;
 }
 
-// 로딩 상태 타입 (확장됨)
+// ✅ 수정: 로딩 상태 타입 업데이트 (카카오 로그인 관련 추가)
 export type LoadingState =
   | "kakao-login"
+  | "kakao-login-real" // 실제 카카오 로그인
   | "refresh"
   | "logout"
   | "dev-token"
@@ -78,6 +96,7 @@ export type LoadingState =
   | "fetch-workplace-employees"
   | "fetch-employee-schedule-detail"
   | "create-today-attendance"
+  | "get-today-attendance" // 오늘 출근 기록 조회 추가
   | "create-daily-attendance"
   | "clock-in"
   | "clock-out"
@@ -88,6 +107,8 @@ export type LoadingState =
   | "fetch-active-attendance"
   | "delete-additional-work"
   | "fetch-workplace-daily-attendance"
+  | "parttime-register" // 파트타임 등록 추가
+  | "parttime-workers" // 파트타임 근무자 목록 추가
   | null;
 
 // 탭 정보 타입
@@ -490,7 +511,13 @@ export interface AttendanceRes {
   updatedAt: string;
 }
 
-// 출근 타입들
+// 출근 타입 (출근 전용)
+export type ClockInType = "NORMAL" | "EARLY_ARRIVAL";
+
+// 퇴근 타입 (퇴근 전용)
+export type ClockOutType = "NORMAL" | "EARLY_DEPARTURE" | "LATE_DEPARTURE";
+
+// 기존 AttendanceType은 호환성을 위해 유지 (필요시 삭제 가능)
 export type AttendanceType =
   | "NORMAL"
   | "EARLY_ARRIVAL"
@@ -499,6 +526,44 @@ export type AttendanceType =
   | "ADDITIONAL_WORK";
 
 // 출근 타입 옵션들
+export const CLOCK_IN_TYPE_OPTIONS = [
+  {
+    value: "NORMAL" as const,
+    label: "정상출근",
+    color: "bg-green-100 text-green-800",
+    icon: "✅",
+  },
+  {
+    value: "EARLY_ARRIVAL" as const,
+    label: "조기출근",
+    color: "bg-blue-100 text-blue-800",
+    icon: "🌅",
+  },
+];
+
+// 퇴근 타입 옵션들
+export const CLOCK_OUT_TYPE_OPTIONS = [
+  {
+    value: "NORMAL" as const,
+    label: "정상퇴근",
+    color: "bg-green-100 text-green-800",
+    icon: "✅",
+  },
+  {
+    value: "EARLY_DEPARTURE" as const,
+    label: "조퇴",
+    color: "bg-red-100 text-red-800",
+    icon: "🏃‍♂️",
+  },
+  {
+    value: "LATE_DEPARTURE" as const,
+    label: "연장근무",
+    color: "bg-orange-100 text-orange-800",
+    icon: "🌙",
+  },
+];
+
+// 기존 AttendanceType 옵션들 (호환성을 위해 유지)
 export const ATTENDANCE_TYPE_OPTIONS = [
   {
     value: "NORMAL" as const,
@@ -530,12 +595,13 @@ export const ATTENDANCE_TYPE_OPTIONS = [
 export interface ClockInReq {
   actualTime?: string;
   notes?: string;
-  manualAttendanceType?: AttendanceType;
+  manualClockInType?: ClockInType; // 수동 출근 타입 (선택적)
 }
 
 export interface ClockOutReq {
   actualTime?: string;
   notes?: string;
+  manualClockOutType?: ClockOutType; // 수동 퇴근 타입 (선택적)
 }
 
 export interface AdditionalWorkCreateReq {

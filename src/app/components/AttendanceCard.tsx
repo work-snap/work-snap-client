@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import {
-  AttendanceType,
+  ClockInType,
   AttendanceRes,
   ClockInReq,
-  ATTENDANCE_TYPE_OPTIONS,
+  CLOCK_IN_TYPE_OPTIONS,
 } from "../develop-test/lib/types";
 import { testApis } from "../develop-test/lib/api";
 
@@ -19,23 +19,23 @@ export default function AttendanceCard({
   onUpdate,
 }: AttendanceCardProps) {
   const [isClockingIn, setIsClockingIn] = useState(false);
-  const [selectedAttendanceType, setSelectedAttendanceType] =
-    useState<AttendanceType | null>("EARLY_ARRIVAL");
+  const [selectedClockInType, setSelectedClockInType] =
+    useState<ClockInType | null>("NORMAL");
 
   // 출근 타입 순환 변경
   const handleTypeChipClick = () => {
     const typeOptions = [
       null,
-      ...ATTENDANCE_TYPE_OPTIONS.map((opt) => opt.value),
+      ...CLOCK_IN_TYPE_OPTIONS.map((opt) => opt.value),
     ];
-    const currentIndex = typeOptions.indexOf(selectedAttendanceType);
+    const currentIndex = typeOptions.indexOf(selectedClockInType);
     const nextIndex = (currentIndex + 1) % typeOptions.length;
-    setSelectedAttendanceType(typeOptions[nextIndex]);
+    setSelectedClockInType(typeOptions[nextIndex]);
   };
 
   // 선택된 타입 정보 가져오기
   const getSelectedTypeInfo = () => {
-    if (!selectedAttendanceType) {
+    if (!selectedClockInType) {
       return {
         label: "자동 계산",
         icon: "⚡",
@@ -43,12 +43,12 @@ export default function AttendanceCard({
       };
     }
 
-    const typeOption = ATTENDANCE_TYPE_OPTIONS.find(
-      (opt) => opt.value === selectedAttendanceType
+    const typeOption = CLOCK_IN_TYPE_OPTIONS.find(
+      (opt) => opt.value === selectedClockInType
     );
     return {
       label: typeOption?.label || "자동 계산",
-      icon: getAttendanceTypeIcon(selectedAttendanceType),
+      icon: getClockInTypeIcon(selectedClockInType),
       color: "bg-orange-100 text-orange-700 border-orange-200",
     };
   };
@@ -59,10 +59,10 @@ export default function AttendanceCard({
     try {
       const clockInData: ClockInReq = {
         actualTime: undefined, // 현재 시간 사용
-        notes: selectedAttendanceType
-          ? `${getTypeName(selectedAttendanceType)} 출근`
+        notes: selectedClockInType
+          ? `${getClockInTypeName(selectedClockInType)} 출근`
           : undefined,
-        manualAttendanceType: selectedAttendanceType || undefined,
+        manualClockInType: selectedClockInType || "NORMAL", // 출근 타입
       };
 
       await testApis.attendance.clockIn(attendance.id, clockInData);
@@ -80,13 +80,10 @@ export default function AttendanceCard({
     }
   };
 
-  const getTypeName = (type: AttendanceType) => {
+  const getClockInTypeName = (type: ClockInType) => {
     const typeMap = {
       NORMAL: "정상출근",
       EARLY_ARRIVAL: "조기출근",
-      LATE_DEPARTURE: "연장근무",
-      EARLY_DEPARTURE: "조퇴",
-      ADDITIONAL_WORK: "추가근무",
     };
     return typeMap[type];
   };
@@ -239,18 +236,12 @@ export default function AttendanceCard({
 }
 
 // 출근 타입별 아이콘
-function getAttendanceTypeIcon(type: AttendanceType): string {
+function getClockInTypeIcon(type: ClockInType): string {
   switch (type) {
     case "NORMAL":
       return "✅";
     case "EARLY_ARRIVAL":
       return "🌅";
-    case "LATE_DEPARTURE":
-      return "🌙";
-    case "EARLY_DEPARTURE":
-      return "🏃‍♂️";
-    case "ADDITIONAL_WORK":
-      return "💪";
     default:
       return "⏰";
   }

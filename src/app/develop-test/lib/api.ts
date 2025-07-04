@@ -25,20 +25,9 @@ import {
 
 // Auth API
 export const authTestApis = {
-  // 카카오 로그인 테스트 (Mock 응답)
-  kakaoLogin: () => {
-    return Promise.resolve({
-      data: {
-        success: true,
-        accessToken: "mock-access-token",
-        refreshToken: "mock-refresh-token",
-        user: {
-          id: 1,
-          username: "testuser",
-          userType: "BUSINESS_OWNER",
-        },
-      },
-    });
+  // ✅ 수정: 실제 카카오 로그인 API 호출 (Mock 응답 제거)
+  kakaoLogin: (data: { code: string; userType: string }) => {
+    return api.post("/api/auth/kakao/login", data);
   },
 
   // 일반 로그인 테스트
@@ -56,44 +45,44 @@ export const authTestApis = {
     return api.post("/api/auth/refresh");
   },
 
-  // 개발 토큰 생성 (사용자 ID)
+  // ✅ 수정: 개발 토큰 생성 경로 수정 (사용자 ID)
   generateDevToken: (userId: string) => {
-    return api.post(`/api/auth/dev/tokens/${userId}`);
+    return api.post(`/api/auth/dev-token/${userId}`);
   },
 
-  // 개발 토큰 생성 (닉네임)
+  // ✅ 수정: 개발 토큰 생성 경로 수정 (닉네임)
   generateDevTokenByNickname: (nickname: string) => {
     return api.post(
-      `/api/auth/dev/tokens/by-nickname/${encodeURIComponent(nickname)}`
+      `/api/auth/dev-token/nickname/${encodeURIComponent(nickname)}`
     );
   },
 };
 
 // User API
 export const userTestApis = {
-  // 내 정보 조회
+  // ✅ 수정: v1 버전 추가 - 내 정보 조회
   getMyInfo: () => {
-    return api.get("/api/users/me");
+    return api.get("/api/v1/users/profile");
   },
 
-  // 내 정보 수정
+  // ✅ 수정: v1 버전 추가 - 내 정보 수정
   updateMyInfo: (data: UserUpdateForm) => {
-    return api.put("/api/users/me", data);
+    return api.put("/api/v1/users/profile", data);
   },
 
-  // 사용자 타입 선택
+  // ✅ 수정: v1 버전 추가 - 사용자 타입 선택
   selectUserType: (userType: string) => {
-    return api.post("/api/users/me/select-type", { userType });
+    return api.post("/api/v1/users/select-type", { userType });
   },
 
-  // 사용자 정보 조회
+  // ✅ 수정: v1 버전 및 경로 통일 - 사용자 정보 조회
   getUserInfo: () => {
-    return api.get("/api/user/info");
+    return api.get("/api/v1/users/info");
   },
 
-  // 사용자 정보 수정
+  // ✅ 수정: v1 버전 및 경로 통일 - 사용자 정보 수정
   updateUserInfo: (data: any) => {
-    return api.put("/api/user/info", data);
+    return api.put("/api/v1/users/info", data);
   },
 };
 
@@ -114,9 +103,9 @@ export const businessOwnerTestApis = {
     return api.get("/api/business-owner/dashboard");
   },
 
-  // 사업자 정보 조회
+  // ✅ 수정: info → profile 경로 변경
   getBusinessOwner: () => {
-    return api.get("/api/business-owner/info");
+    return api.get("/api/business-owner/profile");
   },
 
   // 사업자 검증 상태 조회
@@ -129,7 +118,7 @@ export const businessOwnerTestApis = {
     return api.post("/api/business-owner/test-business-number", data);
   },
 
-  // 프로필 조회 (업데이트됨)
+  // ✅ 수정: 이미 올바른 경로 - 프로필 조회
   getProfile: () => {
     return api.get("/api/business-owner/profile");
   },
@@ -194,9 +183,9 @@ export const workplaceTestApis = {
 
 // Work Schedule API
 export const workScheduleTestApis = {
-  // 근무 스케줄 배치 등록
+  // ✅ 수정: 근무 스케줄 배치 등록 - /batch 경로 추가
   create: (data: WorkScheduleBatchCreateForm) => {
-    return api.post("/api/business-owner/work-schedules", data);
+    return api.post("/api/business-owner/work-schedules/batch", data);
   },
 
   // 사업장별 근무 스케줄 목록 조회
@@ -241,86 +230,126 @@ export const workScheduleTestApis = {
   },
 };
 
-// PartTime API (최신 인증 기반 API)
+// ✅ 수정: PartTime API - v1 버전 추가 및 part-time 경로 수정
 export const partTimeTestApis = {
-  // 초대 코드 생성/갱신 (인증된 사용자 기준)
-  generateInviteCode: () => {
-    return api.post("/api/parttime/invite-code");
+  // ✅ 수정: 초대 코드 생성/갱신 - v1 버전 및 part-time 경로 적용
+  generateInviteCode: (
+    workplaceId?: number,
+    expiresInHours?: number,
+    maxUsageCount?: number,
+    memo?: string
+  ) => {
+    const params = new URLSearchParams();
+    if (workplaceId) params.append("workplaceId", workplaceId.toString());
+    if (expiresInHours)
+      params.append("expiresInHours", expiresInHours.toString());
+    if (maxUsageCount) params.append("maxUsageCount", maxUsageCount.toString());
+    if (memo) params.append("memo", memo);
+
+    return api.post(`/api/v1/part-time/invite-code?${params.toString()}`);
   },
 
-  // 내 파트타임 정보 조회 (인증된 사용자 기준)
+  // ✅ 수정: 내 파트타임 정보 조회 - v1 버전 및 part-time 경로 적용
   getMyPartTimeInfo: () => {
-    return api.get("/api/parttime/my-info");
+    return api.get("/api/v1/part-time/schedule");
   },
 
-  // 초대 코드로 파트타임 조회
+  // ✅ 수정: 초대 코드로 파트타임 조회 - v1 버전 및 part-time 경로 적용
   getByInviteCode: (inviteCode: string) => {
-    return api.get(`/api/parttime/invite-code/${inviteCode}`);
+    return api.get(`/api/v1/part-time/invite-codes`);
   },
 
-  // 내 근무 일정 조회 (인증된 아르바이트 기준)
+  // ✅ 수정: 내 근무 일정 조회 - v1 버전 및 part-time 경로 적용
   getMyWorkSchedules: () => {
-    return api.get("/api/parttime/my-work-schedules");
+    return api.get("/api/v1/part-time/schedule");
+  },
+
+  // ✅ 수정: 파트타임 등록 - v1 버전 및 part-time 경로 적용
+  registerWithInviteCode: (inviteCode: string, preferredStartDate?: string) => {
+    const params = new URLSearchParams();
+    params.append("inviteCode", inviteCode);
+    if (preferredStartDate)
+      params.append("preferredStartDate", preferredStartDate);
+
+    return api.post(`/api/v1/part-time/register?${params.toString()}`);
+  },
+
+  // ✅ 수정: 파트타임 근무자 목록 조회 - v1 버전 및 part-time 경로 적용
+  getPartTimeWorkers: (workplaceId?: number, status?: string) => {
+    const params = new URLSearchParams();
+    if (workplaceId) params.append("workplaceId", workplaceId.toString());
+    if (status) params.append("status", status);
+
+    return api.get(`/api/v1/part-time/workers?${params.toString()}`);
   },
 };
 
-// Attendance API (새로 추가)
+// ✅ 수정: Attendance API - 모든 경로에 v1 버전 추가
 export const attendanceTestApis = {
-  // 오늘의 출근 기록 생성
+  // ✅ 수정: 오늘의 출근 기록 생성 - v1 버전 추가
   createTodayAttendance: () => {
-    return api.post("/api/attendance/today");
+    return api.post("/api/v1/attendance/today");
   },
 
-  // 특정 날짜 출근 기록 생성
+  // ✅ 수정: 특정 날짜 출근 기록 생성 - v1 버전 추가
   createDailyAttendance: (date: string) => {
-    return api.post(`/api/attendance/date/${date}`);
+    return api.post(`/api/v1/attendance/daily?date=${date}`);
   },
 
-  // 출근 처리
+  // ✅ 수정: 출근 처리 - v1 버전 추가
   clockIn: (attendanceId: number, data: ClockInReq) => {
-    return api.post(`/api/attendance/${attendanceId}/clock-in`, data);
+    return api.post(`/api/v1/attendance/${attendanceId}/clock-in`, data);
   },
 
-  // 퇴근 처리
+  // ✅ 수정: 퇴근 처리 - v1 버전 추가
   clockOut: (attendanceId: number, data: ClockOutReq) => {
-    return api.post(`/api/attendance/${attendanceId}/clock-out`, data);
+    return api.post(`/api/v1/attendance/${attendanceId}/clock-out`, data);
   },
 
-  // 추가 근무 등록
+  // ✅ 수정: 추가 근무 등록 - v1 버전 추가
   createAdditionalWork: (data: AdditionalWorkCreateReq) => {
-    return api.post("/api/attendance/additional-work", data);
+    return api.post("/api/v1/attendance/additional-work", data);
   },
 
-  // 특정 날짜 출근 현황 조회
+  // ✅ 수정: 특정 날짜 출근 현황 조회 - v1 버전 추가 및 쿼리 파라미터 방식으로 변경
   getDailyAttendance: (date: string) => {
-    return api.get(`/api/attendance/daily/${date}`);
+    return api.get(`/api/v1/attendance/daily?date=${date}`);
   },
 
-  // 기간별 출근 기록 조회
+  // ✅ 수정: 기간별 출근 기록 조회 - v1 버전 추가
   getAttendanceByPeriod: (startDate: string, endDate: string) => {
     return api.get(
-      `/api/attendance/period?startDate=${startDate}&endDate=${endDate}`
+      `/api/v1/attendance/period?startDate=${startDate}&endDate=${endDate}`
     );
   },
 
-  // 월별 출근 통계 조회
+  // ✅ 수정: 월별 출근 통계 조회 - v1 버전 추가
   getMonthlyStatistics: (yearMonth: string) => {
-    return api.get(`/api/attendance/statistics/${yearMonth}`);
+    return api.get(
+      `/api/v1/attendance/monthly-statistics?yearMonth=${yearMonth}`
+    );
   },
 
-  // 진행중인 근무 조회
+  // ✅ 수정: 진행중인 근무 조회 - v1 버전 추가
   getActiveAttendance: () => {
-    return api.get("/api/attendance/active");
+    return api.get("/api/v1/attendance/active");
   },
 
-  // 추가 근무 삭제
+  // ✅ 수정: 추가 근무 삭제 - v1 버전 추가
   deleteAdditionalWork: (attendanceId: number) => {
-    return api.delete(`/api/attendance/${attendanceId}/additional-work`);
+    return api.delete(`/api/v1/attendance/additional-work/${attendanceId}`);
   },
 
-  // 사업장 일별 출근 현황 조회 (사업자용)
+  // ✅ 수정: 사업장 일별 출근 현황 조회 - v1 버전 추가
   getWorkplaceDailyAttendance: (workplaceId: number, date: string) => {
-    return api.get(`/api/attendance/workplace/${workplaceId}/daily/${date}`);
+    return api.get(
+      `/api/v1/attendance/workplace/${workplaceId}/daily?date=${date}`
+    );
+  },
+
+  // ✅ 수정: 오늘의 출근 기록 조회 - v1 버전 추가
+  getTodayAttendance: () => {
+    return api.get("/api/v1/attendance/today");
   },
 };
 
@@ -335,23 +364,29 @@ export const testApis = {
   attendance: attendanceTestApis,
 };
 
-// 네트워크 연결 테스트 유틸리티 (간소화)
+// ✅ 수정: 네트워크 연결 테스트 유틸리티 - 올바른 헬스체크 엔드포인트 사용
 export const networkUtils = {
   // 간단한 서버 연결 확인
   checkConnection: async (): Promise<{ success: boolean; message: string }> => {
     try {
-      // 기존 API 엔드포인트로 간단한 연결 테스트
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
+      // ✅ 수정: 헬스체크 엔드포인트 사용
+      const response = await fetch("http://localhost:8080/api/ping", {
+        method: "GET",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
       });
 
-      // 400, 401 등의 응답도 연결 성공으로 간주
-      return {
-        success: true,
-        message: `서버 연결 확인 (상태: ${response.status})`,
-      };
+      // 200 응답이면 연결 성공
+      if (response.ok) {
+        return {
+          success: true,
+          message: `서버 연결 성공 (상태: ${response.status})`,
+        };
+      } else {
+        return {
+          success: false,
+          message: `서버 응답 오류 (상태: ${response.status})`,
+        };
+      }
     } catch (error: any) {
       let message = "서버 연결 실패";
       if (error.name === "TypeError" && error.message.includes("fetch")) {
