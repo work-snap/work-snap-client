@@ -118,8 +118,57 @@ export const DailyScheduleCard: React.FC<DailyScheduleCardProps> = ({
   const isLoading =
     isProcessing || clockInMutation.isPending || clockOutMutation.isPending;
 
+  // 상태별 카드 스타일 결정
+  const getCardStatusStyle = () => {
+    const baseStyle = getCardTypeClassName(cardConfig.cardType);
+    const statusStyle = 
+      attendance.status === AttendanceStatus.SCHEDULED 
+        ? " border-l-4 border-l-orange-500" 
+        : attendance.status === AttendanceStatus.IN_PROGRESS 
+        ? " border-l-4 border-l-blue-500" 
+        : " border-l-4 border-l-green-500";
+    
+    return `${baseStyle}${statusStyle}`;
+  };
+
+  // 상태 메시지 생성
+  const getStatusMessage = () => {
+    switch (attendance.status) {
+      case AttendanceStatus.SCHEDULED:
+        return "출근 대기 중";
+      case AttendanceStatus.IN_PROGRESS:
+        return "근무 중";
+      case AttendanceStatus.COMPLETED:
+        return "근무 완료";
+      default:
+        return "상태 확인 중";
+    }
+  };
+
   return (
-    <div className={`${getCardTypeClassName(cardConfig.cardType)} ${className}`}>
+    <div className={`${getCardStatusStyle()} ${className}`}>
+      {/* 상태 표시 헤더 */}
+      <div className="mb-3">
+        <div className="flex items-center">
+          <span className="text-base mr-2">
+            {attendance.status === AttendanceStatus.SCHEDULED 
+              ? "⏰" 
+              : attendance.status === AttendanceStatus.IN_PROGRESS 
+              ? "🔄" 
+              : "✅"}
+          </span>
+          <span className={`text-sm font-medium ${
+            attendance.status === AttendanceStatus.SCHEDULED 
+              ? "text-orange-700" 
+              : attendance.status === AttendanceStatus.IN_PROGRESS 
+              ? "text-blue-700" 
+              : "text-green-700"
+          }`}>
+            {getStatusMessage()}
+          </span>
+        </div>
+      </div>
+
       {/* 카드 헤더 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -145,7 +194,7 @@ export const DailyScheduleCard: React.FC<DailyScheduleCardProps> = ({
           <button
             onClick={cycleButtonOption}
             disabled={attendance.status === AttendanceStatus.COMPLETED || isLoading}
-            className="px-3 py-2 text-sm rounded-lg font-medium text-white bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-2 text-sm rounded-lg font-medium text-white bg-main hover:bg-main2 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
           >
             {(() => {
               if (currentButtonState.action === "CLOCK_IN") {
@@ -163,7 +212,13 @@ export const DailyScheduleCard: React.FC<DailyScheduleCardProps> = ({
       {/* 시간 정보 */}
       {cardConfig.showTimeRange && (
         <div className="mb-4">
-          <RealTimeClock className="text-lg font-bold text-main2 mb-2" />
+          <div className="flex items-center mb-2">
+            <span className="text-sm text-gray-600 mr-2">현재 시간</span>
+          </div>
+          <RealTimeClock className="text-lg font-bold text-main2 mb-3" />
+          <div className="flex items-center mb-2">
+            <span className="text-sm text-gray-600 mr-2">근무 일정</span>
+          </div>
           <WorkScheduleTime
             attendance={attendance}
             className="text-sm font-medium text-gray-600"
@@ -173,7 +228,7 @@ export const DailyScheduleCard: React.FC<DailyScheduleCardProps> = ({
 
       {/* 근무 시간 정보 (진행 중인 경우) */}
       {attendance.actualStartTime && attendance.status === AttendanceStatus.IN_PROGRESS && (
-        <div className="bg-blue-50 rounded-lg p-3 mb-4">
+        <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-200">
           <div className="flex items-center justify-between">
             <span className="text-sm text-blue-700">현재 근무 시간</span>
             <span className="text-lg font-bold text-blue-800">

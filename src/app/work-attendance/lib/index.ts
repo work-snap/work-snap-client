@@ -7,8 +7,11 @@ export * from "./api";
 // 브릿지 통신
 export * from "./bridge";
 
-// React 훅
+// React 훅 (legacy)
 export * from "./hooks";
+
+// React 훅 (refactored)
+export * from "../hooks";
 
 // 유틸리티 함수
 export * from "./utils";
