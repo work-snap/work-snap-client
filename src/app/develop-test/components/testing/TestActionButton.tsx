@@ -1,7 +1,11 @@
 "use client";
 
 import React from "react";
-import { BaseButton, ButtonVariants, BaseButtonState } from "../../../work-attendance/components/base";
+import {
+  BaseButton,
+  ButtonVariants,
+  BaseButtonState,
+} from "../../../components/BaseButton";
 
 // Test action types
 export type TestActionType = "get" | "post" | "put" | "delete" | "patch";
@@ -29,7 +33,7 @@ export interface TestActionButtonProps {
 
 /**
  * TestActionButton - API 테스트 액션을 위한 재사용 가능한 버튼 컴포넌트
- * 
+ *
  * Features:
  * - 다양한 HTTP 메서드 지원
  * - 로딩 상태 관리
@@ -44,12 +48,18 @@ export const TestActionButton: React.FC<TestActionButtonProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const { label, description, method = "get", icon, variant = "primary" } = config;
+  const {
+    label,
+    description,
+    method = "get",
+    icon,
+    variant = "primary",
+  } = config;
 
   // Method에 따른 아이콘 결정
   const getMethodIcon = () => {
     if (icon) return icon;
-    
+
     const iconMap = {
       get: "📥",
       post: "📤",
@@ -63,7 +73,7 @@ export const TestActionButton: React.FC<TestActionButtonProps> = ({
   // Method에 따른 버튼 variant 결정
   const getMethodVariant = () => {
     if (variant !== "primary") return variant;
-    
+
     const variantMap = {
       get: "primary" as const,
       post: "success" as const,
@@ -102,13 +112,11 @@ export const TestActionButton: React.FC<TestActionButtonProps> = ({
         className="w-full"
         title={description || label}
       />
-      
+
       {/* Action Details */}
       {(description || config.endpoint) && (
         <div className="text-xs text-gray-600 space-y-1">
-          {description && (
-            <p className="italic">{description}</p>
-          )}
+          {description && <p className="italic">{description}</p>}
           {config.endpoint && (
             <div className="font-mono bg-gray-100 px-2 py-1 rounded">
               <span className={`font-bold ${getMethodColor()}`}>
@@ -155,7 +163,9 @@ export const TestActionGroup: React.FC<TestActionGroupProps> = ({
   className = "",
 }) => {
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
+    <div
+      className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}
+    >
       {/* Group Header */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
@@ -241,16 +251,31 @@ export const createTestAction = (
 export const TestActionPresets = {
   get: (label: string, endpoint: string, description?: string) =>
     createTestAction(label, { method: "get", endpoint, description }),
-  
-  post: (label: string, endpoint: string, payload?: any, description?: string) =>
+
+  post: (
+    label: string,
+    endpoint: string,
+    payload?: any,
+    description?: string
+  ) =>
     createTestAction(label, { method: "post", endpoint, payload, description }),
-  
+
   put: (label: string, endpoint: string, payload?: any, description?: string) =>
     createTestAction(label, { method: "put", endpoint, payload, description }),
-  
+
   delete: (label: string, endpoint: string, description?: string) =>
     createTestAction(label, { method: "delete", endpoint, description }),
-  
-  patch: (label: string, endpoint: string, payload?: any, description?: string) =>
-    createTestAction(label, { method: "patch", endpoint, payload, description }),
+
+  patch: (
+    label: string,
+    endpoint: string,
+    payload?: any,
+    description?: string
+  ) =>
+    createTestAction(label, {
+      method: "patch",
+      endpoint,
+      payload,
+      description,
+    }),
 };

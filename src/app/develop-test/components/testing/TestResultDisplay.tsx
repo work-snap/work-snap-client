@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { StatusDisplay, AttendanceStatusPresets } from "../../../work-attendance/components/base";
+import {
+  StatusDisplay,
+  AttendanceStatusPresets,
+} from "../../../components/StatusDisplay";
 
 // Test result types
 export type TestResultType = "success" | "error" | "warning" | "info";
@@ -29,7 +32,7 @@ export interface TestResultDisplayProps {
 
 /**
  * TestResultDisplay - 테스트 결과를 표시하는 재사용 가능한 컴포넌트
- * 
+ *
  * Features:
  * - 다양한 결과 타입 지원
  * - JSON 데이터 포맷팅
@@ -45,7 +48,18 @@ export const TestResultDisplay: React.FC<TestResultDisplayProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  const { id, timestamp, type, title, message, data, duration, statusCode, endpoint, method } = result;
+  const {
+    id,
+    timestamp,
+    type,
+    title,
+    message,
+    data,
+    duration,
+    statusCode,
+    endpoint,
+    method,
+  } = result;
 
   // 결과 타입별 스타일 결정
   const getResultStyle = () => {
@@ -61,9 +75,15 @@ export const TestResultDisplay: React.FC<TestResultDisplayProps> = ({
   // 상태 표시 생성
   const getStatusDisplay = () => {
     const statusMap = {
-      success: AttendanceStatusPresets.success(statusCode ? `${statusCode}` : "성공"),
-      error: AttendanceStatusPresets.error(statusCode ? `${statusCode}` : "실패"),
-      warning: AttendanceStatusPresets.warning(statusCode ? `${statusCode}` : "경고"),
+      success: AttendanceStatusPresets.success(
+        statusCode ? `${statusCode}` : "성공"
+      ),
+      error: AttendanceStatusPresets.error(
+        statusCode ? `${statusCode}` : "실패"
+      ),
+      warning: AttendanceStatusPresets.warning(
+        statusCode ? `${statusCode}` : "경고"
+      ),
       info: AttendanceStatusPresets.info(statusCode ? `${statusCode}` : "정보"),
     };
     return statusMap[type];
@@ -95,7 +115,7 @@ export const TestResultDisplay: React.FC<TestResultDisplayProps> = ({
     return timestamp.toLocaleTimeString("ko-KR", {
       hour12: false,
       hour: "2-digit",
-      minute: "2-digit", 
+      minute: "2-digit",
       second: "2-digit",
     });
   };
@@ -111,29 +131,25 @@ export const TestResultDisplay: React.FC<TestResultDisplayProps> = ({
               {formatTimestamp(timestamp)}
             </span>
             {duration && (
-              <span className="text-xs text-gray-500">
-                ({duration}ms)
-              </span>
+              <span className="text-xs text-gray-500">({duration}ms)</span>
             )}
           </div>
-          
+
           <h4 className="font-semibold text-gray-900">{title}</h4>
-          
-          {message && (
-            <p className="text-sm text-gray-700 mt-1">{message}</p>
-          )}
-          
+
+          {message && <p className="text-sm text-gray-700 mt-1">{message}</p>}
+
           {/* Request Info */}
           {(method || endpoint) && (
             <div className="mt-2 text-xs text-gray-600">
               {method && (
-                <span className={`font-mono font-bold ${getMethodColor(method)}`}>
+                <span
+                  className={`font-mono font-bold ${getMethodColor(method)}`}
+                >
                   {method.toUpperCase()}
                 </span>
               )}
-              {endpoint && (
-                <span className="font-mono ml-2">{endpoint}</span>
-              )}
+              {endpoint && <span className="font-mono ml-2">{endpoint}</span>}
             </div>
           )}
         </div>
@@ -149,7 +165,7 @@ export const TestResultDisplay: React.FC<TestResultDisplayProps> = ({
               {isExpanded ? "접기" : "펼치기"}
             </button>
           )}
-          
+
           {onClear && (
             <button
               onClick={() => onClear(id)}
@@ -170,15 +186,15 @@ export const TestResultDisplay: React.FC<TestResultDisplayProps> = ({
             <button
               onClick={() => copyToClipboard(formatData(data) || "")}
               className={`text-xs px-2 py-1 rounded transition-colors ${
-                isCopied 
-                  ? "bg-green-100 text-green-700" 
+                isCopied
+                  ? "bg-green-100 text-green-700"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {isCopied ? "복사됨!" : "복사"}
             </button>
           </div>
-          
+
           <pre className="bg-gray-900 text-green-400 text-xs p-3 rounded overflow-x-auto max-h-64 overflow-y-auto">
             {formatData(data)}
           </pre>
@@ -218,10 +234,7 @@ export const TestResultList: React.FC<TestResultListProps> = ({
   className = "",
 }) => {
   // 최신 결과부터 표시
-  const displayResults = results
-    .slice()
-    .reverse()
-    .slice(0, maxResults);
+  const displayResults = results.slice().reverse().slice(0, maxResults);
 
   // 결과 통계
   const getResultStats = () => {
@@ -240,7 +253,9 @@ export const TestResultList: React.FC<TestResultListProps> = ({
       <div className={`text-center py-8 text-gray-500 ${className}`}>
         <div className="text-4xl mb-2">📝</div>
         <p>아직 테스트 결과가 없습니다</p>
-        <p className="text-sm mt-1">테스트를 실행하면 여기에 결과가 표시됩니다</p>
+        <p className="text-sm mt-1">
+          테스트를 실행하면 여기에 결과가 표시됩니다
+        </p>
       </div>
     );
   }
@@ -253,7 +268,7 @@ export const TestResultList: React.FC<TestResultListProps> = ({
           <h3 className="font-semibold text-gray-900">
             테스트 결과 ({results.length})
           </h3>
-          
+
           <div className="flex items-center space-x-2 text-xs">
             {stats.success && (
               <span className="px-2 py-1 bg-green-100 text-green-700 rounded">
@@ -326,13 +341,13 @@ export const createTestResult = (
 export const TestResultPresets = {
   success: (title: string, data?: any, duration?: number) =>
     createTestResult("success", title, { data, duration, statusCode: 200 }),
-  
+
   error: (title: string, message?: string, statusCode?: number) =>
     createTestResult("error", title, { message, statusCode }),
-  
+
   warning: (title: string, message?: string) =>
     createTestResult("warning", title, { message }),
-  
+
   info: (title: string, message?: string) =>
     createTestResult("info", title, { message }),
 };

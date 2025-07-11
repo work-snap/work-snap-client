@@ -24,9 +24,11 @@ export default function CustomProvider({
 
   return (
     <HeroUIProvider>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>{children}</ThemeProvider>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </ThemeProvider>
     </HeroUIProvider>
   );
 }
