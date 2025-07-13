@@ -1,44 +1,33 @@
-import { AttendanceStatus, Attendance, WorkSchedule } from "../types";
-import { isAfter, isBefore, parseISO } from "date-fns";
-import { STATUS_COLORS, STATUS_MESSAGES } from "../constants/colors";
+import { AttendanceStatus, WorkSchedule } from "../types";
 
-export const determineStatus = (
-  schedule: WorkSchedule,
-  attendance?: Attendance,
-  currentTime: Date = new Date()
-): AttendanceStatus => {
-  // 출근 기록이 없는 경우
-  if (!attendance) {
-    const scheduleStart = parseISO(schedule.startTime);
-    return isBefore(currentTime, scheduleStart)
-      ? AttendanceStatus.NOT_STARTED
-      : AttendanceStatus.ABSENT;
+export const determineStatus = (schedule: WorkSchedule): AttendanceStatus => {
+  if (!schedule.clockInTime) {
+    return AttendanceStatus.NOT_STARTED;
   }
 
-  // 출근만 한 경우 (근무 중)
-  if (attendance.clockInTime && !attendance.clockOutTime) {
+  if (schedule.clockInTime && !schedule.clockOutTime) {
     return AttendanceStatus.IN_PROGRESS;
   }
 
-  // 출근, 퇴근 모두 한 경우 (근무 완료)
-  if (attendance.clockInTime && attendance.clockOutTime) {
-    return AttendanceStatus.COMPLETED;
-  }
-
-  // 출근 시간이 지났지만 출근하지 않은 경우 (지각)
-  const scheduleStart = parseISO(schedule.startTime);
-  if (isAfter(currentTime, scheduleStart)) {
-    return AttendanceStatus.LATE;
-  }
-
-  // 기본값: 근무 예정
-  return AttendanceStatus.NOT_STARTED;
+  return AttendanceStatus.COMPLETED;
 };
 
 export const getStatusColor = (status: AttendanceStatus): string => {
-  return STATUS_COLORS[status];
+  const colorMap: Record<AttendanceStatus, string> = {
+    [AttendanceStatus.NOT_STARTED]: "gray-3",
+    [AttendanceStatus.IN_PROGRESS]: "main",
+    [AttendanceStatus.COMPLETED]: "sub2",
+  };
+
+  return colorMap[status];
 };
 
 export const getStatusMessage = (status: AttendanceStatus): string => {
-  return STATUS_MESSAGES[status];
+  const messageMap: Record<AttendanceStatus, string> = {
+    [AttendanceStatus.NOT_STARTED]: "근무 시작 전",
+    [AttendanceStatus.IN_PROGRESS]: "근무 중",
+    [AttendanceStatus.COMPLETED]: "근무 완료",
+  };
+
+  return messageMap[status];
 };

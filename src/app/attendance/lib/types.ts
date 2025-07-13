@@ -4,11 +4,12 @@
  */
 export interface WorkSchedule {
   id: number;
-  workplaceId: number;
-  startTime: string;
-  endTime: string;
+  scheduleStartTime: Date;
+  scheduleEndTime: Date;
+  clockInTime: Date | null;
+  clockOutTime: Date | null;
   isOvernight: boolean;
-  nextDayEndTime?: string;
+  nextDayEndTime?: Date;
 }
 
 export interface Attendance {
@@ -24,15 +25,6 @@ export enum AttendanceStatus {
   NOT_STARTED = "NOT_STARTED",
   IN_PROGRESS = "IN_PROGRESS",
   COMPLETED = "COMPLETED",
-  LATE = "LATE",
-  ABSENT = "ABSENT",
-  // Legacy values for backward compatibility
-  BEFORE_WORK = "BEFORE_WORK",
-  WORKING = "WORKING",
-  AFTER_WORK = "AFTER_WORK",
-  CLOCKED_IN = "CLOCKED_IN",
-  CLOCKED_OUT = "CLOCKED_OUT",
-  EARLY_LEAVE = "EARLY_LEAVE",
 }
 
 export interface DailyAttendanceResponse {
@@ -43,10 +35,12 @@ export interface DailyAttendanceResponse {
 
 export interface AttendanceCardViewModel {
   id: number;
-  workplaceId: number;
   workplaceName: string;
-  schedule: WorkSchedule;
-  attendance?: Attendance;
+  scheduleStartTime: Date;
+  scheduleEndTime: Date;
+  clockInTime: Date | null;
+  clockOutTime: Date | null;
+  status: AttendanceStatus;
   isAdditionalWork: boolean;
 }
 
