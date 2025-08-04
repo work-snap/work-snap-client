@@ -15,6 +15,7 @@ module.exports = {
         useESM: false,
       },
     ],
+    "^.+\\.(js|jsx)$": "babel-jest",
   },
   testMatch: [
     "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",

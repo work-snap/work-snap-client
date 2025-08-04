@@ -1,0 +1,45 @@
+{
+  "date": "2025-01-14",
+  "dayOfWeek": "TUESDAY",
+  "dayOfWeekKorean": "화요일",
+  "schedules": [
+    {
+      "id": 1,
+      "workplaceId": 1,
+      "workplaceName": "스타벅스 강남점",
+      "userId": 101,
+      "dayOfWeek": "TUESDAY",
+      "dayOfWeekKorean": "화요일",
+      "startTime": "09:00:00",
+      "endTime": "17:00:00",
+      "workingHours": 8.0,
+      "isActive": true
+    },
+    {
+      "id": 2,
+      "workplaceId": 1,
+      "workplaceName": "스타벅스 강남점",
+      "userId": 102,
+      "dayOfWeek": "TUESDAY",
+      "dayOfWeekKorean": "화요일",
+      "startTime": "13:00:00",
+      "endTime": "21:00:00",
+      "workingHours": 8.0,
+      "isActive": true
+    },
+    {
+      "id": 3,
+      "workplaceId": 1,
+      "workplaceName": "스타벅스 강남점",
+      "userId": 103,
+      "dayOfWeek": "TUESDAY",
+      "dayOfWeekKorean": "화요일",
+      "startTime": "18:00:00",
+      "endTime": "22:00:00",
+      "workingHours": 4.0,
+      "isActive": true
+    }
+  ],
+  "totalSchedules": 3,
+  "totalWorkingHours": 20.0
+}
