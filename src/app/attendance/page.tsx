@@ -34,6 +34,12 @@ export default function AttendancePage() {
     setCurrentDate(new Date());
   };
 
+  // 근무 추가 핸들러
+  const handleAddAttendance = () => {
+    // TODO: 근무 추가 API 연결
+    console.log('근무 추가 버튼 클릭됨');
+  };
+
   // 날짜 포맷팅 함수
   function formatDisplayDate(date: Date) {
     return format(date, "yyyy년 M월 d일", { locale: ko });
@@ -167,6 +173,16 @@ export default function AttendancePage() {
                 </div>
               </div>
             ))
+          )}
+          
+          {/* 근무 추가 버튼 */}
+          {!userLoading && !isLoading && !error && (
+            <div 
+              className="w-full py-4 bg-gray-200 rounded-xl text-gray-600 font-bold flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
+              onClick={handleAddAttendance}
+            >
+              추가근무 +
+            </div>
           )}
         </div>
       </div>

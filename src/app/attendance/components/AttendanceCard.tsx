@@ -1,13 +1,14 @@
 import { ScedulesProps, AttendanceRecordProps } from "./types";
 import { MoreHorizontal, CheckCircle } from "lucide-react";
 import { formatMonthDay } from "../../../utils/dateUtils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCheckIn, useCheckOut } from "@/hooks/useAttendanceQuery";
 import toast from "react-hot-toast";
 
 type AttendanceMode =
   | "CHECK_IN_NORMAL" // 출근 하기
   | "CHECK_IN_EARLY" // 조기 출근
+  | "CHECK_IN_LATE" // 지각
   | "CHECK_OUT_NORMAL" // 퇴근 하기
   | "CHECK_OUT_EARLY" // 조퇴 하기
   | "CHECK_OUT_OVERTIME"; // 연장 근무 하기
@@ -67,7 +68,7 @@ export default function AttendanceCard({
     const scheduleEnd = new Date(scheduledEndDate);
 
     if (currentStatus === "NOT_STARTED") {
-      // 출근 전
+      // 정시 또는 조기: 출근하기 + 조기출근 버튼 (토글용)
       return [
         {
           mode: "CHECK_IN_NORMAL",
@@ -113,7 +114,18 @@ export default function AttendanceCard({
       }
     }
     
-    // 다른 날짜나 완료된 스케줄도 기본 버튼 표시 (클릭 시 검증에서 차단)
+    // COMPLETED 상태에서는 업무종료 버튼 표시
+    if (currentStatus === "COMPLETED") {
+      return [
+        {
+          mode: "CHECK_IN_NORMAL",
+          label: "업무종료",
+          description: "완료된 근무",
+        }
+      ];
+    }
+    
+    // 다른 날짜나 기타 상태에서는 기본 버튼 표시 (클릭 시 검증에서 차단)
     return [
       {
         mode: "CHECK_IN_NORMAL",
@@ -124,6 +136,14 @@ export default function AttendanceCard({
   };
 
   const availableModes = getAvailableModes();
+
+  // 지각 상황 감지
+  const isLateCheckIn = useMemo(() => {
+    if (currentStatus !== "NOT_STARTED") return false;
+    const now = new Date();
+    const scheduleStart = new Date(scheduledStartDate);
+    return now > scheduleStart;
+  }, [currentStatus, scheduledStartDate, currentTime]);
 
   // 기본 모드 설정
   useEffect(() => {
@@ -173,6 +193,11 @@ export default function AttendanceCard({
   // 출석 체크 핸들러
   const handleAttendanceClick = async () => {
     if (!selectedModeOption) return;
+
+    // COMPLETED 상태에서는 아무 동작하지 않음
+    if (currentStatus === "COMPLETED") {
+      return;
+    }
 
     // 날짜 검증
     if (!isToday()) {
@@ -293,6 +318,72 @@ export default function AttendanceCard({
     }
   };
 
+  // 지각 출근 처리 핸들러
+  const handleLateCheckIn = async () => {
+    // COMPLETED 상태에서는 아무 동작하지 않음
+    if (currentStatus === "COMPLETED") {
+      return;
+    }
+
+    // 날짜 검증
+    if (!isToday()) {
+      toast.error("오늘 날짜가 아닌 스케줄에는 출근할 수 없습니다.\n오늘 날짜의 스케줄을 확인해주세요.", {
+        duration: 6000,
+        position: 'bottom-center',
+        style: {
+          background: '#FEF2F2',
+          color: '#DC2626',
+          border: '1px solid #FECACA',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: '500',
+          maxWidth: '400px',
+          padding: '16px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        },
+        icon: '⚠️',
+      });
+      return;
+    }
+
+    try {
+      // GPS 위치 정보 가져오기 시도
+      let location: { latitude: number; longitude: number } | null = null;
+
+      try {
+        location = await getCurrentLocation();
+      } catch (locationError) {
+        console.warn("위치 정보 가져오기 실패:", locationError);
+        console.warn("위치 정보 없이 지각 출근 처리를 진행합니다.");
+      }
+
+      // 지각 출근 처리
+      await handleCheckInWithMode(location, "CHECK_IN_LATE");
+    } catch (error) {
+      console.error("지각 출근 처리 실패:", error);
+      
+      // 에러 메시지에 따른 토스트 표시
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다";
+      
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'bottom-center',
+        style: {
+          background: '#FEF2F2',
+          color: '#DC2626',
+          border: '1px solid #FECACA',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: '500',
+          maxWidth: '400px',
+          padding: '16px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        },
+        icon: '❌',
+      });
+    }
+  };
+
   const getCurrentLocation = (): Promise<{
     latitude: number;
     longitude: number;
@@ -316,11 +407,12 @@ export default function AttendanceCard({
     });
   };
 
-  const handleCheckIn = async (
+  const handleCheckInWithMode = async (
     location: {
       latitude: number;
       longitude: number;
-    } | null
+    } | null,
+    mode: AttendanceMode
   ) => {
     try {
       // 위치 정보가 없으면 기본값 사용
@@ -329,19 +421,25 @@ export default function AttendanceCard({
         longitude: 0,
       };
 
-      console.log("출근 처리 시작:", {
-        scheduleId: id,
-        mode: selectedMode,
-        location: finalLocation,
-      });
-
-      await checkInMutation.mutateAsync({
+      const requestData = {
         scheduleId: id,
         latitude: finalLocation.latitude,
         longitude: finalLocation.longitude,
+        isEarlyCheckIn: mode === "CHECK_IN_EARLY",
+        isLateCheckIn: mode === "CHECK_IN_LATE",
+      };
+
+      console.log("출근 처리 시작:", {
+        scheduleId: id,
+        mode: mode,
+        location: finalLocation,
+        requestData: requestData,
       });
 
-      toast.success(`${selectedModeOption.label} 처리되었습니다.`, {
+      await checkInMutation.mutateAsync(requestData);
+
+      const modeLabel = mode === "CHECK_IN_LATE" ? "지각" : (mode === "CHECK_IN_EARLY" ? "조기 출근" : "출근하기");
+      toast.success(`${modeLabel} 처리되었습니다.`, {
         duration: 3000,
         position: 'bottom-center',
         style: {
@@ -357,12 +455,21 @@ export default function AttendanceCard({
         },
         icon: '✅',
       });
-      console.log(`${selectedModeOption.label} 처리되었습니다.`);
+      console.log(`${modeLabel} 처리되었습니다.`);
     } catch (error) {
       console.error("출근 처리 실패:", error);
       // 상위에서 처리하도록 throw
       throw error;
     }
+  };
+
+  const handleCheckIn = async (
+    location: {
+      latitude: number;
+      longitude: number;
+    } | null
+  ) => {
+    await handleCheckInWithMode(location, selectedMode);
   };
 
   const handleCheckOut = async (
@@ -668,26 +775,71 @@ export default function AttendanceCard({
           </div>
         </div>
       </div>
-      {(
-        <button
-          className={`w-full flex justify-center items-center py-3 text-lg border-t border-gray1 hover:opacity-80 transition-opacity ${getStatusStyle(
-            currentStatus,
-            "checkInButton"
-          )} ${
-            checkInMutation.isPending || checkOutMutation.isPending
-              ? "opacity-50 cursor-not-allowed"
-              : ""
-          }`}
-          onClick={() => handleAttendanceClick()}
-          disabled={
-            checkInMutation.isPending ||
-            checkOutMutation.isPending
-          }
-        >
-          {checkInMutation.isPending || checkOutMutation.isPending
-            ? "처리 중..."
-            : selectedModeOption?.label || "출근하기"}
-        </button>
+      {availableModes.length > 0 && (
+        <>
+          {isLateCheckIn ? (
+            // 지각 상황: 분할 버튼
+            <div className="flex w-full border-t border-gray1">
+              <button
+                className={`flex-1 flex justify-center items-center py-3 text-lg hover:opacity-80 transition-opacity ${getStatusStyle(
+                  currentStatus,
+                  "checkInButton"
+                )} ${
+                  checkInMutation.isPending || checkOutMutation.isPending
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                } border-r border-gray1`}
+                onClick={() => handleAttendanceClick()}
+                disabled={
+                  checkInMutation.isPending ||
+                  checkOutMutation.isPending
+                }
+              >
+                {checkInMutation.isPending || checkOutMutation.isPending
+                  ? "처리 중..."
+                  : selectedModeOption?.label || "출근하기"}
+              </button>
+              <button
+                className={`flex-1 flex justify-center items-center py-3 text-lg bg-main hover:bg-main2 text-white transition-opacity ${
+                  checkInMutation.isPending || checkOutMutation.isPending
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                onClick={() => handleLateCheckIn()}
+                disabled={
+                  checkInMutation.isPending ||
+                  checkOutMutation.isPending
+                }
+              >
+                {checkInMutation.isPending || checkOutMutation.isPending
+                  ? "처리 중..."
+                  : "지각"}
+              </button>
+            </div>
+          ) : (
+            // 일반 상황: 단일 버튼
+            <button
+              className={`w-full flex justify-center items-center py-3 text-lg border-t border-gray1 hover:opacity-80 transition-opacity ${getStatusStyle(
+                currentStatus,
+                "checkInButton"
+              )} ${
+                checkInMutation.isPending || checkOutMutation.isPending || currentStatus === "COMPLETED"
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+              onClick={() => handleAttendanceClick()}
+              disabled={
+                checkInMutation.isPending ||
+                checkOutMutation.isPending ||
+                currentStatus === "COMPLETED"
+              }
+            >
+              {checkInMutation.isPending || checkOutMutation.isPending
+                ? "처리 중..."
+                : selectedModeOption?.label || "출근하기"}
+            </button>
+          )}
+        </>
       )}
     </div>
   );

@@ -401,7 +401,7 @@ export const AttendanceButton: React.FC<AttendanceButtonProps> = ({
     if (isLateCheckIn) {
       // 지각 상황: 분할 버튼
       return (
-        <div className="flex w-full">
+        <div className="flex w-full gap-0.5">
           <BaseButton
             buttonState={{
               label: getButtonLabel(),
@@ -411,7 +411,7 @@ export const AttendanceButton: React.FC<AttendanceButtonProps> = ({
               disabled: isButtonDisabled,
             }}
             onClick={() => handleAttendance(false)}
-            className="flex-1 py-3 text-lg font-semibold rounded-r-none border-r-0"
+            className="flex-1 py-3 text-lg font-semibold rounded-r-none"
           />
           <BaseButton
             buttonState={{
@@ -422,7 +422,8 @@ export const AttendanceButton: React.FC<AttendanceButtonProps> = ({
               disabled: isButtonDisabled,
             }}
             onClick={() => handleAttendance(true)}
-            className="flex-1 py-3 text-lg font-semibold rounded-l-none"
+            className="flex-1 py-3 text-lg font-semibold rounded-l-none bg-amber-500 hover:bg-amber-600 text-white border-l border-amber-400"
+            title="지각으로 출근 처리합니다"
           />
         </div>
       );
