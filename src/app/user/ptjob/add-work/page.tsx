@@ -1,14 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/src/app/components/navigation";
+import { ConflictAlert, useConflictAlert } from "@/components/ConflictAlert";
+import { scheduleService, CreateScheduleRequest } from "@/services/scheduleService";
+import { BaseButton } from "@/app/components/BaseButton";
 
 export default function AddWorkPage() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate] = useState("2024년 6월 17일");
-  const [startTime, setStartTime] = useState("6:30");
-  const [endTime, setEndTime] = useState("6:30");
+  const [selectedDate, setSelectedDate] = useState("2024-06-17");
+  const [startTime, setStartTime] = useState("06:30");
+  const [endTime, setEndTime] = useState("18:30");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingConflict, setIsCheckingConflict] = useState(false);
+  
+  const { isVisible, conflicts, alertProps, showAlert, hideAlert } = useConflictAlert();
+
+  // 충돌 검사 함수
+  const checkConflict = useCallback(async (scheduleData: CreateScheduleRequest) => {
+    setIsCheckingConflict(true);
+    try {
+      const result = await scheduleService.checkScheduleConflict(scheduleData);
+      if (result.hasConflict) {
+        showAlert(result.conflicts, {
+          type: "modal",
+          canProceed: result.canProceed,
+          recommendation: result.recommendation,
+          onProceed: () => {
+            hideAlert();
+            createSchedule(scheduleData, true);
+          },
+          onCancel: hideAlert,
+        });
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("충돌 검사 실패:", error);
+      return true; // 충돌 검사 실패 시 진행 허용
+    } finally {
+      setIsCheckingConflict(false);
+    }
+  }, [showAlert, hideAlert]);
+
+  // 스케줄 생성 함수
+  const createSchedule = useCallback(async (scheduleData: CreateScheduleRequest, forceCreate = false) => {
+    setIsLoading(true);
+    try {
+      if (!forceCreate) {
+        const canProceed = await checkConflict(scheduleData);
+        if (!canProceed) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      await scheduleService.createSchedule(scheduleData);
+      router.push("/user/ptjob/mainpage");
+    } catch (error) {
+      console.error("스케줄 생성 실패:", error);
+      alert("스케줄 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [checkConflict, router]);
+
+  // 추가근무 생성 핸들러
+  const handleCreateWork = useCallback(async () => {
+    // 기본 직원 ID (실제로는 로그인한 사용자 정보에서 가져와야 함)
+    const employeeId = "user-123";
+    
+    // 요일 계산
+    const date = new Date(selectedDate);
+    const dayOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][date.getDay()];
+    
+    const scheduleData: CreateScheduleRequest = {
+      employeeId,
+      workDate: selectedDate,
+      startTime,
+      endTime,
+      dayOfWeek,
+      isFlexible: false,
+      workLocation: "스타벅스 해운대점",
+      description: "추가근무",
+    };
+
+    await createSchedule(scheduleData);
+  }, [selectedDate, startTime, endTime, createSchedule]);
 
   return (
     <div className="min-h-screen bg-white max-w-[430px] mx-auto">
@@ -77,7 +156,12 @@ export default function AddWorkPage() {
         <div className="mb-4">
           <h2 className="text-lg font-bold mb-2">날짜</h2>
           <div className="bg-gray1 rounded-lg p-4">
-            <span className="text-gray4">2024년 6월 17일</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full bg-transparent text-gray4 focus:outline-none"
+            />
           </div>
         </div>
 
@@ -87,14 +171,24 @@ export default function AddWorkPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray1 rounded-lg p-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray4">오전</span>
-                <span className="text-gray4">6 : 30</span>
+                <span className="text-gray4">시작</span>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="text-gray4 bg-transparent focus:outline-none"
+                />
               </div>
             </div>
             <div className="bg-gray1 rounded-lg p-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray4">오전</span>
-                <span className="text-gray4">6 : 30</span>
+                <span className="text-gray4">종료</span>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="text-gray4 bg-transparent focus:outline-none"
+                />
               </div>
             </div>
           </div>
@@ -102,14 +196,26 @@ export default function AddWorkPage() {
       </div>
 
       {/* 하단 버튼 */}
-      <div className="fixed bottom-[130px] left-0 right-0 px-6 ">
-        <button
-          onClick={() => router.push("/user/ptjob/mainpage")}
-          className="w-full bg-main text-white py-5 rounded-xl font-bold max-w-[430px] mx-auto flex items-center justify-center"
-        >
-          추가근무 만들기
-        </button>
+      <div className="fixed bottom-[130px] left-0 right-0 px-6">
+        <BaseButton
+          buttonState={{
+            label: isCheckingConflict ? "충돌 검사 중..." : "추가근무 만들기",
+            variant: "primary",
+            loading: isLoading || isCheckingConflict,
+            disabled: isLoading || isCheckingConflict,
+          }}
+          onClick={handleCreateWork}
+          className="w-full py-5 rounded-xl font-bold max-w-[430px] mx-auto"
+        />
       </div>
+
+      {/* 충돌 알림 모달 */}
+      {isVisible && (
+        <ConflictAlert
+          conflicts={conflicts}
+          {...alertProps}
+        />
+      )}
 
       {/* 하단 네비게이션 */}
       <Navigation></Navigation>

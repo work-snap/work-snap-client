@@ -19,7 +19,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // 시스템 테마 감지
   const getSystemTheme = (): "light" | "dark" => {
     if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     }
     return "light";
   };
@@ -52,7 +54,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setTheme(savedTheme);
 
         // 즉시 테마 적용
-        const actualTheme = savedTheme === "system" ? getSystemTheme() : savedTheme;
+        const actualTheme =
+          savedTheme === "system" ? getSystemTheme() : savedTheme;
         if (actualTheme === "dark") {
           document.documentElement.classList.add("dark");
         } else {
@@ -84,6 +87,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       mediaQuery.addEventListener("change", handleChange);
       return () => mediaQuery.removeEventListener("change", handleChange);
     }
+
+    // SSR 환경에서는 정리 함수가 필요 없으므로 undefined 반환
+    return undefined;
   }, []); // 빈 dependency 배열로 한 번만 실행
 
   useEffect(() => {
@@ -102,7 +108,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: updateTheme, actualTheme }}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider
+      value={{ theme, setTheme: updateTheme, actualTheme }}
+    >
+      {children}
+    </ThemeContext.Provider>
   );
 }
 

@@ -1,12 +1,12 @@
 import axios from "axios";
 
-// API 기본 URL 설정
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// API 기본 URL 설정 - Next.js rewrites 사용
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // axios 인스턴스 생성
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
