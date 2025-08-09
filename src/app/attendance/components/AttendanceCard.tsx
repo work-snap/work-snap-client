@@ -45,6 +45,7 @@ export default function AttendanceCard({
   scheduledEndDate,
   attendanceRecord,
   currentStatus,
+  type,
 }: ScedulesProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMode, setSelectedMode] =
@@ -68,7 +69,18 @@ export default function AttendanceCard({
     const scheduleEnd = new Date(scheduledEndDate);
 
     if (currentStatus === "NOT_STARTED") {
-      // 정시 또는 조기: 출근하기 + 조기출근 버튼 (토글용)
+      // 추가 근무인 경우 조기 출근만 표시
+      if (type === "ADDITIONAL") {
+        return [
+          {
+            mode: "CHECK_IN_EARLY",
+            label: "조기 출근",
+            description: "추가 근무 시작",
+          },
+        ];
+      }
+      
+      // 정규 근무인 경우: 출근하기 + 조기출근 버튼 (토글용)
       return [
         {
           mode: "CHECK_IN_NORMAL",

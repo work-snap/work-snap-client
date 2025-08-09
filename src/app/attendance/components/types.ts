@@ -13,6 +13,7 @@ export interface ScedulesProps {
   isActive: boolean;
   attendanceRecord: AttendanceRecordProps | null;
   currentStatus: string;
+  type?: string; // REGULAR or ADDITIONAL
 }
 
 export interface AttendanceRecordProps {

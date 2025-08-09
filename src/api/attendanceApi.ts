@@ -72,7 +72,7 @@ export const fetchDailySchedules = async (
               scheduleId: schedule.scheduleId || schedule.id,
               workplaceId: schedule.workplaceId,
               workplaceName: schedule.workplaceName,
-              attendanceType: 'REGULAR',
+              attendanceType: schedule.type || 'REGULAR',
               attendanceStatus: schedule.attendanceStatus || 'NORMAL',
               // 실제 출근/퇴근 시간 (날짜와 함께 조합)
               checkInTime: schedule.actualStartTime ? `${date}T${schedule.actualStartTime}` : null,
@@ -91,7 +91,8 @@ export const fetchDailySchedules = async (
               createdAt: schedule.actualStartTime ? `${date}T${schedule.actualStartTime}` : '',
               updatedAt: schedule.actualEndTime ? `${date}T${schedule.actualEndTime}` : (schedule.actualStartTime ? `${date}T${schedule.actualStartTime}` : '')
             } : null,
-            currentStatus: mapScheduleStatus(schedule.status)
+            currentStatus: mapScheduleStatus(schedule.status),
+            type: schedule.type
           };
           
           allSchedules.push(mappedSchedule);
