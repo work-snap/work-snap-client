@@ -2,7 +2,10 @@
  * 데이터 변환 유틸리티
  */
 
-import { ScedulesProps, AttendanceRecordProps } from "@/app/attendance/components/types";
+import {
+  ScedulesProps,
+  AttendanceRecordProps,
+} from "@/app/attendance/components/types";
 
 /**
  * 서버 응답을 클라이언트 타입으로 변환
@@ -21,7 +24,9 @@ export const transformServerResponse = (serverData: any): ScedulesProps => {
     scheduledEndDate: serverData.scheduledEndDate,
     workingHours: serverData.workingHours,
     isActive: serverData.isActive,
-    attendanceRecord: serverData.attendanceRecord ? transformAttendanceRecord(serverData.attendanceRecord) : null,
+    attendanceRecord: serverData.attendanceRecord
+      ? transformAttendanceRecord(serverData.attendanceRecord)
+      : null,
     currentStatus: serverData.currentStatus,
   };
 };
@@ -29,7 +34,9 @@ export const transformServerResponse = (serverData: any): ScedulesProps => {
 /**
  * 출석 기록 데이터 변환
  */
-export const transformAttendanceRecord = (serverRecord: any): AttendanceRecordProps => {
+export const transformAttendanceRecord = (
+  serverRecord: any
+): AttendanceRecordProps => {
   return {
     id: serverRecord.id,
     scheduleId: serverRecord.scheduleId,
@@ -40,9 +47,12 @@ export const transformAttendanceRecord = (serverRecord: any): AttendanceRecordPr
     workDurationMinutes: serverRecord.workDurationMinutes,
     overtimeDurationMinutes: serverRecord.overtimeDurationMinutes,
     // location 객체가 있으면 평면화된 필드로 변환
-    locationLatitude: serverRecord.locationLatitude || serverRecord.location?.latitude,
-    locationLongitude: serverRecord.locationLongitude || serverRecord.location?.longitude,
-    locationAddress: serverRecord.locationAddress || serverRecord.location?.address,
+    locationLatitude:
+      serverRecord.locationLatitude || serverRecord.location?.latitude,
+    locationLongitude:
+      serverRecord.locationLongitude || serverRecord.location?.longitude,
+    locationAddress:
+      serverRecord.locationAddress || serverRecord.location?.address,
   };
 };
 
@@ -57,7 +67,7 @@ export const parseDate = (dateString: string): Date => {
  * 시간 문자열을 분으로 변환 (예: "09:30" -> 570)
  */
 export const timeStringToMinutes = (timeString: string): number => {
-  const [hours, minutes] = timeString.split(':').map(Number);
+  const [hours, minutes] = timeString.split(":").map(Number);
   return hours * 60 + minutes;
 };
 
@@ -67,7 +77,9 @@ export const timeStringToMinutes = (timeString: string): number => {
 export const minutesToTimeString = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${mins
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 /**
@@ -75,10 +87,10 @@ export const minutesToTimeString = (minutes: number): string => {
  */
 export const formatWorkDuration = (minutes: number): string => {
   if (minutes === 0) return "0분";
-  
+
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  
+
   if (hours === 0) {
     return `${mins}분`;
   } else if (mins === 0) {
@@ -193,32 +205,24 @@ export const isPastDate = (date: Date): boolean => {
  */
 export const validateSchedulesData = (data: any[]): data is ScedulesProps[] => {
   if (!Array.isArray(data)) return false;
-  
-  return data.every(item => 
-    typeof item === 'object' &&
-    typeof item.id === 'number' &&
-    typeof item.workplaceId === 'number' &&
-    typeof item.workplaceName === 'string' &&
-    typeof item.userId === 'number' &&
-    typeof item.dayOfWeek === 'string' &&
-    typeof item.dayOfWeekKorean === 'string' &&
-    typeof item.startTime === 'string' &&
-    typeof item.endTime === 'string' &&
-    typeof item.currentStatus === 'string'
+
+  return data.every(
+    (item) =>
+      typeof item === "object" &&
+      typeof item.id === "number" &&
+      typeof item.workplaceId === "number" &&
+      typeof item.workplaceName === "string" &&
+      typeof item.userId === "number" &&
+      typeof item.dayOfWeek === "string" &&
+      typeof item.dayOfWeekKorean === "string" &&
+      typeof item.startTime === "string" &&
+      typeof item.endTime === "string" &&
+      typeof item.currentStatus === "string"
   );
 };
 
 /**
  * 안전한 데이터 파싱
  */
-export const safeParseSchedules = (data: unknown): ScedulesProps[] => {
-  try {
-    if (Array.isArray(data)) {
-      return data.map(transformServerResponse).filter(Boolean);
-    }
-    return [];
-  } catch (error) {
-    console.error("스케줄 데이터 파싱 실패:", error);
-    return [];
-  }
-};
+// 서버에서 받은 컬렉션을 ScedulesProps[]로 변환하는 책임은 api 레이어에서 수행합니다.
+// 프레젠테이션 레이어에서는 이미 매핑된 타입을 신뢰합니다.

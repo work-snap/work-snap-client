@@ -1,13 +1,21 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchDailySchedules, checkIn, checkOut, CheckInRequest, CheckOutRequest } from "@/api/attendanceApi";
+import {
+  fetchDailySchedules,
+  checkIn,
+  checkOut,
+  CheckInRequest,
+  CheckOutRequest,
+} from "@/api/attendanceApi";
 import { ScedulesProps } from "@/app/attendance/components/types";
 
 // 쿼리 키 상수
 export const ATTENDANCE_QUERY_KEYS = {
-  dailySchedules: (workplaceId: number, date: string) => ["attendance", "daily-schedules", workplaceId, date] as const,
-  userSchedules: (userId: number) => ["attendance", "user-schedules", userId] as const,
+  dailySchedules: (workplaceId: number, date: string) =>
+    ["attendance", "daily-schedules", workplaceId, date] as const,
+  userSchedules: (userId: number) =>
+    ["attendance", "user-schedules", userId] as const,
 } as const;
 
 /**
@@ -20,7 +28,7 @@ export const useDailySchedules = (workplaceId: number, date: string) => {
     staleTime: 5 * 60 * 1000, // 5분
     gcTime: 10 * 60 * 1000, // 10분
     retry: 2,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 
@@ -30,14 +38,14 @@ export const useDailySchedules = (workplaceId: number, date: string) => {
 export const useCheckIn = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<any, Error, CheckInRequest>({
+  return useMutation<unknown, Error, CheckInRequest>({
     mutationFn: checkIn,
     onSuccess: (data, variables) => {
       // 해당 스케줄의 캐시 무효화
       queryClient.invalidateQueries({
         queryKey: ["attendance"],
       });
-      
+
       console.log("출근 처리 성공:", data);
     },
     onError: (error) => {
@@ -46,6 +54,9 @@ export const useCheckIn = () => {
   });
 };
 
+// 아래는 과거 버전에서 사용하던 로컬 상태 관리 훅 코드 일부가 복사되어 들어온 것으로 보입니다.
+// 파일 파싱 오류를 유발하므로 주석 처리하거나 별도 유틸로 이전되어야 합니다. 현재는 미사용이므로 임시 주석 처리합니다.
+/*
   // 출석 기록 목록 로드
   const loadRecords = useCallback(async (filter: AttendanceFilter = {}) => {
     try {
@@ -383,7 +394,11 @@ export const useEmployeeAttendance = (employeeId: string) => {
 /**
  * 출석 통계만 관리하는 경량 훅
  */
-export const useAttendanceStats = (employeeId: string, startDate: string, endDate: string) => {
+export const useAttendanceStats = (
+  employeeId: string,
+  startDate: string,
+  endDate: string
+) => {
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -394,12 +409,16 @@ export const useAttendanceStats = (employeeId: string, startDate: string, endDat
     try {
       setLoading(true);
       setError(null);
-      
-      const result = await attendanceService.getAttendanceStats(employeeId, startDate, endDate);
+
+      const result = await attendanceService.getAttendanceStats(
+        employeeId,
+        startDate,
+        endDate
+      );
       setStats(result);
     } catch (error) {
-      console.error('출석 통계 로드 실패:', error);
-      setError('출석 통계를 불러오는데 실패했습니다.');
+      console.error("출석 통계 로드 실패:", error);
+      setError("출석 통계를 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -431,13 +450,16 @@ export const useTodayAttendance = (employeeId: string) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const today = new Date().toISOString().split('T')[0];
-      const result = await attendanceService.getAttendanceByDate(employeeId, today);
+
+      const today = new Date().toISOString().split("T")[0];
+      const result = await attendanceService.getAttendanceByDate(
+        employeeId,
+        today
+      );
       setRecord(result);
     } catch (error) {
-      console.error('오늘 출석 기록 로드 실패:', error);
-      setError('오늘 출석 기록을 불러오는데 실패했습니다.');
+      console.error("오늘 출석 기록 로드 실패:", error);
+      setError("오늘 출석 기록을 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -463,9 +485,13 @@ export const useTodayAttendance = (employeeId: string) => {
       hasCheckedIn: attendanceHelpers.hasCheckedIn(record),
       hasCheckedOut: attendanceHelpers.hasCheckedOut(record),
       canCheckIn: !attendanceHelpers.hasCheckedIn(record),
-      canCheckOut: attendanceHelpers.hasCheckedIn(record) && !attendanceHelpers.hasCheckedOut(record),
+      canCheckOut:
+        attendanceHelpers.hasCheckedIn(record) &&
+        !attendanceHelpers.hasCheckedOut(record),
       status: record.status,
-      workTime: record.totalWorkMinutes ? attendanceHelpers.formatWorkTime(record.totalWorkMinutes) : null,
+      workTime: record.totalWorkMinutes
+        ? attendanceHelpers.formatWorkTime(record.totalWorkMinutes)
+        : null,
     };
   }, [record]);
 

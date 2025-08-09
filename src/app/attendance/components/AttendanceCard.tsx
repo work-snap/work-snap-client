@@ -3,6 +3,7 @@ import { MoreHorizontal, CheckCircle } from "lucide-react";
 import { formatMonthDay } from "../../../utils/dateUtils";
 import { useState, useEffect, useMemo } from "react";
 import { useCheckIn, useCheckOut } from "@/hooks/useAttendanceQuery";
+import { getCurrentLocation as getCurrentLocationApi } from "@/api/attendanceApi";
 import toast from "react-hot-toast";
 
 type AttendanceMode =
@@ -79,7 +80,7 @@ export default function AttendanceCard({
           },
         ];
       }
-      
+
       // 정규 근무인 경우: 출근하기 + 조기출근 버튼 (토글용)
       return [
         {
@@ -125,7 +126,7 @@ export default function AttendanceCard({
         ];
       }
     }
-    
+
     // COMPLETED 상태에서는 업무종료 버튼 표시
     if (currentStatus === "COMPLETED") {
       return [
@@ -133,17 +134,17 @@ export default function AttendanceCard({
           mode: "CHECK_IN_NORMAL",
           label: "업무종료",
           description: "완료된 근무",
-        }
+        },
       ];
     }
-    
+
     // 다른 날짜나 기타 상태에서는 기본 버튼 표시 (클릭 시 검증에서 차단)
     return [
       {
         mode: "CHECK_IN_NORMAL",
         label: "출근 하기",
         description: "스케줄 시간으로 기록",
-      }
+      },
     ];
   };
 
@@ -184,7 +185,7 @@ export default function AttendanceCard({
     if (availableModes.length !== 2) {
       return selectedModeOption?.label || "완료";
     }
-    
+
     const currentIndex = availableModes.findIndex(
       (mode) => mode.mode === selectedMode
     );
@@ -196,10 +197,12 @@ export default function AttendanceCard({
   const isToday = () => {
     const today = new Date();
     const scheduleDate = new Date(scheduledStartDate);
-    
-    return today.getFullYear() === scheduleDate.getFullYear() &&
-           today.getMonth() === scheduleDate.getMonth() &&
-           today.getDate() === scheduleDate.getDate();
+
+    return (
+      today.getFullYear() === scheduleDate.getFullYear() &&
+      today.getMonth() === scheduleDate.getMonth() &&
+      today.getDate() === scheduleDate.getDate()
+    );
   };
 
   // 출석 체크 핸들러
@@ -213,22 +216,26 @@ export default function AttendanceCard({
 
     // 날짜 검증
     if (!isToday()) {
-      toast.error("오늘 날짜가 아닌 스케줄에는 출근할 수 없습니다.\n오늘 날짜의 스케줄을 확인해주세요.", {
-        duration: 6000,
-        position: 'bottom-center',
-        style: {
-          background: '#FEF2F2',
-          color: '#DC2626',
-          border: '1px solid #FECACA',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontWeight: '500',
-          maxWidth: '400px',
-          padding: '16px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        },
-        icon: '⚠️',
-      });
+      toast.error(
+        "오늘 날짜가 아닌 스케줄에는 출근할 수 없습니다.\n오늘 날짜의 스케줄을 확인해주세요.",
+        {
+          duration: 6000,
+          position: "bottom-center",
+          style: {
+            background: "#FEF2F2",
+            color: "#DC2626",
+            border: "1px solid #FECACA",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "500",
+            maxWidth: "400px",
+            padding: "16px",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+          },
+          icon: "⚠️",
+        }
+      );
       return;
     }
 
@@ -254,77 +261,87 @@ export default function AttendanceCard({
       }
     } catch (error) {
       console.error("출석 체크 실패:", error);
-      
+
       // 에러 메시지에 따른 토스트 표시
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다";
-      
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "알 수 없는 오류가 발생했습니다";
+
       if (errorMessage.includes("날짜") || errorMessage.includes("요일")) {
-        toast.error("스케줄 날짜와 현재 날짜가 일치하지 않습니다.\n오늘 날짜의 스케줄을 확인해주세요.", {
-          duration: 8000,
-          position: 'bottom-center',
-          style: {
-            background: '#FEF2F2',
-            color: '#DC2626',
-            border: '1px solid #FECACA',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '500',
-            maxWidth: '400px',
-            padding: '16px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          },
-          icon: '🚫',
-        });
+        toast.error(
+          "스케줄 날짜와 현재 날짜가 일치하지 않습니다.\n오늘 날짜의 스케줄을 확인해주세요.",
+          {
+            duration: 8000,
+            position: "bottom-center",
+            style: {
+              background: "#FEF2F2",
+              color: "#DC2626",
+              border: "1px solid #FECACA",
+              borderRadius: "12px",
+              fontSize: "14px",
+              fontWeight: "500",
+              maxWidth: "400px",
+              padding: "16px",
+              boxShadow:
+                "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            },
+            icon: "🚫",
+          }
+        );
       } else if (errorMessage.includes("권한")) {
         toast.error("해당 스케줄에 대한 권한이 없습니다.", {
           duration: 5000,
-          position: 'bottom-center',
+          position: "bottom-center",
           style: {
-            background: '#FEF2F2',
-            color: '#DC2626',
-            border: '1px solid #FECACA',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '500',
-            maxWidth: '400px',
-            padding: '16px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            background: "#FEF2F2",
+            color: "#DC2626",
+            border: "1px solid #FECACA",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "500",
+            maxWidth: "400px",
+            padding: "16px",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
           },
-          icon: '🔒',
+          icon: "🔒",
         });
       } else if (errorMessage.includes("중복")) {
         toast.error("이미 출근 처리된 스케줄입니다.", {
           duration: 5000,
-          position: 'bottom-center',
+          position: "bottom-center",
           style: {
-            background: '#FEF7CD',
-            color: '#A16207',
-            border: '1px solid #FDE68A',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '500',
-            maxWidth: '400px',
-            padding: '16px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            background: "#FEF7CD",
+            color: "#A16207",
+            border: "1px solid #FDE68A",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "500",
+            maxWidth: "400px",
+            padding: "16px",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
           },
-          icon: '⚠️',
+          icon: "⚠️",
         });
       } else {
         toast.error(errorMessage, {
           duration: 5000,
-          position: 'bottom-center',
+          position: "bottom-center",
           style: {
-            background: '#FEF2F2',
-            color: '#DC2626',
-            border: '1px solid #FECACA',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '500',
-            maxWidth: '400px',
-            padding: '16px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            background: "#FEF2F2",
+            color: "#DC2626",
+            border: "1px solid #FECACA",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "500",
+            maxWidth: "400px",
+            padding: "16px",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
           },
-          icon: '❌',
+          icon: "❌",
         });
       }
     }
@@ -339,22 +356,26 @@ export default function AttendanceCard({
 
     // 날짜 검증
     if (!isToday()) {
-      toast.error("오늘 날짜가 아닌 스케줄에는 출근할 수 없습니다.\n오늘 날짜의 스케줄을 확인해주세요.", {
-        duration: 6000,
-        position: 'bottom-center',
-        style: {
-          background: '#FEF2F2',
-          color: '#DC2626',
-          border: '1px solid #FECACA',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontWeight: '500',
-          maxWidth: '400px',
-          padding: '16px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        },
-        icon: '⚠️',
-      });
+      toast.error(
+        "오늘 날짜가 아닌 스케줄에는 출근할 수 없습니다.\n오늘 날짜의 스케줄을 확인해주세요.",
+        {
+          duration: 6000,
+          position: "bottom-center",
+          style: {
+            background: "#FEF2F2",
+            color: "#DC2626",
+            border: "1px solid #FECACA",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "500",
+            maxWidth: "400px",
+            padding: "16px",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+          },
+          icon: "⚠️",
+        }
+      );
       return;
     }
 
@@ -373,50 +394,40 @@ export default function AttendanceCard({
       await handleCheckInWithMode(location, "CHECK_IN_LATE");
     } catch (error) {
       console.error("지각 출근 처리 실패:", error);
-      
+
       // 에러 메시지에 따른 토스트 표시
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다";
-      
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "알 수 없는 오류가 발생했습니다";
+
       toast.error(errorMessage, {
         duration: 5000,
-        position: 'bottom-center',
+        position: "bottom-center",
         style: {
-          background: '#FEF2F2',
-          color: '#DC2626',
-          border: '1px solid #FECACA',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontWeight: '500',
-          maxWidth: '400px',
-          padding: '16px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          background: "#FEF2F2",
+          color: "#DC2626",
+          border: "1px solid #FECACA",
+          borderRadius: "12px",
+          fontSize: "14px",
+          fontWeight: "500",
+          maxWidth: "400px",
+          padding: "16px",
+          boxShadow:
+            "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
         },
-        icon: '❌',
+        icon: "❌",
       });
     }
   };
 
-  const getCurrentLocation = (): Promise<{
+  // 위치 정보는 공용 API 유틸을 사용해 중복 제거
+  const getCurrentLocation = async (): Promise<{
     latitude: number;
     longitude: number;
   }> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("GPS를 지원하지 않는 브라우저입니다."));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => reject(error),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-      );
-    });
+    const loc = await getCurrentLocationApi();
+    return { latitude: loc.latitude, longitude: loc.longitude };
   };
 
   const handleCheckInWithMode = async (
@@ -450,22 +461,28 @@ export default function AttendanceCard({
 
       await checkInMutation.mutateAsync(requestData);
 
-      const modeLabel = mode === "CHECK_IN_LATE" ? "지각" : (mode === "CHECK_IN_EARLY" ? "조기 출근" : "출근하기");
+      const modeLabel =
+        mode === "CHECK_IN_LATE"
+          ? "지각"
+          : mode === "CHECK_IN_EARLY"
+          ? "조기 출근"
+          : "출근하기";
       toast.success(`${modeLabel} 처리되었습니다.`, {
         duration: 3000,
-        position: 'bottom-center',
+        position: "bottom-center",
         style: {
-          background: '#F0FDF4',
-          color: '#166534',
-          border: '1px solid #BBF7D0',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontWeight: '500',
-          maxWidth: '400px',
-          padding: '16px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          background: "#F0FDF4",
+          color: "#166534",
+          border: "1px solid #BBF7D0",
+          borderRadius: "12px",
+          fontSize: "14px",
+          fontWeight: "500",
+          maxWidth: "400px",
+          padding: "16px",
+          boxShadow:
+            "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
         },
-        icon: '✅',
+        icon: "✅",
       });
       console.log(`${modeLabel} 처리되었습니다.`);
     } catch (error) {
@@ -496,19 +513,20 @@ export default function AttendanceCard({
         console.error(errorMsg);
         toast.error(errorMsg, {
           duration: 5000,
-          position: 'bottom-center',
+          position: "bottom-center",
           style: {
-            background: '#FEF2F2',
-            color: '#DC2626',
-            border: '1px solid #FECACA',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '500',
-            maxWidth: '400px',
-            padding: '16px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            background: "#FEF2F2",
+            color: "#DC2626",
+            border: "1px solid #FECACA",
+            borderRadius: "12px",
+            fontSize: "14px",
+            fontWeight: "500",
+            maxWidth: "400px",
+            padding: "16px",
+            boxShadow:
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
           },
-          icon: '❌',
+          icon: "❌",
         });
         return;
       }
@@ -533,19 +551,20 @@ export default function AttendanceCard({
 
       toast.success(`${selectedModeOption.label} 처리되었습니다.`, {
         duration: 3000,
-        position: 'bottom-center',
+        position: "bottom-center",
         style: {
-          background: '#F0FDF4',
-          color: '#166534',
-          border: '1px solid #BBF7D0',
-          borderRadius: '12px',
-          fontSize: '14px',
-          fontWeight: '500',
-          maxWidth: '400px',
-          padding: '16px',
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          background: "#F0FDF4",
+          color: "#166534",
+          border: "1px solid #BBF7D0",
+          borderRadius: "12px",
+          fontSize: "14px",
+          fontWeight: "500",
+          maxWidth: "400px",
+          padding: "16px",
+          boxShadow:
+            "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
         },
-        icon: '✅',
+        icon: "✅",
       });
       console.log(`${selectedModeOption.label} 처리되었습니다.`);
     } catch (error) {
@@ -679,11 +698,9 @@ export default function AttendanceCard({
                 ? "cursor-pointer shadow-md"
                 : "cursor-default"
             }`}
-            disabled={
-              availableModes.length <= 1
-            }
+            disabled={availableModes.length <= 1}
           >
-{getToggleButtonText()}
+            {getToggleButtonText()}
           </button>
         </div>
       </div>
@@ -803,8 +820,7 @@ export default function AttendanceCard({
                 } border-r border-gray1`}
                 onClick={() => handleAttendanceClick()}
                 disabled={
-                  checkInMutation.isPending ||
-                  checkOutMutation.isPending
+                  checkInMutation.isPending || checkOutMutation.isPending
                 }
               >
                 {checkInMutation.isPending || checkOutMutation.isPending
@@ -819,8 +835,7 @@ export default function AttendanceCard({
                 }`}
                 onClick={() => handleLateCheckIn()}
                 disabled={
-                  checkInMutation.isPending ||
-                  checkOutMutation.isPending
+                  checkInMutation.isPending || checkOutMutation.isPending
                 }
               >
                 {checkInMutation.isPending || checkOutMutation.isPending
@@ -835,7 +850,9 @@ export default function AttendanceCard({
                 currentStatus,
                 "checkInButton"
               )} ${
-                checkInMutation.isPending || checkOutMutation.isPending || currentStatus === "COMPLETED"
+                checkInMutation.isPending ||
+                checkOutMutation.isPending ||
+                currentStatus === "COMPLETED"
                   ? "opacity-50 cursor-not-allowed"
                   : ""
               }`}

@@ -37,7 +37,7 @@ export default function AttendancePage() {
   // 근무 추가 핸들러
   const handleAddAttendance = () => {
     // TODO: 근무 추가 API 연결
-    console.log('근무 추가 버튼 클릭됨');
+    console.log("근무 추가 버튼 클릭됨");
   };
 
   // 날짜 포맷팅 함수
@@ -80,9 +80,9 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="h-screen bg-white w-full mx-auto relative">
+    <div className="min-h-screen flex flex-col bg-white max-w-[430px] w-full mx-auto relative">
       {/* 헤더 - 고정 */}
-      <div className="absolute top-0 left-0 right-0 bg-white z-10">
+      <div className="absolute top-0 left-0 right-0 bg-white z-10 max-w-[430px] w-full mx-auto">
         <div className="flex justify-between items-center p-2 w-full space-x-2">
           {/* 왼쪽 고정 박스 */}
           <div className="w-16 h-16 bg-main rounded-xl flex items-center justify-center">
@@ -174,10 +174,10 @@ export default function AttendancePage() {
               </div>
             ))
           )}
-          
+
           {/* 근무 추가 버튼 */}
           {!userLoading && !isLoading && !error && (
-            <div 
+            <div
               className="w-full py-4 bg-gray-200 rounded-xl text-gray-600 font-bold flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
               onClick={handleAddAttendance}
             >

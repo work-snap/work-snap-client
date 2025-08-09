@@ -3,14 +3,22 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchDailySchedules, checkIn, checkOut, CheckInRequest, CheckOutRequest } from "@/api/attendanceApi";
+import {
+  fetchDailySchedules,
+  checkIn,
+  checkOut,
+  CheckInRequest,
+  CheckOutRequest,
+} from "@/api/attendanceApi";
 import { ScedulesProps } from "@/app/attendance/components/types";
 import { formatErrorMessage, logError } from "@/utils/errorHandler";
 
 // 쿼리 키 상수
 export const ATTENDANCE_QUERY_KEYS = {
-  dailySchedules: (date: string) => ["attendance", "my-daily-schedules", date] as const,
-  userSchedules: (userId: number) => ["attendance", "user-schedules", userId] as const,
+  dailySchedules: (date: string) =>
+    ["attendance", "my-daily-schedules", date] as const,
+  userSchedules: (userId: number) =>
+    ["attendance", "user-schedules", userId] as const,
 } as const;
 
 /**
@@ -31,23 +39,23 @@ export const useDailySchedules = (date: string) => {
     gcTime: 10 * 60 * 1000, // 10분
     retry: (failureCount, error) => {
       // 개발 환경에서는 재시도 안함 (서버 미실행 시)
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === "development") {
         return false;
       }
-      
+
       // 최대 3번 재시도
       if (failureCount >= 3) return false;
-      
+
       // 네트워크 오류나 서버 오류인 경우에만 재시도
-      const errorMessage = error?.message || '';
-      const isRetryable = 
-        errorMessage.includes('네트워크') ||
-        errorMessage.includes('서버') ||
-        errorMessage.includes('시간 초과');
-      
+      const errorMessage = error?.message || "";
+      const isRetryable =
+        errorMessage.includes("네트워크") ||
+        errorMessage.includes("서버") ||
+        errorMessage.includes("시간 초과");
+
       return isRetryable;
     },
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 
@@ -57,7 +65,7 @@ export const useDailySchedules = (date: string) => {
 export const useCheckIn = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<any, Error, CheckInRequest>({
+  return useMutation<unknown, Error, CheckInRequest>({
     mutationFn: async (request: CheckInRequest) => {
       try {
         return await checkIn(request);
@@ -71,7 +79,7 @@ export const useCheckIn = () => {
       queryClient.invalidateQueries({
         queryKey: ["attendance"],
       });
-      
+
       console.log("출근 처리 성공:", data);
     },
     onError: (error) => {
@@ -86,12 +94,15 @@ export const useCheckIn = () => {
 export const useCheckOut = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<any, Error, CheckOutRequest>({
+  return useMutation<unknown, Error, CheckOutRequest>({
     mutationFn: async (request: CheckOutRequest) => {
       try {
         return await checkOut(request);
       } catch (error) {
-        logError(error, `Check-out attempt - record:${request.attendanceRecordId}`);
+        logError(
+          error,
+          `Check-out attempt - record:${request.attendanceRecordId}`
+        );
         throw new Error(formatErrorMessage(error));
       }
     },
@@ -100,7 +111,7 @@ export const useCheckOut = () => {
       queryClient.invalidateQueries({
         queryKey: ["attendance"],
       });
-      
+
       console.log("퇴근 처리 성공:", data);
     },
     onError: (error) => {

@@ -2,7 +2,9 @@
  * API 클라이언트 설정
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+// 개발 편의를 위해 로컬 기본값을 제공. 배포환경은 환경변수로 주입됨
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
 interface ApiResponse<T = any> {
   data: T;
@@ -25,12 +27,12 @@ class ApiClient {
   constructor(baseURL: string) {
     this.baseURL = baseURL;
     this.defaultHeaders = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
-    
+
     // 브라우저 환경에서 토큰 자동 설정
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("accessToken");
       if (token) {
         this.setAuthToken(token);
       }
@@ -42,17 +44,17 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     // 매 요청마다 최신 토큰 확인 및 설정
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken');
-      if (token && !this.defaultHeaders['Authorization']) {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("accessToken");
+      if (token && !this.defaultHeaders["Authorization"]) {
         this.setAuthToken(token);
-      } else if (!token && this.defaultHeaders['Authorization']) {
+      } else if (!token && this.defaultHeaders["Authorization"]) {
         this.removeAuthToken();
       }
     }
-    
+
     const config: RequestInit = {
       ...options,
       headers: {
@@ -63,12 +65,15 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         // 에러 응답에서 메시지 추출 시도
         try {
           const errorData = await response.json();
-          const errorMessage = errorData.message || errorData.error || `HTTP error! status: ${response.status}`;
+          const errorMessage =
+            errorData.message ||
+            errorData.error ||
+            `HTTP error! status: ${response.status}`;
           throw new Error(errorMessage);
         } catch (parseError) {
           // JSON 파싱 실패 시 기본 에러 메시지
@@ -77,7 +82,7 @@ class ApiClient {
       }
 
       const data = await response.json();
-      
+
       return {
         data,
         status: response.status,
@@ -85,12 +90,15 @@ class ApiClient {
         headers: Object.fromEntries(response.headers.entries()),
       };
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       throw error;
     }
   }
 
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+  async get<T>(
+    endpoint: string,
+    params?: Record<string, any>
+  ): Promise<ApiResponse<T>> {
     let url = endpoint;
     if (params) {
       const searchParams = new URLSearchParams();
@@ -102,40 +110,40 @@ class ApiClient {
       url += `?${searchParams.toString()}`;
     }
 
-    return this.request<T>(url, { method: 'GET' });
+    return this.request<T>(url, { method: "GET" });
   }
 
   async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
-      method: 'PUT',
+      method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
-      method: 'PATCH',
+      method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.request<T>(endpoint, { method: "DELETE" });
   }
 
   setAuthToken(token: string) {
-    this.defaultHeaders['Authorization'] = `Bearer ${token}`;
+    this.defaultHeaders["Authorization"] = `Bearer ${token}`;
   }
 
   removeAuthToken() {
-    delete this.defaultHeaders['Authorization'];
+    delete this.defaultHeaders["Authorization"];
   }
 }
 
