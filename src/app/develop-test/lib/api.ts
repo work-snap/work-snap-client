@@ -83,7 +83,7 @@ export const userTestApis = {
 
   // 사용자 타입 선택
   selectUserType: (userType: string) => {
-    return api.post("/api/users/me/select-type", { userType });
+    return api.post("/api/v1/users/type", { userType });
   },
 
   // 사용자 정보 조회

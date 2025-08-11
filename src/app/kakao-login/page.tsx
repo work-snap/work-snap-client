@@ -48,10 +48,10 @@ export default function KakaoLogin() {
 
       // 사용자 타입에 따른 리다이렉트 처리
       if (data.isNewUser || data.user.userType === "PENDING") {
-        console.log("🆕 신규 사용자 또는 타입 미선택 - 회원가입 페이지로 이동");
         router.push("/signup");
-      } else {
-        console.log("👤 기존 사용자 - 메인 페이지로 이동");
+      } else if (data.user.userType === "BUSINESS_OWNER") {
+        router.push("/signup/business/signup-1");
+      } else if (data.user.userType === "PART_TIME_WORKER") {
         router.push("/user/ptjob/mainpage");
       }
     },

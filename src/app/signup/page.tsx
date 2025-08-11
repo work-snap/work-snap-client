@@ -26,7 +26,7 @@ export default function SignupPage() {
       const API_URL = "http://localhost:8080";
 
       await axios.post(
-        `${API_URL}/api/users/me/select-type`,
+        `${API_URL}/api/v1/users/select-type`,
         { userType },
         {
           headers: {

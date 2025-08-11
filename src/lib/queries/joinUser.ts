@@ -1,0 +1,34 @@
+// src/lib/queries/joinUser.ts
+import { useMutation } from "@tanstack/react-query";
+import api from "../api"; // axios instance
+
+export interface Schedule {
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface JoinUserRequest {
+  workplaceId: number;
+  inviteCode: string;
+  schedules: Schedule[];
+}
+
+export const useJoinUser = () => {
+  return useMutation({
+    mutationFn: async ({
+      workplaceId,
+      inviteCode,
+      schedules,
+    }: JoinUserRequest) => {
+      const res = await api.post(
+        `/api/business-owner/workplaces/${workplaceId}/employees/onboard`,
+        {
+          inviteCode,
+          schedules,
+        }
+      );
+      return res.data;
+    },
+  });
+};

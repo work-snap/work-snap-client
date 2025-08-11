@@ -6,13 +6,12 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 // axios 인스턴스 생성
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true, // 쿠키 전송을 위해 추가
 });
-
 // 요청 인터셉터
 api.interceptors.request.use(
   (config) => {

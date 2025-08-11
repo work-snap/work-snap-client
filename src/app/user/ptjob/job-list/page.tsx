@@ -1,26 +1,77 @@
 "use client";
 
 import Navigation from "../../../components/navigation";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useCreateInviteCode } from "../../../../lib/auth/auth.query";
+import { UseMutationResult } from "@tanstack/react-query";
+import { CreateInvitationCodeRequest } from "../../../../lib/auth/types";
+import ToastModal from "../../../components/ToastModal";
+import Benner from "@/src/app/components/benner";
+import { useUser } from "@/src/lib/queries/useUser";
 
 export default function PtJobPage() {
+  const { data: user } = useUser();
   const [isVisible, setIsVisible] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+
+  const {
+    mutate: createInviteCode,
+    data: inviteCodeData,
+    isPending,
+  }: UseMutationResult<
+    CreateInvitationCodeRequest,
+    Error,
+    void
+  > = useCreateInviteCode();
+
+  useEffect(() => {
+    if (!isPending && isInitialLoading) {
+      setIsInitialLoading(false);
+    }
+  }, [isPending]);
+
+  useEffect(() => {
+    if (!inviteCodeData?.data?.inviteCode) {
+      createInviteCode();
+    }
+  }, [inviteCodeData, createInviteCode]);
+
+  const handleCopy = useCallback(() => {
+    if (inviteCodeData?.data?.inviteCode) {
+      navigator.clipboard.writeText(inviteCodeData.data.inviteCode);
+      setShowToast(true);
+    }
+  }, [inviteCodeData?.data?.inviteCode]);
+
+  const handleCloseToast = useCallback(() => {
+    setShowToast(false);
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col  max-w-[430px] w-full mx-auto relative pb-[80px]">
+    <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
+      <ToastModal
+        message="인증코드가 복사되었습니다"
+        isVisible={showToast}
+        onClose={handleCloseToast}
+      />
+
       {/* 헤더 */}
       <header className="flex items-center justify-between px-4 pt-6 pb-3">
         <h1 className="text-[26px] font-extrabold text-main tracking-tight">
           Work Snap
         </h1>
         <div className="flex items-center gap-2">
-          <span className="text-[18px] font-bold text-gray5">SOO</span>
+          <span className="text-[18px] font-bold text-gray5">
+            {user?.data.nickname}
+          </span>
           <span className="bg-main2 text-gray1 text-xs font-semibold rounded-full px-2 py-1">
             알바님
           </span>
         </div>
       </header>
-
+      {/* 배너 */}
+      <Benner />
       {/* 인증코드 */}
       <div className="px-4 mt-2">
         <div className="flex items-center w-full">
@@ -28,67 +79,42 @@ export default function PtJobPage() {
             인증코드
           </span>
           <div className="flex-1 flex items-center rounded-lg px-3 py-2 shadow-sm border border-gray2">
-            <span className="flex-1 text-2xl  text-gray3 text-center select-all">
-              23F7KW
+            <span className="flex-1 text-2xl text-gray3 text-center select-all">
+              {isPending || isInitialLoading
+                ? "로딩중..."
+                : inviteCodeData?.data?.inviteCode || "코드 생성 실패"}
             </span>
-            <button className="ml-2">
-              <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-                <rect
-                  x="5.5"
-                  y="3.5"
-                  width="11"
-                  height="13"
-                  rx="2.5"
-                  stroke="#AAAAAA"
-                />
-                <path
-                  d="M3.5 6.5v8A2.5 2.5 0 0 0 6 17h6.5"
-                  stroke="#AAAAAA"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-      {/* 배너 */}
-      <div className="px-4 mt-4">
-        <div className="rounded-xl bg-sub1/20 p-4 flex items-center gap-4">
-          {/* 일러스트 대체 */}
-          <div className="flex-shrink-0">
-            <svg width="70" height="60" viewBox="0 0 70 60" fill="none">
-              <rect width="70" height="60" rx="10" fill="#FAA856" />
-              <rect
-                x="10"
-                y="30"
-                width="50"
-                height="10"
-                rx="5"
-                fill="#FAA856"
-              />
-              <rect
-                x="20"
-                y="20"
-                width="30"
-                height="10"
-                rx="5"
-                fill="#FAA856"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <div className="font-bold text-gray5 text-base leading-tight">
-              알바 출석,
-              <br />
-              <span className="inline-block bg-main text-gray1 text-xs rounded px-1.5 py-0.5 align-middle mr-1">
-                사장님도 알바님도
-              </span>
-              <br />
-              어플로 관리하세요.
+            <div className="flex gap-2">
+              <button
+                className="ml-2"
+                onClick={handleCopy}
+                disabled={
+                  isPending ||
+                  isInitialLoading ||
+                  !inviteCodeData?.data?.inviteCode
+                }
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+                  <rect
+                    x="5.5"
+                    y="3.5"
+                    width="11"
+                    height="13"
+                    rx="2.5"
+                    stroke="#AAAAAA"
+                  />
+                  <path
+                    d="M3.5 6.5v8A2.5 2.5 0 0 0 6 17h6.5"
+                    stroke="#AAAAAA"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
       {/* 대기 메시지 */}
       <div className="px-4 mt-4 flex flex-col items-center justify-center py-8 waiting-message">
         <div className="text-gray4 text-base font-medium text-center mb-4">

@@ -2,18 +2,53 @@
 
 import Link from "next/link";
 import Navigation from "../../../components/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "@/src/lib/queries/useUser";
 
 export default function PtjobMainPage() {
+  const { data: user } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentDate, setCurrentDate] = useState("2025년 6월 16일");
   const [workStatus, setWorkStatus] = useState("before"); // before, early, working, done
   const [isEarlyStart, setIsEarlyStart] = useState(false);
   const [isEarlyLeave, setIsEarlyLeave] = useState(false);
 
+  // 날짜 포맷
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}년 ${month}월 ${day}일`;
+  };
+
+  // 시간 포맷을 초 단위까지 포함하여 실시간 갱신
+  const getFormattedTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
+  const [currentTime, setCurrentTime] = useState(getFormattedTime());
+
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
+
+  // 현재 시각 실시간 갱신 (1분마다)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getFormattedTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const handleEarlyStart = () => {
     if (workStatus === "working") {
-      setIsEarlyLeave(true);
+      // 조퇴하기 버튼 누르면 isEarlyLeave 토글
+      setIsEarlyLeave((prev) => !prev);
+    } else if (workStatus === "early") {
+      setWorkStatus("before");
+      setIsEarlyStart(false);
     } else {
       setWorkStatus("early");
       setIsEarlyStart(true);
@@ -21,23 +56,37 @@ export default function PtjobMainPage() {
   };
 
   const handleStart = () => {
-    if (workStatus === "early") {
-      setWorkStatus("working");
-    } else if (workStatus === "before") {
-      setWorkStatus("working");
-      setIsEarlyStart(false);
-    }
+    const now = getFormattedTime();
+    setStartTime(now);
+    setWorkStatus("working");
+    setIsEarlyStart(workStatus === "early");
   };
 
   const handleEnd = () => {
-    if (isEarlyLeave) {
-      setWorkStatus("done");
-    } else if (workStatus === "working") {
+    const now = getFormattedTime();
+    if (isEarlyLeave || workStatus === "working") {
+      setEndTime(now);
       setWorkStatus("done");
     }
   };
 
   const getStatusButton = (status: string) => {
+    if (status === "working") {
+      if (isEarlyLeave) {
+        return (
+          <span className="text-sub3 text-xs font-medium bg-white rounded-full px-4 py-2">
+            정시퇴근
+          </span>
+        );
+      } else {
+        return (
+          <span className="text-sub3 text-xs font-medium bg-white rounded-full px-4 py-2">
+            조퇴하기
+          </span>
+        );
+      }
+    }
+
     switch (status) {
       case "before":
         return (
@@ -48,13 +97,7 @@ export default function PtjobMainPage() {
       case "early":
         return (
           <span className="text-white text-xs font-medium bg-main rounded-full px-4 py-2">
-            조기출근
-          </span>
-        );
-      case "working":
-        return (
-          <span className="text-sub3 text-xs font-medium bg-white rounded-full px-4 py-2">
-            조퇴하기
+            정시출근
           </span>
         );
       case "done":
@@ -126,7 +169,9 @@ export default function PtjobMainPage() {
           Work Snap
         </h1>
         <div className="flex items-center gap-2">
-          <span className="text-[18px] font-bold text-gray5">SOO</span>
+          <span className="text-[18px] font-bold text-gray5">
+            {user?.nickname}
+          </span>
           <span className="bg-main2 text-gray1 text-xs font-semibold rounded-full px-2 py-1">
             알바님
           </span>
@@ -134,12 +179,10 @@ export default function PtjobMainPage() {
       </header>
 
       {!isAuthenticated ? (
-        // 인증 전 화면
         <div className="flex-1 flex flex-col items-center justify-center px-4">
           <div className="text-main text-xl text-center font-extrabold whitespace-pre-line bg-gray1 rounded-3xl px-20 py-10 mb-4">
             {"사장님께서 알바님\n인증번호를 등록할 때까지\n잠시 기다려주세요."}
           </div>
-          {/* 테스트용 인증 버튼 */}
           <button
             onClick={() => setIsAuthenticated(true)}
             className="mt-4 px-6 py-2 bg-main text-white rounded-lg font-medium"
@@ -148,18 +191,16 @@ export default function PtjobMainPage() {
           </button>
         </div>
       ) : (
-        // 인증 후 화면
         <>
-          {/* 날짜 선택 */}
           <div className="flex items-center justify-between px-3 py-4 bg-main rounded-xl mb-5 mx-4">
             <button className="text-white">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-6 h-6"
               >
                 <path
                   strokeLinecap="round"
@@ -172,11 +213,11 @@ export default function PtjobMainPage() {
             <button className="text-white">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-6 h-6"
               >
                 <path
                   strokeLinecap="round"
@@ -189,7 +230,6 @@ export default function PtjobMainPage() {
 
           {/* 근무 시간표 */}
           <div className="flex-1 px-4 space-y-3">
-            {/* 스타벅스 */}
             <div className="bg-white rounded-xl border border-gray2">
               <div
                 className={`flex items-center justify-between mb-4 ${
@@ -209,27 +249,32 @@ export default function PtjobMainPage() {
                 >
                   스타벅스 해운대점
                 </span>
-                <div onClick={handleEarlyStart}>
+                <div
+                  onClick={handleEarlyStart}
+                  className="cursor-pointer select-none"
+                >
                   {getStatusButton(workStatus)}
                 </div>
               </div>
+
+              {/* 상태 메시지 */}
               <div
-                className={`flex items-center text-gray3 text-xs mb-3 px-6 ${
+                className={`flex items-center text-xs mb-3 px-6 ${
                   workStatus === "working"
                     ? "text-sub3"
                     : workStatus === "done"
                     ? "text-main"
-                    : ""
+                    : "text-gray3"
                 }`}
               >
                 {workStatus === "done" ? (
                   <svg
+                    className="w-4 h-4 mr-1"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-4 h-4 mr-1"
                   >
                     <path
                       strokeLinecap="round"
@@ -239,12 +284,12 @@ export default function PtjobMainPage() {
                   </svg>
                 ) : (
                   <svg
+                    className="w-4 h-4 mr-1"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-4 h-4 mr-1"
                   >
                     <path
                       strokeLinecap="round"
@@ -254,15 +299,13 @@ export default function PtjobMainPage() {
                   </svg>
                 )}
                 {workStatus === "working"
-                  ? isEarlyStart
-                    ? "열심히 일하고 있어요"
-                    : "열심히 일하고 있어요"
+                  ? "열심히 일하고 있어요"
                   : workStatus === "done"
-                  ? isEarlyLeave
-                    ? "오늘 업무 완료"
-                    : "오늘 업무 완료"
-                  : "아직 출근 전입니다."}
+                  ? "오늘 업무 완료"
+                  : `아직 출근 전입니다.`}
               </div>
+
+              {/* 시간 영역 */}
               <div className="flex flex-col gap-1 mb-3 px-2">
                 <div className="flex justify-around text-xs text-gray3">
                   <span
@@ -274,9 +317,8 @@ export default function PtjobMainPage() {
                         : "border-gray3"
                     }`}
                   >
-                    6월 16일
+                    {currentDate}
                   </span>
-
                   <span
                     className={`border rounded-full px-2 py-1 ${
                       workStatus === "working"
@@ -286,10 +328,11 @@ export default function PtjobMainPage() {
                         : "border-gray3"
                     }`}
                   >
-                    6월 16일
+                    {currentDate}
                   </span>
                 </div>
                 <div className="flex justify-around px-5">
+                  {/* 출근 시간 */}
                   <div className="flex flex-col">
                     <div
                       className={`text-4xl font-bold ${
@@ -311,17 +354,14 @@ export default function PtjobMainPage() {
                           : "text-gray3"
                       }`}
                     >
-                      {workStatus === "working"
+                      {workStatus === "working" || workStatus === "done"
                         ? isEarlyStart
-                          ? "조기출근 08:58"
-                          : "출근 08:58"
-                        : workStatus === "done"
-                        ? isEarlyStart
-                          ? "조기출근 08:58"
-                          : "출근 08:58"
-                        : "현재시각 8:58"}
+                          ? `조기출근 ${startTime}`
+                          : `출근 ${startTime}`
+                        : `현재시각 ${currentTime}`}
                     </div>
                   </div>
+
                   <div
                     className={`text-2xl font-bold ${
                       workStatus === "working"
@@ -333,6 +373,8 @@ export default function PtjobMainPage() {
                   >
                     . . .
                   </div>
+
+                  {/* 퇴근 시간 */}
                   <div className="flex flex-col">
                     <div
                       className={`text-4xl font-bold ${
@@ -345,7 +387,6 @@ export default function PtjobMainPage() {
                     >
                       15:00
                     </div>
-
                     <div
                       className={`text-md ${
                         workStatus === "working"
@@ -356,16 +397,17 @@ export default function PtjobMainPage() {
                       }`}
                     >
                       {workStatus === "working"
-                        ? "현재시각 14:53"
+                        ? `현재시각 ${currentTime}`
                         : workStatus === "done"
                         ? isEarlyLeave
-                          ? "조퇴 14:02"
-                          : "퇴근 15:02"
+                          ? `조퇴 ${endTime}`
+                          : `퇴근 ${endTime}`
                         : ""}
                     </div>
                   </div>
                 </div>
               </div>
+
               {getActionButton(workStatus)}
             </div>
           </div>
