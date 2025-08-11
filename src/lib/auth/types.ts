@@ -80,3 +80,38 @@ export interface ErrorResponse {
   timestamp: string;
   path: string;
 }
+
+//초대 코드 생성 요청 타입
+export interface CreateInvitationCodeRequest {
+  success: boolean;
+  data: {
+    inviteCode: string;
+    createdAt: string;
+  };
+  message: string;
+}
+export interface CreateInviteCodeResponse {
+  inviteCode: string;
+}
+export interface ResisterBusinessRequest {
+  businessRegistrationImage: string;
+}
+
+export interface ResisterBusinessResponse {
+  id: number;
+  userId: number;
+  businessName: string;
+  ownerName: string;
+  businessAddress: string;
+  businessRegistrationNumber: string;
+  businessType: string;
+  verificationStatus: string;
+  businessDescription: string;
+  employeeCount: number;
+  isActive: boolean;
+  verificationRequestedAt: string;
+  verificationCompletedAt: string;
+  verificationRejectionReason: string;
+  createdAt: string;
+  updatedAt: string;
+}

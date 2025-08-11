@@ -12,7 +12,6 @@ const api = axios.create({
   },
   withCredentials: true, // 쿠키 전송을 위해 추가
 });
-
 // 요청 인터셉터
 api.interceptors.request.use(
   (config) => {

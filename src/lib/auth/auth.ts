@@ -2,6 +2,7 @@ import { AxiosResponse } from "axios";
 import api from "../api";
 import {
   ApiResponse,
+  CreateInvitationCodeRequest,
   KakaoLoginRequest,
   LoginResponse,
   RefreshTokenResponse,
@@ -10,6 +11,9 @@ import {
   UpdateProfileRequest,
   UpdateProfileResponse,
   User,
+  CreateInviteCodeResponse,
+  ResisterBusinessResponse,
+  ResisterBusinessRequest,
 } from "./types";
 
 const BASE_URL = "/api/auth";
@@ -71,5 +75,19 @@ export const authApis = {
   // 토큰 유효성 검증
   validateToken: (): Promise<AxiosResponse<{ valid: boolean }>> => {
     return api.get<{ valid: boolean }>(`${BASE_URL}/validate`);
+  },
+  //초대 인증코드 생성
+  createInviteCode: (): Promise<AxiosResponse<CreateInvitationCodeRequest>> => {
+    return api.post<CreateInvitationCodeRequest>(
+      `/api/v1/part-time/invite-code`
+    );
+  },
+  resisterBusiness: (
+    request: ResisterBusinessRequest
+  ): Promise<AxiosResponse<ResisterBusinessResponse>> => {
+    return api.post<ResisterBusinessResponse>(
+      `/api/business-owner/register`,
+      request
+    );
   },
 };

@@ -3,15 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Navigation() {
+interface NavigationProps {
+  userType?: "ptjob" | "business";
+}
+
+export default function Navigation({ userType = "ptjob" }: NavigationProps) {
   const pathname = usePathname();
+  const basePath = userType === "business" ? "/user/business" : "/user/ptjob";
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[430px] w-full bg-white border-t border-gray2 py-5">
       <div className="flex justify-around items-center h-[64px]">
         {/* 알바 */}
         <Link
-          href="/user/ptjob/job-list"
+          href={
+            userType === "business"
+              ? `${basePath}/add-business`
+              : `${basePath}/job-list`
+          }
           className={`flex flex-col items-center justify-center gap-1`}
         >
           <svg
@@ -29,7 +38,13 @@ export default function Navigation() {
           </svg>
           <span
             className={`text-xs ${
-              pathname.includes("job-list") ? "text-main" : "text-gray3"
+              (
+                userType === "business"
+                  ? pathname.includes("add-business")
+                  : pathname.includes("job-list")
+              )
+                ? "text-main"
+                : "text-gray3"
             }`}
           >
             알바
@@ -38,7 +53,7 @@ export default function Navigation() {
 
         {/* 출석 */}
         <Link
-          href="/user/ptjob/mainpage"
+          href={`${basePath}/mainpage`}
           className={`flex flex-col items-center justify-center gap-1`}
         >
           <svg
@@ -65,7 +80,11 @@ export default function Navigation() {
 
         {/* MY */}
         <Link
-          href="/user/ptjob/my"
+          href={
+            userType === "business"
+              ? `${basePath}/mypage`
+              : `${basePath}/mypage`
+          }
           className={`flex flex-col items-center justify-center gap-1`}
         >
           <svg
@@ -83,7 +102,13 @@ export default function Navigation() {
           </svg>
           <span
             className={`text-xs ${
-              pathname.includes("my") ? "text-main" : "text-gray3"
+              (
+                userType === "business"
+                  ? pathname.includes("mypage")
+                  : pathname.includes("my")
+              )
+                ? "text-main"
+                : "text-gray3"
             }`}
           >
             MY

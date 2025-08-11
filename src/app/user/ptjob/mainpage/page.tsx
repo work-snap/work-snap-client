@@ -2,23 +2,13 @@
 
 import Link from "next/link";
 import Navigation from "../../../components/navigation";
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useCurrentTime } from "@/hooks/useCurrentTime";
-import { useDateNavigation, DateNavigationProvider } from "@/context/DateContext";
-import { useGeolocation } from "@/hooks/useGeolocation";
-import { attendanceService, AttendanceRecord } from "@/services/attendanceService";
-import { locationService } from "@/services/locationService";
-import { scheduleService, WorkSchedule } from "@/services/scheduleService";
-import { WorkCard, WorkInfo, createWorkInfo } from "@/components/WorkCard";
-import { AttendanceStatus } from "@/components/StatusChip";
-import { formatDate } from "@/utils/dateUtils";
-import { usePushNotification } from "@/services/pushNotificationService";
-import { NotificationSettings } from "@/components/NotificationSettings";
-import { ToastContainer, useToast } from "@/components/Toast";
+import { useState, useEffect } from "react";
+import { useUser } from "@/src/lib/queries/useUser";
 
-// 메인 컴포넌트
-function PtjobMainPageContent() {
+export default function PtjobMainPage() {
+  const { data: user } = useUser();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [workStatus, setWorkStatus] = useState("before"); // before, early, working, done
   const [isEarlyStart, setIsEarlyStart] = useState(false);
   const [isEarlyLeave, setIsEarlyLeave] = useState(false);
   const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord | null>(null);
@@ -68,9 +58,46 @@ function PtjobMainPageContent() {
         console.error('오늘 출석 기록 로드 실패:', error);
       }
     };
+  // 날짜 포맷
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}년 ${month}월 ${day}일`;
+  };
 
-    if (isAuthenticated) {
-      loadTodayAttendance();
+  // 시간 포맷을 초 단위까지 포함하여 실시간 갱신
+  const getFormattedTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const [currentDate, setCurrentDate] = useState(formatDate(new Date()));
+  const [currentTime, setCurrentTime] = useState(getFormattedTime());
+
+  const [startTime, setStartTime] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
+
+  // 현재 시각 실시간 갱신 (1분마다)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getFormattedTime());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleEarlyStart = () => {
+    if (workStatus === "working") {
+      // 조퇴하기 버튼 누르면 isEarlyLeave 토글
+      setIsEarlyLeave((prev) => !prev);
+    } else if (workStatus === "early") {
+      setWorkStatus("before");
+      setIsEarlyStart(false);
+    } else {
+      setWorkStatus("early");
+      setIsEarlyStart(true);
     }
   }, [isAuthenticated, currentEmployeeId]);
 
@@ -111,143 +138,61 @@ function PtjobMainPageContent() {
         return;
       }
 
-      // 서비스 워커 등록
-      await pushNotification.service.registerServiceWorker();
+  const handleStart = () => {
+    const now = getFormattedTime();
+    setStartTime(now);
+    setWorkStatus("working");
+    setIsEarlyStart(workStatus === "early");
+  };
 
-      // 오늘 날짜의 활성 스케줄만 필터링
-      const today = new Date().toISOString().split('T')[0];
-      const activeSchedules = scheduleData.filter(schedule => 
-        schedule.workDate === today && 
-        schedule.isActive
-      );
+  const handleEnd = () => {
+    const now = getFormattedTime();
+    if (isEarlyLeave || workStatus === "working") {
+      setEndTime(now);
+      setWorkStatus("done");
 
-      // 각 스케줄에 대해 10분 전 알림 등록
-      for (const schedule of activeSchedules) {
-        const workStartTime = new Date(`${schedule.workDate}T${schedule.startTime}:00`);
-        const workplaceName = schedule.workLocation || '직장';
-        
-        // 현재 시간보다 미래인 경우만 알림 등록
-        if (workStartTime > new Date()) {
-          const notificationId = pushNotification.scheduleWorkReminder(
-            workStartTime,
-            workplaceName,
-            schedule.id
-          );
-          
-          if (notificationId) {
-            console.log(`알림 등록 완료: ${schedule.id} - ${workStartTime.toLocaleTimeString()}`);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('알림 등록 실패:', error);
-    }
-  }, [pushNotification]);
-
-  // 컴포넌트 마운트 시 알림 권한 요청 및 FCM 초기화
-  useEffect(() => {
-    const initializeNotifications = async () => {
-      try {
-        const permissionState = pushNotification.getPermissionState();
-        if (permissionState.supported && permissionState.permission === 'granted') {
-          // 권한이 허용된 경우 FCM 초기화
-          await pushNotification.service.initializeFCM();
-        } else if (permissionState.supported && permissionState.permission === 'default') {
-          // 자동으로 권한 요청하지 않고 사용자 동작에 따라 요청
-          console.log('알림 권한이 필요합니다. 설정에서 권한을 허용해주세요.');
-        }
-      } catch (error) {
-        console.error('알림 초기화 실패:', error);
-      }
-    };
-
-    initializeNotifications();
-  }, [pushNotification]);
-
-  const handleStart = useCallback(async () => {
-    if (isLoading) return;
-    
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // GPS 위치 정보 요청
-      if (!location) {
-        await getCurrentPosition();
-        return;
-      }
-      
-      // 위치 인증
-      const authResult = await locationService.authenticateCheckIn(
-        currentEmployeeId,
-        location,
-        currentWorkplaceId
-      );
-      
-      if (!authResult.isAuthenticated) {
-        setError(authResult.message || '위치 인증에 실패했습니다.');
-        return;
-      }
-      
-      // 출근 처리
-      const attendanceRecord = await attendanceService.checkInWithLocation(
-        currentEmployeeId,
-        location,
-        currentWorkplaceId,
-        isEarlyStart ? "조기 출근" : undefined
-      );
-      
-      setTodayAttendance(attendanceRecord);
-      console.log('출근 완료:', attendanceRecord);
-      
-    } catch (error: any) {
-      setError(error.message || '출근 처리에 실패했습니다.');
-      console.error('출근 처리 실패:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, [isLoading, location, getCurrentPosition, currentEmployeeId, currentWorkplaceId, isEarlyStart]);
 
-  const handleEnd = useCallback(async () => {
-    if (isLoading || !todayAttendance) return;
-    
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // GPS 위치 정보 요청
-      if (!location) {
-        await getCurrentPosition();
-        return;
+
+  const getStatusButton = (status: string) => {
+    if (status === "working") {
+      if (isEarlyLeave) {
+        return (
+          <span className="text-sub3 text-xs font-medium bg-white rounded-full px-4 py-2">
+            정시퇴근
+          </span>
+        );
+      } else {
+        return (
+          <span className="text-sub3 text-xs font-medium bg-white rounded-full px-4 py-2">
+            조퇴하기
+          </span>
+        );
       }
-      
-      // 위치 인증
-      const authResult = await locationService.authenticateCheckOut(
-        currentEmployeeId,
-        location,
-        currentWorkplaceId
-      );
-      
-      if (!authResult.isAuthenticated) {
-        setError(authResult.message || '위치 인증에 실패했습니다.');
-        return;
-      }
-      
-      // 퇴근 처리
-      const updatedRecord = await attendanceService.checkOutWithLocation(
-        todayAttendance.id,
-        location,
-        isEarlyLeave ? "조기 퇴근" : undefined
-      );
-      
-      setTodayAttendance(updatedRecord);
-      console.log('퇴근 완료:', updatedRecord);
-      
-    } catch (error: any) {
-      setError(error.message || '퇴근 처리에 실패했습니다.');
-      console.error('퇴근 처리 실패:', error);
-    } finally {
-      setIsLoading(false);
+    }
+
+    switch (status) {
+      case "before":
+        return (
+          <span className="text-white text-xs font-medium bg-main rounded-full px-4 py-2">
+            조기출근
+          </span>
+        );
+      case "early":
+        return (
+          <span className="text-white text-xs font-medium bg-main rounded-full px-4 py-2">
+            정시출근
+          </span>
+        );
+      case "done":
+        return null;
+      default:
+        return (
+          <span className="text-white text-xs font-medium bg-main rounded-full px-4 py-2">
+            조기출근
+          </span>
+        );
     }
   }, [isLoading, location, getCurrentPosition, currentEmployeeId, currentWorkplaceId, todayAttendance, isEarlyLeave]);
 
@@ -430,16 +375,9 @@ function PtjobMainPageContent() {
           Work Snap
         </h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowNotificationSettings(true)}
-            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-            title="알림 설정"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-          </button>
-          <span className="text-[18px] font-bold text-gray5">SOO</span>
+          <span className="text-[18px] font-bold text-gray5">
+            {user?.nickname}
+          </span>
           <span className="bg-main2 text-gray1 text-xs font-semibold rounded-full px-2 py-1">
             알바님
           </span>
@@ -447,12 +385,10 @@ function PtjobMainPageContent() {
       </header>
 
       {!isAuthenticated ? (
-        // 인증 전 화면
         <div className="flex-1 flex flex-col items-center justify-center px-4">
           <div className="text-main text-xl text-center font-extrabold whitespace-pre-line bg-gray1 rounded-3xl px-20 py-10 mb-4">
             {"사장님께서 알바님\n인증번호를 등록할 때까지\n잠시 기다려주세요."}
           </div>
-          {/* 테스트용 인증 버튼 */}
           <button
             onClick={() => setIsAuthenticated(true)}
             className="mt-4 px-6 py-2 bg-main text-white rounded-lg font-medium"
@@ -461,18 +397,16 @@ function PtjobMainPageContent() {
           </button>
         </div>
       ) : (
-        // 인증 후 화면
         <>
-          {/* 날짜 선택 */}
           <div className="flex items-center justify-between px-3 py-4 bg-main rounded-xl mb-5 mx-4">
             <button className="text-white" onClick={goToPreviousDay}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-6 h-6"
               >
                 <path
                   strokeLinecap="round"
@@ -494,11 +428,11 @@ function PtjobMainPageContent() {
             <button className="text-white" onClick={goToNextDay}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth={2}
                 stroke="currentColor"
-                className="w-6 h-6"
               >
                 <path
                   strokeLinecap="round"
@@ -509,57 +443,187 @@ function PtjobMainPageContent() {
             </button>
           </div>
 
-          {/* 근무 시간표 - WorkCard 컴포넌트 적용 */}
-          <div className="flex-1 px-4">
-            {schedulesLoading ? (
-              <div className="bg-white rounded-xl border border-gray2 p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-main mx-auto mb-4"></div>
-                <p className="text-gray-500">스케줄을 불러오는 중...</p>
-              </div>
-            ) : schedules.length > 0 ? (
-              <div className="space-y-3">
-                {schedules.map((schedule, index) => renderScheduleCard(schedule, index))}
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl border border-gray2 p-8 text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-12 h-12 text-gray-400 mx-auto mb-4"
+          {/* 근무 시간표 */}
+          <div className="flex-1 px-4 space-y-3">
+            <div className="bg-white rounded-xl border border-gray2">
+              <div
+                className={`flex items-center justify-between mb-4 ${
+                  workStatus === "working"
+                    ? "bg-sub3"
+                    : workStatus === "done"
+                    ? "bg-main"
+                    : "bg-gray1"
+                } p-3 rounded-t-xl`}
+              >
+                <span
+                  className={`font-bold ${
+                    workStatus === "working" || workStatus === "done"
+                      ? "text-white"
+                      : "text-main"
+                  }`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5a2.25 2.25 0 0 1 21 9v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008ZM15 15h.008v.008H15V15Zm0 2.25h.008v.008H15v-.008ZM16.5 15h.008v.008H16.5V15Zm0 2.25h.008v.008H16.5v-.008Z"
-                  />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  스케줄이 없습니다
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {formatDate(currentDate, { showYear: false, locale: 'ko-KR' })}에 등록된 근무 일정이 없습니다.
-                </p>
-                <Link
-                  href="/user/ptjob/add-work"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-main bg-main/10 hover:bg-main/20 transition-colors"
+                  스타벅스 해운대점
+                </span>
+                <div
+                  onClick={handleEarlyStart}
+                  className="cursor-pointer select-none"
                 >
+                  {getStatusButton(workStatus)}
+                </div>
+              </div>
+
+              {/* 상태 메시지 */}
+              <div
+                className={`flex items-center text-xs mb-3 px-6 ${
+                  workStatus === "working"
+                    ? "text-sub3"
+                    : workStatus === "done"
+                    ? "text-main"
+                    : "text-gray3"
+                }`}
+              >
+                {workStatus === "done" ? (
                   <svg
+                    className="w-4 h-4 mr-1"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                ) : (
+
+                  <svg
+                    className="w-4 h-4 mr-1"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={1.5}
                     stroke="currentColor"
-                    className="w-4 h-4 mr-2"
+
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
-                  근무 추가하기
-                </Link>
+
+                )}
+                {workStatus === "working"
+                  ? "열심히 일하고 있어요"
+                  : workStatus === "done"
+                  ? "오늘 업무 완료"
+                  : `아직 출근 전입니다.`}
               </div>
-            )}
+
+              {/* 시간 영역 */}
+              <div className="flex flex-col gap-1 mb-3 px-2">
+                <div className="flex justify-around text-xs text-gray3">
+                  <span
+                    className={`border rounded-full px-2 py-1 ${
+                      workStatus === "working"
+                        ? "border-sub3 text-sub3"
+                        : workStatus === "done"
+                        ? "border-main text-main"
+                        : "border-gray3"
+                    }`}
+                  >
+                    {currentDate}
+                  </span>
+                  <span
+                    className={`border rounded-full px-2 py-1 ${
+                      workStatus === "working"
+                        ? "border-sub3 text-sub3"
+                        : workStatus === "done"
+                        ? "border-main text-main"
+                        : "border-gray3"
+                    }`}
+                  >
+                    {currentDate}
+                  </span>
+                </div>
+                <div className="flex justify-around px-5">
+                  {/* 출근 시간 */}
+                  <div className="flex flex-col">
+                    <div
+                      className={`text-4xl font-bold ${
+                        workStatus === "working"
+                          ? "text-sub3"
+                          : workStatus === "done"
+                          ? "text-main"
+                          : ""
+                      }`}
+                    >
+                      09:00
+                    </div>
+                    <div
+                      className={`text-md ${
+                        workStatus === "working"
+                          ? "text-sub3"
+                          : workStatus === "done"
+                          ? "text-main"
+                          : "text-gray3"
+                      }`}
+                    >
+                      {workStatus === "working" || workStatus === "done"
+                        ? isEarlyStart
+                          ? `조기출근 ${startTime}`
+                          : `출근 ${startTime}`
+                        : `현재시각 ${currentTime}`}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`text-2xl font-bold ${
+                      workStatus === "working"
+                        ? "text-sub3"
+                        : workStatus === "done"
+                        ? "text-main"
+                        : "text-gray3"
+                    } self-start -mt-2`}
+                  >
+                    . . .
+                  </div>
+
+                  {/* 퇴근 시간 */}
+                  <div className="flex flex-col">
+                    <div
+                      className={`text-4xl font-bold ${
+                        workStatus === "working"
+                          ? "text-sub3"
+                          : workStatus === "done"
+                          ? "text-main"
+                          : ""
+                      }`}
+                    >
+                      15:00
+                    </div>
+                    <div
+                      className={`text-md ${
+                        workStatus === "working"
+                          ? "text-gray3"
+                          : workStatus === "done"
+                          ? "text-main"
+                          : "text-gray1"
+                      }`}
+                    >
+                      {workStatus === "working"
+                        ? `현재시각 ${currentTime}`
+                        : workStatus === "done"
+                        ? isEarlyLeave
+                          ? `조퇴 ${endTime}`
+                          : `퇴근 ${endTime}`
+                        : ""}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {getActionButton(workStatus)}
+            </div>
           </div>
 
           {/* 추가 버튼 */}

@@ -9,6 +9,9 @@ import {
   UpdateProfileResponse,
   User,
   RefreshTokenResponse,
+  CreateInvitationCodeRequest,
+  ResisterBusinessResponse,
+  ResisterBusinessRequest,
 } from "./types";
 
 // 현재 사용자 정보 조회
@@ -127,5 +130,19 @@ export function useDeleteAccount(options = {}) {
       localStorage.removeItem("user");
     },
     ...options,
+  });
+}
+//초대 인증코드 생성
+export function useCreateInviteCode(options = {}) {
+  return useMutation<CreateInvitationCodeRequest, Error, void>({
+    mutationFn: () => authApis.createInviteCode().then((res) => res.data),
+    ...options,
+  });
+}
+//사업자 등록신청
+export function useResisterBusiness() {
+  return useMutation<ResisterBusinessResponse, Error, ResisterBusinessRequest>({
+    mutationFn: (data: ResisterBusinessRequest) =>
+      authApis.resisterBusiness(data).then((res) => res.data),
   });
 }
