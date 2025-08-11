@@ -1,4 +1,15 @@
 import api from "@/lib/api";
+import type {
+  LoginRequest,
+  UserUpdateForm,
+  BusinessOwnerRegistrationForm,
+  BusinessOwnerTestRequest,
+  WorkplaceRegistrationForm,
+  WorkScheduleBatchCreateForm,
+  WorkScheduleUpdateForm,
+  ClockInReq,
+  ClockOutReq,
+} from "./types";
 
 interface DevTokenResponse {
   accessToken: string;
@@ -286,7 +297,7 @@ export const attendanceTestApis = {
   },
 
   // 추가 근무 등록
-  createAdditionalWork: (data: AdditionalWorkCreateReq) => {
+  createAdditionalWork: (data: unknown) => {
     return api.post("/api/attendance/additional-work", data);
   },
 
@@ -328,7 +339,9 @@ export const testApis = {
   auth: {
     // 닉네임으로 개발 토큰 생성
     generateDevTokenByNickname: async (nickname: string) => {
-      const response = await api.post(`/api/auth/dev-token/nickname/${nickname}`);
+      const response = await api.post(
+        `/api/auth/dev-token/nickname/${nickname}`
+      );
       return response;
     },
 
@@ -359,6 +372,3 @@ export const testApis = {
 };
 
 // 기타 테스트 API들도 필요하면 추가
-export const workScheduleTestApis = {
-  // 워크 스케줄 관련 API들...
-};
