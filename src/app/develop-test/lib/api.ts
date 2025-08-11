@@ -328,7 +328,9 @@ export const testApis = {
   auth: {
     // 닉네임으로 개발 토큰 생성
     generateDevTokenByNickname: async (nickname: string) => {
-      const response = await api.post(`/api/auth/dev-token/nickname/${nickname}`);
+      const response = await api.post(
+        `/api/auth/dev-token/nickname/${nickname}`
+      );
       return response;
     },
 
@@ -356,9 +358,4 @@ export const testApis = {
       return response;
     },
   },
-};
-
-// 기타 테스트 API들도 필요하면 추가
-export const workScheduleTestApis = {
-  // 워크 스케줄 관련 API들...
 };
