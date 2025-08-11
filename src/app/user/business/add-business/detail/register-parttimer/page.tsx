@@ -2,15 +2,16 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import Navigation from "@/src/app/components/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { useJoinUser } from "@/src/lib/queries/joinUser";
 import { useGetWorkplaceDetail } from "@/src/lib/queries/getWPDetail";
 import { useValidateInviteCode } from "@/src/lib/queries/validateInviteCode";
-import WorkTimePicker from "@/src/app/components/WorkTimePicker";
+import DayTimePicker, {
+  type ScheduleItem,
+} from "@/src/app/components/DayTimePicker";
 
 export default function RegisterParttimer() {
   const joinUserMutation = useJoinUser();
@@ -27,9 +28,7 @@ export default function RegisterParttimer() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const [schedules, setSchedules] = useState<
-    { dayOfWeek: string; startTime: string; endTime: string }[]
-  >([]);
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
 
   const handleValidateCode = async () => {
     if (!code) {
@@ -52,15 +51,10 @@ export default function RegisterParttimer() {
       });
     }
   };
-  const handleSchedulesChange = useCallback(
-    (
-      newSchedules: { dayOfWeek: string; startTime: string; endTime: string }[]
-    ) => {
-      setSchedules(newSchedules);
-    },
-    []
-  );
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSchedulesChange = useCallback((newSchedules: ScheduleItem[]) => {
+    setSchedules(newSchedules);
+  }, []);
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!code || !name || !phone || schedules.length === 0) {
@@ -147,7 +141,9 @@ export default function RegisterParttimer() {
             <input
               type="text"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setCode(e.target.value)
+              }
               // required
               className="border border-gray2 rounded-lg p-3 w-full"
               placeholder="예) 23FK99"
@@ -189,7 +185,9 @@ export default function RegisterParttimer() {
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setStartDate(e.target.value)
+                }
                 // required
                 className="border border-gray2 rounded-lg p-2"
               />
@@ -197,13 +195,15 @@ export default function RegisterParttimer() {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setEndDate(e.target.value)
+                }
                 // required
                 className="border border-gray2 rounded-lg p-2"
               />
             </div>
           </div>
-          <WorkTimePicker onChange={handleSchedulesChange} />
+          <DayTimePicker onChange={handleSchedulesChange} />
           {/* 등록 버튼 */}
           <div className="w-full pt-6 pb-8">
             <Button
