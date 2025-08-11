@@ -1,27 +1,26 @@
-import api from "../../../lib/api";
-import {
-  TestResult,
-  AuthTokens,
-  LoginRequest,
-  LoginResponse,
-  UserUpdateForm,
-  DevTokenRequest,
-  ApiResponse,
-  BusinessOwnerRegistrationForm,
-  BusinessOwnerTestRequest,
-  BusinessOwnerInfo,
-  FileUploadResponse,
-  VerificationStatusResponse,
-  WorkplaceRegistrationForm,
-  Workplace,
-  InviteCodeResponse,
-  PartTimeInfo,
-  WorkScheduleUpdateForm,
-  WorkScheduleBatchCreateForm,
-  ClockInReq,
-  ClockOutReq,
-  AdditionalWorkCreateReq,
-} from "./types";
+import api from "@/lib/api";
+
+interface DevTokenResponse {
+  accessToken: string;
+  user: {
+    id: string | number;
+    nickname: string;
+  };
+}
+
+interface KakaoLoginRequest {
+  code: string;
+  userType: string;
+}
+
+interface LoginResponse {
+  accessToken: string;
+  user: {
+    id: number;
+    nickname?: string;
+  };
+  isNewUser?: boolean;
+}
 
 // Auth API
 export const authTestApis = {
@@ -326,44 +325,40 @@ export const attendanceTestApis = {
 
 // 통합 API 객체
 export const testApis = {
-  auth: authTestApis,
-  user: userTestApis,
-  businessOwner: businessOwnerTestApis,
-  workplace: workplaceTestApis,
-  workSchedule: workScheduleTestApis,
-  partTime: partTimeTestApis,
-  attendance: attendanceTestApis,
-};
+  auth: {
+    // 닉네임으로 개발 토큰 생성
+    generateDevTokenByNickname: async (nickname: string) => {
+      const response = await api.post(`/api/auth/dev-token/nickname/${nickname}`);
+      return response;
+    },
 
-// 네트워크 연결 테스트 유틸리티 (간소화)
-export const networkUtils = {
-  // 간단한 서버 연결 확인
-  checkConnection: async (): Promise<{ success: boolean; message: string }> => {
-    try {
-      // 기존 API 엔드포인트로 간단한 연결 테스트
-      const response = await fetch("http://localhost:8080/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
+    // 사용자 ID로 개발 토큰 생성
+    generateDevToken: async (userId: string) => {
+      const response = await api.post(`/api/auth/dev-token/${userId}`);
+      return response;
+    },
 
-      // 400, 401 등의 응답도 연결 성공으로 간주
-      return {
-        success: true,
-        message: `서버 연결 확인 (상태: ${response.status})`,
-      };
-    } catch (error: any) {
-      let message = "서버 연결 실패";
-      if (error.name === "TypeError" && error.message.includes("fetch")) {
-        message = "네트워크 연결 오류 - 서버가 실행되지 않았을 수 있습니다";
-      }
+    // 카카오 로그인
+    kakaoLogin: async (request: KakaoLoginRequest) => {
+      const response = await api.post("/api/auth/kakao/login", request);
+      return response;
+    },
 
-      return {
-        success: false,
-        message,
-      };
-    }
+    // 토큰 갱신
+    refreshToken: async () => {
+      const response = await api.post("/api/auth/refresh");
+      return response;
+    },
+
+    // 로그아웃
+    logout: async () => {
+      const response = await api.post("/api/auth/logout");
+      return response;
+    },
   },
 };
 
-export default api;
+// 기타 테스트 API들도 필요하면 추가
+export const workScheduleTestApis = {
+  // 워크 스케줄 관련 API들...
+};

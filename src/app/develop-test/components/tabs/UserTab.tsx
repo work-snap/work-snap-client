@@ -22,9 +22,23 @@ export const UserTab: React.FC<UserTabProps> = ({
     onLoadingChange("my-info");
     try {
       const response = await testApis.user.getMyInfo();
-      onTestResult(createTestResult("/api/users/me", "GET", response));
+      onTestResult(createTestResult("/api/v1/users/profile", "GET", response));
     } catch (error) {
-      onTestResult(createTestResult("/api/users/me", "GET", null, error));
+      onTestResult(
+        createTestResult("/api/v1/users/profile", "GET", null, error)
+      );
+    } finally {
+      onLoadingChange(null);
+    }
+  };
+
+  const handleGetUserInfo = async () => {
+    onLoadingChange("my-info");
+    try {
+      const response = await testApis.user.getUserInfo();
+      onTestResult(createTestResult("/api/v1/users/info", "GET", response));
+    } catch (error) {
+      onTestResult(createTestResult("/api/v1/users/info", "GET", null, error));
     } finally {
       onLoadingChange(null);
     }
@@ -35,11 +49,28 @@ export const UserTab: React.FC<UserTabProps> = ({
     onLoadingChange("update-info");
     try {
       const response = await testApis.user.updateMyInfo(userUpdateForm);
-      onTestResult(createTestResult("/api/users/me", "PUT", response));
+      onTestResult(createTestResult("/api/v1/users/profile", "PUT", response));
       setShowUserUpdateForm(false);
       resetForm();
     } catch (error) {
-      onTestResult(createTestResult("/api/users/me", "PUT", null, error));
+      onTestResult(
+        createTestResult("/api/v1/users/profile", "PUT", null, error)
+      );
+    } finally {
+      onLoadingChange(null);
+    }
+  };
+
+  const handleUpdateUserInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    onLoadingChange("update-info");
+    try {
+      const response = await testApis.user.updateUserInfo(userUpdateForm);
+      onTestResult(createTestResult("/api/v1/users/info", "PUT", response));
+      setShowUserUpdateForm(false);
+      resetForm();
+    } catch (error) {
+      onTestResult(createTestResult("/api/v1/users/info", "PUT", null, error));
     } finally {
       onLoadingChange(null);
     }
@@ -53,11 +84,11 @@ export const UserTab: React.FC<UserTabProps> = ({
         userUpdateForm.userType
       );
       onTestResult(
-        createTestResult("/api/users/me/select-type", "POST", response)
+        createTestResult("/api/v1/users/select-type", "POST", response)
       );
     } catch (error) {
       onTestResult(
-        createTestResult("/api/users/me/select-type", "POST", null, error)
+        createTestResult("/api/v1/users/select-type", "POST", null, error)
       );
     } finally {
       onLoadingChange(null);
@@ -87,7 +118,7 @@ export const UserTab: React.FC<UserTabProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
               onClick={handleGetMyInfo}
               disabled={loading === "my-info"}
@@ -101,7 +132,25 @@ export const UserTab: React.FC<UserTabProps> = ({
               ) : (
                 <span className="flex items-center justify-center space-x-2">
                   <span>📋</span>
-                  <span>내 정보 조회</span>
+                  <span>프로필 조회</span>
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={handleGetUserInfo}
+              disabled={loading === "my-info"}
+              className="group relative bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed transform hover:scale-105"
+            >
+              {loading === "my-info" ? (
+                <span className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>조회 중...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center space-x-2">
+                  <span>👤</span>
+                  <span>사용자 정보</span>
                 </span>
               )}
             </button>
@@ -116,74 +165,134 @@ export const UserTab: React.FC<UserTabProps> = ({
             >
               <span className="flex items-center space-x-2">
                 <span>{showUserUpdateForm ? "📝" : "✏️"}</span>
-                <span>
-                  {showUserUpdateForm ? "폼 닫기" : "정보 수정 폼 열기"}
-                </span>
+                <span>{showUserUpdateForm ? "폼 닫기" : "정보 수정"}</span>
               </span>
             </button>
           </div>
 
           {showUserUpdateForm && (
             <div className="mt-6 backdrop-blur-sm bg-white/70 rounded-2xl p-6 border border-emerald-100/50 shadow-lg">
-              <form onSubmit={handleUserUpdate} className="space-y-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">✏️</span>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <form onSubmit={handleUserUpdate} className="space-y-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm">📋</span>
+                    </div>
+                    <h5 className="text-lg font-bold text-emerald-700">
+                      프로필 수정 (/profile)
+                    </h5>
                   </div>
-                  <h5 className="text-lg font-bold text-emerald-700">
-                    사용자 정보 수정
-                  </h5>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    닉네임
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="새로운 닉네임을 입력하세요"
-                    value={userUpdateForm.nickname}
-                    onChange={(e) => updateForm({ nickname: e.target.value })}
-                    className="w-full px-4 py-3 text-gray-900 bg-white/80 border border-emerald-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent shadow-sm backdrop-blur-sm transition-all duration-200"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      닉네임
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="새로운 닉네임을 입력하세요"
+                      value={userUpdateForm.nickname}
+                      onChange={(e) => updateForm({ nickname: e.target.value })}
+                      className="w-full px-4 py-3 text-gray-900 bg-white/80 border border-emerald-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent shadow-sm backdrop-blur-sm transition-all duration-200"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    사용자 타입
-                  </label>
-                  <select
-                    value={userUpdateForm.userType}
-                    onChange={(e) => updateForm({ userType: e.target.value })}
-                    className="w-full px-4 py-3 text-gray-900 bg-white/80 border border-emerald-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent shadow-sm backdrop-blur-sm transition-all duration-200"
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      사용자 타입
+                    </label>
+                    <select
+                      value={userUpdateForm.userType}
+                      onChange={(e) => updateForm({ userType: e.target.value })}
+                      className="w-full px-4 py-3 text-gray-900 bg-white/80 border border-emerald-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-transparent shadow-sm backdrop-blur-sm transition-all duration-200"
+                    >
+                      {USER_TYPE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading === "update-info"}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
                   >
-                    {USER_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    {loading === "update-info" ? (
+                      <span className="flex items-center justify-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>수정 중...</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center space-x-2">
+                        <span>💾</span>
+                        <span>프로필 수정</span>
+                      </span>
+                    )}
+                  </button>
+                </form>
 
-                <button
-                  type="submit"
-                  disabled={loading === "update-info"}
-                  className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
-                >
-                  {loading === "update-info" ? (
-                    <span className="flex items-center justify-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>수정 중...</span>
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center space-x-2">
-                      <span>💾</span>
-                      <span>정보 수정</span>
-                    </span>
-                  )}
-                </button>
-              </form>
+                <form onSubmit={handleUpdateUserInfo} className="space-y-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm">👤</span>
+                    </div>
+                    <h5 className="text-lg font-bold text-teal-700">
+                      사용자 정보 수정 (/info)
+                    </h5>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      닉네임
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="새로운 닉네임을 입력하세요"
+                      value={userUpdateForm.nickname}
+                      onChange={(e) => updateForm({ nickname: e.target.value })}
+                      className="w-full px-4 py-3 text-gray-900 bg-white/80 border border-teal-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent shadow-sm backdrop-blur-sm transition-all duration-200"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      사용자 타입
+                    </label>
+                    <select
+                      value={userUpdateForm.userType}
+                      onChange={(e) => updateForm({ userType: e.target.value })}
+                      className="w-full px-4 py-3 text-gray-900 bg-white/80 border border-teal-200/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent shadow-sm backdrop-blur-sm transition-all duration-200"
+                    >
+                      {USER_TYPE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading === "update-info"}
+                    className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  >
+                    {loading === "update-info" ? (
+                      <span className="flex items-center justify-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>수정 중...</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center space-x-2">
+                        <span>💾</span>
+                        <span>정보 수정</span>
+                      </span>
+                    )}
+                  </button>
+                </form>
+              </div>
             </div>
           )}
         </div>

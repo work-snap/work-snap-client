@@ -22,12 +22,56 @@ export const AuthTab: React.FC<AuthTabProps> = ({
   const [showDevTokenForm, setShowDevTokenForm] = useState(false);
   const [devTokenUserId, setDevTokenUserId] = useState("");
   const [devTokenNickname, setDevTokenNickname] = useState("");
+  const [kakaoCode, setKakaoCode] = useState("");
+  const [userType, setUserType] = useState("BUSINESS_OWNER");
 
   const handleKakaoLogin = async () => {
     onLoadingChange("kakao-login");
     try {
-      const response = await testApis.auth.kakaoLogin();
+      const mockResponse = {
+        data: {
+          success: true,
+          accessToken: "mock-access-token",
+          refreshToken: "mock-refresh-token",
+          user: {
+            id: 1,
+            username: "testuser",
+            userType: "BUSINESS_OWNER",
+          },
+        },
+      };
+      onTestResult(
+        createTestResult("/api/auth/kakao/login", "POST", mockResponse)
+      );
+    } catch (error) {
+      onTestResult(
+        createTestResult("/api/auth/kakao/login", "POST", null, error)
+      );
+    } finally {
+      onLoadingChange(null);
+    }
+  };
+
+  const handleRealKakaoLogin = async () => {
+    if (!kakaoCode) {
+      alert("카카오 인증 코드를 입력해주세요.");
+      return;
+    }
+
+    onLoadingChange("kakao-login-real");
+    try {
+      const response = await testApis.auth.kakaoLogin({
+        code: kakaoCode,
+        userType: userType,
+      });
       onTestResult(createTestResult("/api/auth/kakao/login", "POST", response));
+
+      if (response.data?.accessToken) {
+        onAuthUpdate(
+          response.data.accessToken,
+          response.data.user?.id?.toString() || "unknown"
+        );
+      }
     } catch (error) {
       onTestResult(
         createTestResult("/api/auth/kakao/login", "POST", null, error)
@@ -71,7 +115,7 @@ export const AuthTab: React.FC<AuthTabProps> = ({
       const response = await testApis.auth.generateDevToken(devTokenUserId);
       onTestResult(
         createTestResult(
-          `/api/auth/dev/tokens/${devTokenUserId}`,
+          `/api/auth/dev-token/${devTokenUserId}`,
           "POST",
           response
         )
@@ -85,7 +129,7 @@ export const AuthTab: React.FC<AuthTabProps> = ({
       setDevTokenUserId("");
     } catch (error) {
       onTestResult(
-        createTestResult("/api/auth/dev/tokens/{userId}", "POST", null, error)
+        createTestResult("/api/auth/dev-token/{userId}", "POST", null, error)
       );
     } finally {
       onLoadingChange(null);
@@ -103,7 +147,7 @@ export const AuthTab: React.FC<AuthTabProps> = ({
       );
       onTestResult(
         createTestResult(
-          `/api/auth/dev/tokens/by-nickname/${devTokenNickname}`,
+          `/api/auth/dev-token/nickname/${devTokenNickname}`,
           "POST",
           response
         )
@@ -121,7 +165,7 @@ export const AuthTab: React.FC<AuthTabProps> = ({
     } catch (error) {
       onTestResult(
         createTestResult(
-          "/api/auth/dev/tokens/by-nickname/{nickname}",
+          "/api/auth/dev-token/nickname/{nickname}",
           "POST",
           null,
           error
@@ -134,9 +178,107 @@ export const AuthTab: React.FC<AuthTabProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* 개발용 토큰 생성 섹션 */}
+      <div className="backdrop-blur-xl bg-gradient-to-br from-green-50/80 to-emerald-50/80 border border-green-200/50 rounded-2xl p-6 shadow-xl shadow-green-500/10 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-24 h-24 bg-green-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-emerald-400/20 rounded-full blur-2xl"></div>
+
+        <div className="relative">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-2xl">🔐</span>
+            </div>
+            <div>
+              <h4 className="text-2xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">
+                실제 카카오 로그인
+              </h4>
+              <p className="text-green-600/80 mt-1">
+                실제 백엔드 API를 통한 카카오 로그인 테스트
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                카카오 인증 코드
+              </label>
+              <input
+                type="text"
+                placeholder="카카오에서 받은 인증 코드를 입력하세요"
+                value={kakaoCode}
+                onChange={(e) => setKakaoCode(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-green-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400/50 transition-all duration-300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                사용자 타입
+              </label>
+              <select
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-green-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400/50 transition-all duration-300"
+              >
+                <option value="BUSINESS_OWNER">사업자</option>
+                <option value="PART_TIME_WORKER">파트타임 근무자</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            onClick={handleRealKakaoLogin}
+            disabled={loading === "kakao-login-real"}
+            className="group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="flex items-center space-x-2">
+              <span>🚀</span>
+              <span>
+                {loading === "kakao-login-real"
+                  ? "로그인 중..."
+                  : "실제 카카오 로그인"}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div className="backdrop-blur-xl bg-gradient-to-br from-yellow-50/80 to-orange-50/80 border border-yellow-200/50 rounded-2xl p-6 shadow-xl shadow-yellow-500/10 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-24 h-24 bg-yellow-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-orange-400/20 rounded-full blur-2xl"></div>
+
+        <div className="relative">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-2xl">💛</span>
+            </div>
+            <div>
+              <h4 className="text-2xl font-bold bg-gradient-to-r from-yellow-700 to-orange-700 bg-clip-text text-transparent">
+                Mock 카카오 로그인
+              </h4>
+              <p className="text-yellow-600/80 mt-1">
+                테스트용 Mock 응답으로 빠른 인증 테스트
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleKakaoLogin}
+            disabled={loading === "kakao-login"}
+            className="group relative px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-yellow-600 to-orange-600 text-white shadow-lg shadow-yellow-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="flex items-center space-x-2">
+              <span>💛</span>
+              <span>
+                {loading === "kakao-login"
+                  ? "로그인 중..."
+                  : "Mock 카카오 로그인"}
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+
       <div className="backdrop-blur-xl bg-gradient-to-br from-purple-50/80 to-indigo-50/80 border border-purple-200/50 rounded-2xl p-6 shadow-xl shadow-purple-500/10 relative overflow-hidden">
-        {/* 배경 장식 */}
         <div className="absolute -top-8 -right-8 w-24 h-24 bg-purple-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-indigo-400/20 rounded-full blur-2xl"></div>
 
@@ -176,7 +318,6 @@ export const AuthTab: React.FC<AuthTabProps> = ({
           {showDevTokenForm && (
             <div className="backdrop-blur-sm bg-white/70 rounded-2xl p-6 border border-purple-100/50 shadow-lg">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* 사용자 ID로 토큰 생성 */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -223,7 +364,6 @@ export const AuthTab: React.FC<AuthTabProps> = ({
                   </form>
                 </div>
 
-                {/* 닉네임으로 토큰 생성 */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
@@ -275,9 +415,7 @@ export const AuthTab: React.FC<AuthTabProps> = ({
         </div>
       </div>
 
-      {/* OAuth 로그인 섹션 */}
       <div className="backdrop-blur-xl bg-gradient-to-br from-yellow-50/80 to-orange-50/80 border border-yellow-200/50 rounded-2xl p-6 shadow-xl shadow-yellow-500/10 relative overflow-hidden">
-        {/* 배경 장식 */}
         <div className="absolute -top-8 -right-8 w-24 h-24 bg-yellow-400/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-orange-400/20 rounded-full blur-2xl"></div>
 
@@ -297,24 +435,6 @@ export const AuthTab: React.FC<AuthTabProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button
-              onClick={handleKakaoLogin}
-              disabled={loading === "kakao-login"}
-              className="group relative bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed transform hover:scale-105"
-            >
-              {loading === "kakao-login" ? (
-                <span className="flex items-center justify-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>로그인 중...</span>
-                </span>
-              ) : (
-                <span className="flex items-center justify-center space-x-2">
-                  <span>🟡</span>
-                  <span>카카오 로그인</span>
-                </span>
-              )}
-            </button>
-
             <button
               onClick={handleRefreshToken}
               disabled={loading === "refresh"}

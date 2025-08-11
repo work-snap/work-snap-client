@@ -11,7 +11,53 @@ export default function PtjobMainPage() {
   const [workStatus, setWorkStatus] = useState("before"); // before, early, working, done
   const [isEarlyStart, setIsEarlyStart] = useState(false);
   const [isEarlyLeave, setIsEarlyLeave] = useState(false);
+  const [todayAttendance, setTodayAttendance] = useState<AttendanceRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [schedules, setSchedules] = useState<WorkSchedule[]>([]);
+  const [schedulesLoading, setSchedulesLoading] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  
+  // 실시간 시간 관리
+  const { currentTime, formattedTime } = useCurrentTime({
+    updateInterval: 1000, // 1초마다 업데이트
+    enableServerSync: true
+  });
+  
+  // 푸시 알림 관리
+  const pushNotification = usePushNotification();
+  
+  // 토스트 관리
+  const { toasts, removeToast } = useToast();
+  
+  // 날짜 네비게이션
+  const { currentDate, goToPreviousDay, goToNextDay, goToToday } = useDateNavigation();
+  
+  // GPS 위치 정보
+  const {
+    location,
+    getCurrentPosition,
+    loading: locationLoading,
+    error: locationError,
+    hasPermission,
+    needsPermission
+  } = useGeolocation({ autoRequest: false });
 
+  // 임시 직원 및 사업장 ID
+  const currentEmployeeId = "temp-employee-001"; // 임시 직원 ID
+  const currentWorkplaceId = "temp-workplace-001"; // 임시 사업장 ID
+  
+  // 오늘 출석 기록 불러오기
+  useEffect(() => {
+    const loadTodayAttendance = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const record = await attendanceService.getAttendanceByDate(currentEmployeeId, today);
+        setTodayAttendance(record);
+      } catch (error) {
+        console.error('오늘 출석 기록 로드 실패:', error);
+      }
+    };
   // 날짜 포맷
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -53,7 +99,44 @@ export default function PtjobMainPage() {
       setWorkStatus("early");
       setIsEarlyStart(true);
     }
-  };
+  }, [isAuthenticated, currentEmployeeId]);
+
+  // 선택된 날짜의 스케줄 불러오기
+  useEffect(() => {
+    const loadSchedules = async () => {
+      if (!isAuthenticated) return;
+
+      try {
+        setSchedulesLoading(true);
+        const selectedDateStr = currentDate.toISOString().split('T')[0];
+        const scheduleData = await scheduleService.getSchedulesByDate(selectedDateStr, currentEmployeeId);
+        setSchedules(scheduleData);
+        
+        // 오늘 날짜의 스케줄에 대해 알림 등록
+        const today = new Date().toISOString().split('T')[0];
+        if (selectedDateStr === today) {
+          scheduleAlarmRegistration(scheduleData);
+        }
+      } catch (error) {
+        console.error('스케줄 로드 실패:', error);
+        setSchedules([]); // 에러 시 빈 배열로 설정
+      } finally {
+        setSchedulesLoading(false);
+      }
+    };
+
+    loadSchedules();
+  }, [isAuthenticated, currentDate, currentEmployeeId]);
+
+  // 스케줄 알림 등록 함수
+  const scheduleAlarmRegistration = useCallback(async (scheduleData: WorkSchedule[]) => {
+    try {
+      // 알림 권한 확인
+      const permissionState = pushNotification.getPermissionState();
+      if (permissionState.permission !== 'granted') {
+        console.log('알림 권한이 없어서 알림 등록을 건너뜁니다.');
+        return;
+      }
 
   const handleStart = () => {
     const now = getFormattedTime();
@@ -67,8 +150,10 @@ export default function PtjobMainPage() {
     if (isEarlyLeave || workStatus === "working") {
       setEndTime(now);
       setWorkStatus("done");
+
     }
-  };
+  }, [isLoading, location, getCurrentPosition, currentEmployeeId, currentWorkplaceId, isEarlyStart]);
+
 
   const getStatusButton = (status: string) => {
     if (status === "working") {
@@ -109,57 +194,178 @@ export default function PtjobMainPage() {
           </span>
         );
     }
-  };
+  }, [isLoading, location, getCurrentPosition, currentEmployeeId, currentWorkplaceId, todayAttendance, isEarlyLeave]);
 
-  const getActionButton = (status: string) => {
-    switch (status) {
-      case "before":
-        return (
-          <button
-            onClick={handleStart}
-            className="w-full text-center text-main py-3 border-t border-gray2 font-bold"
-          >
-            출근하기
-          </button>
-        );
-      case "early":
-        return (
-          <button
-            onClick={handleStart}
-            className="w-full text-center text-main py-3 border-t border-gray2 font-bold"
-          >
-            조기출근하기
-          </button>
-        );
-      case "working":
-        return (
-          <button
-            onClick={handleEnd}
-            className="w-full text-center text-sub3 py-3 border-t border-gray2 font-bold bg-white"
-          >
-            {isEarlyLeave ? "조퇴하기" : "퇴근하기"}
-          </button>
-        );
-      case "done":
-        return (
-          <button
-            className="w-full text-center text-gray3 py-3 border-t border-gray2 font-bold bg-gray1"
-            disabled
-          >
-            업무종료
-          </button>
-        );
-      default:
-        return (
-          <button
-            onClick={handleStart}
-            className="w-full text-center text-main py-3 border-t border-gray2 font-bold"
-          >
-            출근하기
-          </button>
-        );
+
+  // WorkSchedule을 WorkInfo로 변환하는 함수
+  const transformScheduleToWorkInfo = useCallback((schedule: WorkSchedule, attendanceRecord?: AttendanceRecord | null): WorkInfo => {
+    // 스케줄에 맞는 출석 기록 찾기
+    const scheduleAttendance = attendanceRecord && 
+      attendanceRecord.workDate === schedule.workDate &&
+      attendanceRecord.workplaceId === schedule.id ? attendanceRecord : null;
+
+    // 출석 상태 계산
+    const getAttendanceStatus = (): AttendanceStatus => {
+      if (scheduleAttendance) {
+        const hasCheckedIn = !!scheduleAttendance.actualStartTime;
+        const hasCheckedOut = !!scheduleAttendance.actualEndTime;
+        
+        if (hasCheckedIn && hasCheckedOut) {
+          return "NORMAL"; // 정상 완료
+        } else if (hasCheckedIn) {
+          return "NORMAL"; // 근무 중
+        }
+      }
+      
+      // 현재 시간 기반 상태 계산
+      const now = currentTime;
+      const today = now.toDateString();
+      const selectedDay = currentDate.toDateString();
+      
+      if (today !== selectedDay) {
+        return "NORMAL"; // 다른 날짜는 정상으로 표시
+      }
+      
+      const currentTimeStr = now.toTimeString().slice(0, 5);
+      const timeToMinutes = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+      
+      const currentMinutes = timeToMinutes(currentTimeStr);
+      const startMinutes = timeToMinutes(schedule.startTime);
+      
+      if (currentMinutes < startMinutes - 30) {
+        return "NORMAL"; // 시작 전
+      } else if (currentMinutes < startMinutes) {
+        return "EARLY_ARRIVAL"; // 조기 출근 가능
+      } else {
+        return "NORMAL"; // 근무 시간
+      }
+    };
+
+    return createWorkInfo({
+      id: schedule.id,
+      employeeId: schedule.employeeId,
+      employeeName: schedule.employeeName || "직원",
+      workDate: new Date(schedule.workDate),
+      scheduledStartTime: schedule.startTime,
+      scheduledEndTime: schedule.endTime,
+      actualStartTime: scheduleAttendance?.actualStartTime,
+      actualEndTime: scheduleAttendance?.actualEndTime,
+      status: getAttendanceStatus(),
+      workLocation: schedule.workLocation || `근무지`,
+      isFlexTime: schedule.isFlexible,
+      notes: schedule.description,
+    });
+  }, [currentTime, currentDate]);
+
+  // WorkCard의 체크인 핸들러
+  const handleWorkCardCheckIn = useCallback(async (workInfo: WorkInfo) => {
+    if (isLoading) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // GPS 위치 정보 요청
+      if (!location) {
+        await getCurrentPosition();
+        return;
+      }
+      
+      // 위치 인증
+      const authResult = await locationService.authenticateCheckIn(
+        workInfo.employeeId,
+        location,
+        workInfo.id // workInfo.id가 workplaceId 역할
+      );
+      
+      if (!authResult.isAuthenticated) {
+        setError(authResult.message || '위치 인증에 실패했습니다.');
+        return;
+      }
+      
+      // 출근 처리
+      const attendanceRecord = await attendanceService.checkInWithLocation(
+        workInfo.employeeId,
+        location,
+        workInfo.id,
+        workInfo.status === "EARLY_ARRIVAL" ? "조기 출근" : undefined
+      );
+      
+      setTodayAttendance(attendanceRecord);
+      console.log('출근 완료:', attendanceRecord);
+      
+    } catch (error: any) {
+      setError(error.message || '출근 처리에 실패했습니다.');
+      console.error('출근 처리 실패:', error);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [isLoading, location, getCurrentPosition]);
+
+  // WorkCard의 체크아웃 핸들러
+  const handleWorkCardCheckOut = useCallback(async (workInfo: WorkInfo) => {
+    if (isLoading || !todayAttendance) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // GPS 위치 정보 요청
+      if (!location) {
+        await getCurrentPosition();
+        return;
+      }
+      
+      // 위치 인증
+      const authResult = await locationService.authenticateCheckOut(
+        workInfo.employeeId,
+        location,
+        workInfo.id
+      );
+      
+      if (!authResult.isAuthenticated) {
+        setError(authResult.message || '위치 인증에 실패했습니다.');
+        return;
+      }
+      
+      // 퇴근 처리
+      const updatedRecord = await attendanceService.checkOutWithLocation(
+        todayAttendance.id,
+        location,
+        isEarlyLeave ? "조기 퇴근" : undefined
+      );
+      
+      setTodayAttendance(updatedRecord);
+      console.log('퇴근 완료:', updatedRecord);
+      
+    } catch (error: any) {
+      setError(error.message || '퇴근 처리에 실패했습니다.');
+      console.error('퇴근 처리 실패:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, location, getCurrentPosition, todayAttendance, isEarlyLeave]);
+
+  // 스케줄을 WorkCard로 렌더링하는 함수
+  const renderScheduleCard = useCallback((schedule: WorkSchedule, index: number) => {
+    // WorkSchedule을 WorkInfo로 변환
+    const workInfo = transformScheduleToWorkInfo(schedule, todayAttendance);
+    
+    return (
+      <WorkCard
+        key={schedule.id}
+        workInfo={workInfo}
+        size="md"
+        variant="default"
+        showActions={true}
+        onCheckIn={handleWorkCardCheckIn}
+        onCheckOut={handleWorkCardCheckOut}
+      />
+    );
+  }, [transformScheduleToWorkInfo, todayAttendance, handleWorkCardCheckIn, handleWorkCardCheckOut]);
 
   return (
     <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
@@ -193,7 +399,7 @@ export default function PtjobMainPage() {
       ) : (
         <>
           <div className="flex items-center justify-between px-3 py-4 bg-main rounded-xl mb-5 mx-4">
-            <button className="text-white">
+            <button className="text-white" onClick={goToPreviousDay}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-6 h-6"
@@ -209,8 +415,17 @@ export default function PtjobMainPage() {
                 />
               </svg>
             </button>
-            <span className="text-lg font-bold text-white">{currentDate}</span>
-            <button className="text-white">
+            <span className="text-lg font-bold text-white">
+              {formatDate(currentDate, { showYear: true, locale: 'ko-KR' })}
+            </span>
+            <button 
+              className="text-white text-xs bg-white bg-opacity-20 rounded px-2 py-1"
+              onClick={goToToday}
+              title="오늘로 이동"
+            >
+              오늘
+            </button>
+            <button className="text-white" onClick={goToNextDay}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-6 h-6"
@@ -283,20 +498,19 @@ export default function PtjobMainPage() {
                     />
                   </svg>
                 ) : (
+
                   <svg
                     className="w-4 h-4 mr-1"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     stroke="currentColor"
+
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
+
                 )}
                 {workStatus === "working"
                   ? "열심히 일하고 있어요"
@@ -418,11 +632,117 @@ export default function PtjobMainPage() {
               <Link href="/user/ptjob/add-work">추가근무 +</Link>
             </div>
           </div>
+          {/* 에러 메시지 표시 */}
+          {error && (
+            <div className="mx-4 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span className="text-red-800 text-sm font-medium">{error}</span>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-red-600 text-sm underline"
+              >
+                닫기
+              </button>
+            </div>
+          )}
+          
+          {/* 위치 권한 요청 메시지 */}
+          {needsPermission && (
+            <div className="mx-4 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="text-yellow-800 text-sm font-medium">
+                  출석을 위해 위치 권한이 필요합니다.
+                </span>
+              </div>
+              <button
+                onClick={getCurrentPosition}
+                className="mt-2 text-yellow-600 text-sm underline"
+              >
+                위치 권한 허용하기
+              </button>
+            </div>
+          )}
+          
+          {/* 위치 에러 메시지 */}
+          {locationError && (
+            <div className="mx-4 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-orange-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                <div className="flex-1">
+                  <span className="text-orange-800 text-sm font-medium block">
+                    {locationError.message}
+                  </span>
+                  <span className="text-orange-600 text-xs">
+                    GPS를 켜거나 실외로 이동해 주세요.
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={getCurrentPosition}
+                className="mt-2 text-orange-600 text-sm underline"
+              >
+                다시 시도
+              </button>
+            </div>
+          )}
         </>
+      )}
+
+      {/* 알림 설정 모달 */}
+      {showNotificationSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">알림 설정</h2>
+              <button
+                onClick={() => setShowNotificationSettings(false)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4">
+              <NotificationSettings
+                onSettingsChange={(settings) => {
+                  console.log('알림 설정 변경:', settings);
+                  // 설정 변경 시 스케줄 알림 재등록
+                  if (settings.workReminderEnabled) {
+                    scheduleAlarmRegistration(schedules);
+                  } else {
+                    pushNotification.cancelAllScheduledNotifications();
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 하단 네비게이션 */}
       <Navigation />
+      
+      {/* 토스트 컨테이너 */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
+  );
+}
+
+// DateNavigationProvider로 감싸진 메인 컴포넌트
+export default function PtjobMainPage() {
+  return (
+    <DateNavigationProvider>
+      <PtjobMainPageContent />
+    </DateNavigationProvider>
   );
 }
