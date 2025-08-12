@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["img1.kakaocdn.net", "t1.kakaocdn.net", "cdn.worksnap.com"], // 외부 이미지 도메인 허용
+    domains: [
+      "img1.kakaocdn.net",
+      "t1.kakaocdn.net",
+      "cdn.worksnap.com",
+      "example.com",
+    ], // 외부 이미지 도메인 허용
   },
 
   async rewrites() {

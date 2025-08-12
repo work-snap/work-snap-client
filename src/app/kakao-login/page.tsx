@@ -52,7 +52,7 @@ export default function KakaoLogin() {
       } else if (data.user.userType === "BUSINESS_OWNER") {
         router.push("/signup/business/signup-1");
       } else if (data.user.userType === "PART_TIME_WORKER") {
-        router.push("/user/ptjob/mainpage");
+        router.push("/attendance");
       }
     },
     onError: (error: AxiosError) => {

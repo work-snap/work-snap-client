@@ -215,8 +215,6 @@ export default function RegisterParttimer() {
           </div>
         </form>
       </div>
-
-      <Navigation userType="business" />
     </div>
   );
 }

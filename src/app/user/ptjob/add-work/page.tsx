@@ -4,7 +4,10 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/src/app/components/navigation";
 import { ConflictAlert, useConflictAlert } from "@/components/ConflictAlert";
-import { scheduleService, CreateScheduleRequest } from "@/services/scheduleService";
+import {
+  scheduleService,
+  CreateScheduleRequest,
+} from "@/services/scheduleService";
 import { BaseButton } from "@/app/components/BaseButton";
 
 export default function AddWorkPage() {
@@ -14,67 +17,84 @@ export default function AddWorkPage() {
   const [endTime, setEndTime] = useState("18:30");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingConflict, setIsCheckingConflict] = useState(false);
-  
-  const { isVisible, conflicts, alertProps, showAlert, hideAlert } = useConflictAlert();
+
+  const { isVisible, conflicts, alertProps, showAlert, hideAlert } =
+    useConflictAlert();
 
   // 충돌 검사 함수
-  const checkConflict = useCallback(async (scheduleData: CreateScheduleRequest) => {
-    setIsCheckingConflict(true);
-    try {
-      const result = await scheduleService.checkScheduleConflict(scheduleData);
-      if (result.hasConflict) {
-        showAlert(result.conflicts, {
-          type: "modal",
-          canProceed: result.canProceed,
-          recommendation: result.recommendation,
-          onProceed: () => {
-            hideAlert();
-            createSchedule(scheduleData, true);
-          },
-          onCancel: hideAlert,
-        });
-        return false;
+  const checkConflict = useCallback(
+    async (scheduleData: CreateScheduleRequest) => {
+      setIsCheckingConflict(true);
+      try {
+        const result = await scheduleService.checkScheduleConflict(
+          scheduleData
+        );
+        if (result.hasConflict) {
+          showAlert(result.conflicts, {
+            type: "modal",
+            canProceed: result.canProceed,
+            recommendation: result.recommendation,
+            onProceed: () => {
+              hideAlert();
+              createSchedule(scheduleData, true);
+            },
+            onCancel: hideAlert,
+          });
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("충돌 검사 실패:", error);
+        return true; // 충돌 검사 실패 시 진행 허용
+      } finally {
+        setIsCheckingConflict(false);
       }
-      return true;
-    } catch (error) {
-      console.error("충돌 검사 실패:", error);
-      return true; // 충돌 검사 실패 시 진행 허용
-    } finally {
-      setIsCheckingConflict(false);
-    }
-  }, [showAlert, hideAlert]);
+    },
+    [showAlert, hideAlert]
+  );
 
   // 스케줄 생성 함수
-  const createSchedule = useCallback(async (scheduleData: CreateScheduleRequest, forceCreate = false) => {
-    setIsLoading(true);
-    try {
-      if (!forceCreate) {
-        const canProceed = await checkConflict(scheduleData);
-        if (!canProceed) {
-          setIsLoading(false);
-          return;
+  const createSchedule = useCallback(
+    async (scheduleData: CreateScheduleRequest, forceCreate = false) => {
+      setIsLoading(true);
+      try {
+        if (!forceCreate) {
+          const canProceed = await checkConflict(scheduleData);
+          if (!canProceed) {
+            setIsLoading(false);
+            return;
+          }
         }
-      }
 
-      await scheduleService.createSchedule(scheduleData);
-      router.push("/user/ptjob/mainpage");
-    } catch (error) {
-      console.error("스케줄 생성 실패:", error);
-      alert("스케줄 생성에 실패했습니다. 다시 시도해주세요.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [checkConflict, router]);
+        await scheduleService.createSchedule(scheduleData);
+        router.push("/user/ptjob/mainpage");
+      } catch (error) {
+        console.error("스케줄 생성 실패:", error);
+        alert("스케줄 생성에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [checkConflict, router]
+  );
 
   // 추가근무 생성 핸들러
   const handleCreateWork = useCallback(async () => {
     // 기본 직원 ID (실제로는 로그인한 사용자 정보에서 가져와야 함)
     const employeeId = "user-123";
-    
+
     // 요일 계산
     const date = new Date(selectedDate);
-    const dayOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][date.getDay()];
-    
+    const dayOfWeek = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ][date.getDay()];
+
     const scheduleData: CreateScheduleRequest = {
       employeeId,
       workDate: selectedDate,
@@ -210,15 +230,7 @@ export default function AddWorkPage() {
       </div>
 
       {/* 충돌 알림 모달 */}
-      {isVisible && (
-        <ConflictAlert
-          conflicts={conflicts}
-          {...alertProps}
-        />
-      )}
-
-      {/* 하단 네비게이션 */}
-      <Navigation></Navigation>
+      {isVisible && <ConflictAlert conflicts={conflicts} {...alertProps} />}
     </div>
   );
 }
