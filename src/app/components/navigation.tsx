@@ -1,15 +1,15 @@
 "use client";
 
+import { useUser } from "@/lib/queries/useUser";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-interface NavigationProps {
-  userType?: "ptjob" | "business";
-}
-
-export default function Navigation({ userType = "ptjob" }: NavigationProps) {
+export default function Navigation() {
+  const { data: user } = useUser();
+  const userType = user?.data.userType ?? "ptjob";
   const pathname = usePathname();
-  const basePath = userType === "business" ? "/user/business" : "/user/ptjob";
+  const basePath =
+    userType === "BUSINESS_OWNER" ? "/user/business" : "/user/ptjob";
   // "/" 페이지에서는 안 보이게
   // "/" 또는 "/signup" 경로에서는 네비게이션 안 보이게
   if (
@@ -17,7 +17,9 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
     pathname === "/kakao-login" ||
     pathname === "/signup" ||
     pathname === "/signup/ptjob" ||
-    pathname === "/test-login"
+    pathname === "/test-login" ||
+    pathname === "/signup/business/signup-1" ||
+    pathname === " /signup/business/success-signup"
   )
     return null;
 
@@ -27,7 +29,7 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
         {/* 알바 */}
         <Link
           href={
-            userType === "business"
+            userType === "BUSINESS_OWNER"
               ? `${basePath}/add-business`
               : `${basePath}/job-list`
           }
@@ -49,7 +51,7 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
           <span
             className={`text-xs ${
               (
-                userType === "business"
+                userType === "BUSINESS_OWNER"
                   ? pathname.includes("add-business")
                   : pathname.includes("job-list")
               )
@@ -63,7 +65,11 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
 
         {/* 출석 */}
         <Link
-          href={"/attendance"}
+          href={
+            userType === "BUSINESS_OWNER"
+              ? `${basePath}/mainpage`
+              : "/attendance"
+          }
           className={`flex flex-col items-center justify-center gap-1`}
         >
           <svg
@@ -91,7 +97,7 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
         {/* MY */}
         <Link
           href={
-            userType === "business"
+            userType === "BUSINESS_OWNER"
               ? `${basePath}/mypage`
               : `${basePath}/mypage`
           }
