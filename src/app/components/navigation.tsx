@@ -10,6 +10,16 @@ interface NavigationProps {
 export default function Navigation({ userType = "ptjob" }: NavigationProps) {
   const pathname = usePathname();
   const basePath = userType === "business" ? "/user/business" : "/user/ptjob";
+  // "/" 페이지에서는 안 보이게
+  // "/" 또는 "/signup" 경로에서는 네비게이션 안 보이게
+  if (
+    pathname === "/" ||
+    pathname === "/kakao-login" ||
+    pathname === "/signup" ||
+    pathname === "/signup/ptjob" ||
+    pathname === "/test-login"
+  )
+    return null;
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[430px] w-full bg-white border-t border-gray2 py-5">
@@ -53,7 +63,7 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
 
         {/* 출석 */}
         <Link
-          href={`${basePath}/mainpage`}
+          href={"/attendance"}
           className={`flex flex-col items-center justify-center gap-1`}
         >
           <svg
@@ -66,12 +76,12 @@ export default function Navigation({ userType = "ptjob" }: NavigationProps) {
               id="event_available_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24"
               d="M153.927-810.225l-15.15-15.15,6.188-6.188,8.962,8.962,17.924-17.924,6.188,6.188Zm-25.392,15.577a8.219,8.219,0,0,1-6.028-2.507A8.219,8.219,0,0,1,120-803.184V-862.93a8.219,8.219,0,0,1,2.507-6.028,8.219,8.219,0,0,1,6.028-2.507H132.8V-880h8.535v8.535h34.141V-880h8.535v8.535h4.268a8.218,8.218,0,0,1,6.028,2.507,8.219,8.219,0,0,1,2.507,6.028v59.746a8.219,8.219,0,0,1-2.507,6.028,8.219,8.219,0,0,1-6.028,2.507Zm0-8.535h59.746v-42.676H128.535Zm0-51.211h59.746v-8.535H128.535Zm0,0v0Z"
               transform="translate(-120 880)"
-              fill={pathname.includes("mainpage") ? "#FA6956" : "#aaa"}
+              fill={pathname.includes("attendance") ? "#FA6956" : "#aaa"}
             />
           </svg>
           <span
             className={`text-xs ${
-              pathname.includes("mainpage") ? "text-main" : "text-gray3"
+              pathname.includes("attendance") ? "text-main" : "text-gray3"
             }`}
           >
             출석

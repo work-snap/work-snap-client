@@ -2,7 +2,7 @@
  * 스케줄 관련 API 서비스
  */
 
-import { api } from './api';
+import { api } from "./api";
 
 // 스케줄 타입 정의
 export interface WorkSchedule {
@@ -40,7 +40,7 @@ export interface UpdateScheduleRequest extends Partial<CreateScheduleRequest> {
 // 스케줄 충돌 정보 타입
 export interface ScheduleConflict {
   conflictingSchedule: WorkSchedule;
-  conflictType: 'OVERLAP' | 'DUPLICATE' | 'ADJACENT';
+  conflictType: "OVERLAP" | "DUPLICATE" | "ADJACENT";
   conflictStartTime: string;
   conflictEndTime: string;
   conflictDurationMinutes: number;
@@ -80,7 +80,7 @@ export interface BulkScheduleRequest {
 }
 
 class ScheduleService {
-  private baseUrl = '/api/schedules';
+  private baseUrl = "/api/schedules";
 
   /**
    * 스케줄 목록 조회
@@ -88,7 +88,7 @@ class ScheduleService {
   async getSchedules(filter: ScheduleFilter = {}): Promise<WorkSchedule[]> {
     try {
       const params = new URLSearchParams();
-      
+
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           params.append(key, String(value));
@@ -98,29 +98,32 @@ class ScheduleService {
       const response = await api.get(`${this.baseUrl}?${params.toString()}`);
       return response.data;
     } catch (error) {
-      console.error('스케줄 조회 실패:', error);
-      throw new Error('스케줄을 불러오는데 실패했습니다.');
+      console.error("스케줄 조회 실패:", error);
+      throw new Error("스케줄을 불러오는데 실패했습니다.");
     }
   }
 
   /**
    * 특정 날짜의 스케줄 조회
    */
-  async getSchedulesByDate(date: string, employeeId?: string): Promise<WorkSchedule[]> {
+  async getSchedulesByDate(
+    date: string,
+    employeeId?: string
+  ): Promise<WorkSchedule[]> {
     try {
-      const filter: ScheduleFilter = { 
-        startDate: date, 
+      const filter: ScheduleFilter = {
+        startDate: date,
         endDate: date,
-        isActive: true 
+        isActive: true,
       };
-      
+
       if (employeeId) {
         filter.employeeId = employeeId;
       }
 
       return await this.getSchedules(filter);
     } catch (error) {
-      console.error('날짜별 스케줄 조회 실패:', error);
+      console.error("날짜별 스케줄 조회 실패:", error);
       throw error;
     }
   }
@@ -128,19 +131,22 @@ class ScheduleService {
   /**
    * 특정 직원의 주간 스케줄 조회
    */
-  async getWeeklySchedules(employeeId: string, startDate: string): Promise<WorkSchedule[]> {
+  async getWeeklySchedules(
+    employeeId: string,
+    startDate: string
+  ): Promise<WorkSchedule[]> {
     try {
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 6);
-      
+
       return await this.getSchedules({
         employeeId,
         startDate,
-        endDate: endDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split("T")[0],
         isActive: true,
       });
     } catch (error) {
-      console.error('주간 스케줄 조회 실패:', error);
+      console.error("주간 스케줄 조회 실패:", error);
       throw error;
     }
   }
@@ -153,8 +159,8 @@ class ScheduleService {
       const response = await api.get(`${this.baseUrl}/${id}`);
       return response.data;
     } catch (error) {
-      console.error('스케줄 상세 조회 실패:', error);
-      throw new Error('스케줄 정보를 불러오는데 실패했습니다.');
+      console.error("스케줄 상세 조회 실패:", error);
+      throw new Error("스케줄 정보를 불러오는데 실패했습니다.");
     }
   }
 
@@ -171,30 +177,37 @@ class ScheduleService {
         excludeId,
       };
 
-      const response = await api.post(`${this.baseUrl}/check-conflict`, payload);
+      const response = await api.post(
+        `${this.baseUrl}/check-conflict`,
+        payload
+      );
       return response.data;
     } catch (error) {
-      console.error('스케줄 충돌 검사 실패:', error);
-      throw new Error('스케줄 충돌 검사에 실패했습니다.');
+      console.error("스케줄 충돌 검사 실패:", error);
+      throw new Error("스케줄 충돌 검사에 실패했습니다.");
     }
   }
 
   /**
    * 스케줄 생성
    */
-  async createSchedule(scheduleData: CreateScheduleRequest): Promise<WorkSchedule> {
+  async createSchedule(
+    scheduleData: CreateScheduleRequest
+  ): Promise<WorkSchedule> {
     try {
       // 먼저 충돌 검사 수행
       const conflictCheck = await this.checkScheduleConflict(scheduleData);
-      
+
       if (conflictCheck.hasConflict && !conflictCheck.canProceed) {
-        throw new Error(`스케줄 충돌이 발생했습니다: ${conflictCheck.conflicts[0]?.message}`);
+        throw new Error(
+          `스케줄 충돌이 발생했습니다: ${conflictCheck.conflicts[0]?.message}`
+        );
       }
 
-      const response = await api.post(this.baseUrl, scheduleData);
+      const response = await api.post("/api/v1/attendance/additional-work");
       return response.data;
     } catch (error) {
-      console.error('스케줄 생성 실패:', error);
+      console.error("스케줄 생성 실패:", error);
       throw error;
     }
   }
@@ -202,26 +215,30 @@ class ScheduleService {
   /**
    * 스케줄 수정
    */
-  async updateSchedule(scheduleData: UpdateScheduleRequest): Promise<WorkSchedule> {
+  async updateSchedule(
+    scheduleData: UpdateScheduleRequest
+  ): Promise<WorkSchedule> {
     try {
       const { id, ...updateData } = scheduleData;
-      
+
       // 수정 시에도 충돌 검사 수행 (자기 자신 제외)
       if (updateData.startTime || updateData.endTime || updateData.workDate) {
         const conflictCheck = await this.checkScheduleConflict(
           updateData as CreateScheduleRequest,
           id
         );
-        
+
         if (conflictCheck.hasConflict && !conflictCheck.canProceed) {
-          throw new Error(`스케줄 충돌이 발생했습니다: ${conflictCheck.conflicts[0]?.message}`);
+          throw new Error(
+            `스케줄 충돌이 발생했습니다: ${conflictCheck.conflicts[0]?.message}`
+          );
         }
       }
 
       const response = await api.put(`${this.baseUrl}/${id}`, updateData);
       return response.data;
     } catch (error) {
-      console.error('스케줄 수정 실패:', error);
+      console.error("스케줄 수정 실패:", error);
       throw error;
     }
   }
@@ -233,34 +250,41 @@ class ScheduleService {
     try {
       await api.delete(`${this.baseUrl}/${id}`);
     } catch (error) {
-      console.error('스케줄 삭제 실패:', error);
-      throw new Error('스케줄 삭제에 실패했습니다.');
+      console.error("스케줄 삭제 실패:", error);
+      throw new Error("스케줄 삭제에 실패했습니다.");
     }
   }
 
   /**
    * 스케줄 활성화/비활성화
    */
-  async toggleScheduleStatus(id: string, isActive: boolean): Promise<WorkSchedule> {
+  async toggleScheduleStatus(
+    id: string,
+    isActive: boolean
+  ): Promise<WorkSchedule> {
     try {
-      const response = await api.patch(`${this.baseUrl}/${id}/status`, { isActive });
+      const response = await api.patch(`${this.baseUrl}/${id}/status`, {
+        isActive,
+      });
       return response.data;
     } catch (error) {
-      console.error('스케줄 상태 변경 실패:', error);
-      throw new Error('스케줄 상태 변경에 실패했습니다.');
+      console.error("스케줄 상태 변경 실패:", error);
+      throw new Error("스케줄 상태 변경에 실패했습니다.");
     }
   }
 
   /**
    * 일괄 스케줄 생성
    */
-  async createBulkSchedules(bulkData: BulkScheduleRequest): Promise<WorkSchedule[]> {
+  async createBulkSchedules(
+    bulkData: BulkScheduleRequest
+  ): Promise<WorkSchedule[]> {
     try {
       const response = await api.post(`${this.baseUrl}/bulk`, bulkData);
       return response.data;
     } catch (error) {
-      console.error('일괄 스케줄 생성 실패:', error);
-      throw new Error('일괄 스케줄 생성에 실패했습니다.');
+      console.error("일괄 스케줄 생성 실패:", error);
+      throw new Error("일괄 스케줄 생성에 실패했습니다.");
     }
   }
 
@@ -269,11 +293,13 @@ class ScheduleService {
    */
   async duplicateSchedule(id: string, newDate: string): Promise<WorkSchedule> {
     try {
-      const response = await api.post(`${this.baseUrl}/${id}/duplicate`, { newDate });
+      const response = await api.post(`${this.baseUrl}/${id}/duplicate`, {
+        newDate,
+      });
       return response.data;
     } catch (error) {
-      console.error('스케줄 복제 실패:', error);
-      throw new Error('스케줄 복제에 실패했습니다.');
+      console.error("스케줄 복제 실패:", error);
+      throw new Error("스케줄 복제에 실패했습니다.");
     }
   }
 
@@ -294,11 +320,14 @@ class ScheduleService {
         endDate,
       };
 
-      const response = await api.post(`${this.baseUrl}/apply-template`, payload);
+      const response = await api.post(
+        `${this.baseUrl}/apply-template`,
+        payload
+      );
       return response.data;
     } catch (error) {
-      console.error('스케줄 템플릿 적용 실패:', error);
-      throw new Error('스케줄 템플릿 적용에 실패했습니다.');
+      console.error("스케줄 템플릿 적용 실패:", error);
+      throw new Error("스케줄 템플릿 적용에 실패했습니다.");
     }
   }
 }
@@ -338,13 +367,13 @@ export const scheduleHelpers = {
    */
   dayOfWeekToKorean(dayOfWeek: string): string {
     const dayMap: Record<string, string> = {
-      MONDAY: '월요일',
-      TUESDAY: '화요일',
-      WEDNESDAY: '수요일',
-      THURSDAY: '목요일',
-      FRIDAY: '금요일',
-      SATURDAY: '토요일',
-      SUNDAY: '일요일',
+      MONDAY: "월요일",
+      TUESDAY: "화요일",
+      WEDNESDAY: "수요일",
+      THURSDAY: "목요일",
+      FRIDAY: "금요일",
+      SATURDAY: "토요일",
+      SUNDAY: "일요일",
     };
     return dayMap[dayOfWeek] || dayOfWeek;
   },
@@ -353,33 +382,40 @@ export const scheduleHelpers = {
    * 스케줄 상태 텍스트 반환
    */
   getScheduleStatusText(schedule: WorkSchedule): string {
-    if (!schedule.isActive) return '비활성';
-    if (schedule.isFlexible) return '유연근무';
-    return '정규근무';
+    if (!schedule.isActive) return "비활성";
+    if (schedule.isFlexible) return "유연근무";
+    return "정규근무";
   },
 
   /**
    * 충돌 타입별 메시지 생성
    */
   getConflictMessage(conflict: ScheduleConflict): string {
-    const { conflictType, conflictStartTime, conflictEndTime, conflictDurationMinutes } = conflict;
-    
+    const {
+      conflictType,
+      conflictStartTime,
+      conflictEndTime,
+      conflictDurationMinutes,
+    } = conflict;
+
     switch (conflictType) {
-      case 'OVERLAP':
+      case "OVERLAP":
         return `기존 스케줄과 ${conflictDurationMinutes}분 겹칩니다 (${conflictStartTime}-${conflictEndTime})`;
-      case 'DUPLICATE':
-        return '동일한 시간대의 스케줄이 이미 존재합니다';
-      case 'ADJACENT':
-        return '연속된 스케줄로 휴게시간이 부족할 수 있습니다';
+      case "DUPLICATE":
+        return "동일한 시간대의 스케줄이 이미 존재합니다";
+      case "ADJACENT":
+        return "연속된 스케줄로 휴게시간이 부족할 수 있습니다";
       default:
-        return '스케줄 충돌이 발생했습니다';
+        return "스케줄 충돌이 발생했습니다";
     }
   },
 
   /**
    * 스케줄을 날짜별로 그룹화
    */
-  groupSchedulesByDate(schedules: WorkSchedule[]): Record<string, WorkSchedule[]> {
+  groupSchedulesByDate(
+    schedules: WorkSchedule[]
+  ): Record<string, WorkSchedule[]> {
     return schedules.reduce((groups, schedule) => {
       const date = schedule.workDate;
       if (!groups[date]) {
@@ -395,8 +431,8 @@ export const scheduleHelpers = {
    */
   sortSchedulesByTime(schedules: WorkSchedule[]): WorkSchedule[] {
     return [...schedules].sort((a, b) => {
-      const timeA = a.startTime.replace(':', '');
-      const timeB = b.startTime.replace(':', '');
+      const timeA = a.startTime.replace(":", "");
+      const timeB = b.startTime.replace(":", "");
       return timeA.localeCompare(timeB);
     });
   },
