@@ -1,11 +1,8 @@
 import { useUser } from "@/lib/queries/useUser";
-import { usePathname } from "next/navigation";
 
 export default function Header() {
   const { data: user } = useUser();
   const userType = user?.data.userType ?? "PART_TIME_WORKER"; // 기본값 PARTIME_WORKER
-  const pathname = usePathname();
-
   const roleLabel = userType === "PART_TIME_WORKER" ? "알바님" : "사장님";
   const roleBgClass = userType === "PART_TIME_WORKER" ? "bg-main2" : "bg-main";
 
