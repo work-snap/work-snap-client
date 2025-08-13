@@ -5,6 +5,7 @@ import Navigation from "../../../components/navigation";
 import Benner from "@/src/app/components/benner";
 import { useGetWP } from "@/src/lib/queries/getWP";
 import { useDeleteWP } from "@/src/lib/queries/useDeleteWP";
+import Header from "@/app/components/Header";
 
 export default function AddBusiness() {
   const router = useRouter();
@@ -32,7 +33,8 @@ export default function AddBusiness() {
 
   return (
     <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
-      <header className="flex items-center gap-2 px-4 pt-6 pb-3">
+      <Header />
+      {/* <header className="flex items-center gap-2 px-4 pt-6 pb-3">
         <h1 className="text-[26px] font-extrabold text-main tracking-tight">
           Work Snap
         </h1>
@@ -41,7 +43,7 @@ export default function AddBusiness() {
             사장님
           </span>
         </div>
-      </header>
+      </header> */}
 
       <Benner />
 
@@ -109,8 +111,6 @@ export default function AddBusiness() {
           <span className="font-semibold text-lg">사업장 등록</span>
         </button>
       </div>
-
-      <Navigation userType="business" />
     </div>
   );
 }

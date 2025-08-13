@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import Navigation from "@/src/app/components/navigation";
 import { useGetWorkplaceDetail } from "@/src/lib/queries/getWPDetail";
+import Header from "@/app/components/Header";
 
 export default function BusinessDetail() {
   const router = useRouter();
@@ -17,16 +18,7 @@ export default function BusinessDetail() {
 
   return (
     <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto bg-white pb-[80px]">
-      <header className="flex items-center gap-2 px-4 pt-6 pb-3">
-        <h1 className="text-[26px] font-extrabold text-main tracking-tight">
-          Work Snap
-        </h1>
-        <div>
-          <span className="bg-main text-gray1 text-xs font-semibold rounded-full px-2 py-1">
-            사장님
-          </span>
-        </div>
-      </header>
+      <Header />
 
       <div className="flex items-center px-2 py-4 ">
         <button
@@ -77,8 +69,6 @@ export default function BusinessDetail() {
           알바 인증코드 등록
         </button>
       </div>
-
-      <Navigation userType="business" />
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function Navigation() {
     pathname === "/signup/ptjob" ||
     pathname === "/test-login" ||
     pathname === "/signup/business/signup-1" ||
-    pathname === " /signup/business/success-signup"
+    pathname === "/signup/business/success-signup"
   )
     return null;
 
@@ -119,7 +119,7 @@ export default function Navigation() {
           <span
             className={`text-xs ${
               (
-                userType === "business"
+                userType === "BUSINESS_OWNER"
                   ? pathname.includes("mypage")
                   : pathname.includes("my")
               )

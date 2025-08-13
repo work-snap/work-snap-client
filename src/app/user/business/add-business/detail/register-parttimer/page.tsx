@@ -12,6 +12,7 @@ import { useValidateInviteCode } from "@/src/lib/queries/validateInviteCode";
 import DayTimePicker, {
   type ScheduleItem,
 } from "@/src/app/components/DayTimePicker";
+import Header from "@/app/components/Header";
 
 export default function RegisterParttimer() {
   const joinUserMutation = useJoinUser();
@@ -89,16 +90,7 @@ export default function RegisterParttimer() {
   return (
     <div className="min-h-screen h-screen flex flex-col max-w-[430px] w-full mx-auto bg-white">
       {/* 헤더 */}
-      <header className="flex items-center gap-2 px-4 pt-6 pb-3">
-        <h1 className="text-[26px] font-extrabold text-main tracking-tight">
-          Work Snap
-        </h1>
-        <div>
-          <span className="bg-main text-gray1 text-xs font-semibold rounded-full px-2 py-1">
-            사장님
-          </span>
-        </div>
-      </header>
+      <Header />
 
       {/* 상단 네비게이션 */}
       <div className="flex flex-col px-2 py-2">
