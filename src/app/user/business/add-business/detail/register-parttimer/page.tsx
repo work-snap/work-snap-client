@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
-import Navigation from "@/src/app/components/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useJoinUser } from "@/src/lib/queries/joinUser";

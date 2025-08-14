@@ -32,21 +32,9 @@ export default function AddBusiness() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
+    <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[120px]">
       <Header />
-      {/* <header className="flex items-center gap-2 px-4 pt-6 pb-3">
-        <h1 className="text-[26px] font-extrabold text-main tracking-tight">
-          Work Snap
-        </h1>
-        <div>
-          <span className="bg-main text-gray1 text-xs font-semibold rounded-full px-2 py-1">
-            사장님
-          </span>
-        </div>
-      </header> */}
-
       <Benner />
-
       <div>
         {workplaces.length === 0 ? (
           <div className="text-center text-gray-400 mt-8">
