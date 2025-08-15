@@ -10,8 +10,23 @@ interface DateSelectorProps {
 }
 
 export default function DateSelector({ date, onChange }: DateSelectorProps) {
+  // 날짜 형식 검증 및 기본값 설정
+  const getValidDate = (dateString: string): string => {
+    // ISO 8601 형식 검증 (YYYY-MM-DD)
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (isoDateRegex.test(dateString)) {
+      return dateString;
+    }
+    
+    // 잘못된 형식인 경우 오늘 날짜 반환
+    console.warn(`Invalid date format: ${dateString}, using today's date`);
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const validDate = getValidDate(date);
+  
   // Convert string date to CalendarDate for HeroUI
-  const calendarDate = parseDate(date);
+  const calendarDate = parseDate(validDate);
 
   const handleDateChange = (newDate: CalendarDate | null) => {
     if (newDate) {
@@ -34,6 +49,13 @@ export default function DateSelector({ date, onChange }: DateSelectorProps) {
         aria-label="날짜 선택"
         showMonthAndYearPickers
         granularity="day"
+        disableAnimation={true}
+        classNames={{
+          base: "w-full",
+          inputWrapper: "border-2 border-default-200 hover:border-default-300 rounded-xl bg-transparent",
+          input: "h-14",
+          popoverContent: "rounded-xl shadow-lg"
+        }}
       />
     </div>
   );

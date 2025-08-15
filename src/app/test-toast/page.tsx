@@ -80,7 +80,7 @@ export default function TestToastPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="h-full bg-gray-50 p-8">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold text-center mb-8 text-gray-800">
           토스트 테스트

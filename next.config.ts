@@ -12,10 +12,13 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
+    // ngrok URL을 사용하는 경우 환경 변수로 설정
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8080/api/:path*",
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },
@@ -58,7 +61,7 @@ const nextConfig: NextConfig = {
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
-                    "connect-src 'self' http://localhost:8080",
+                    "connect-src 'self' http://localhost:8080 https://*.ngrok-free.app https://*.ngrok.io",
                     "object-src 'none'",
                     "base-uri 'self'",
                     "form-action 'self'",

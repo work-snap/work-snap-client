@@ -121,7 +121,7 @@ export const ScheduleConflictDemo: React.FC = () => {
 
   return (
     <DateNavigationProvider>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="h-full bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
           {/* 헤더 */}
           <div className="mb-8">

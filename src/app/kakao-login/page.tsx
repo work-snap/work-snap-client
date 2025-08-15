@@ -255,7 +255,7 @@ export default function KakaoLogin() {
   const code = searchParams.get("code");
   if (!code) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-full flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-16 h-16 bg-main rounded-full mx-auto mb-4 flex items-center justify-center">
             <svg
@@ -280,7 +280,7 @@ export default function KakaoLogin() {
 
   // code가 있는 경우 (카카오에서 돌아온 후) 상세한 로딩 UI 표시
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="h-full flex items-center justify-center bg-gray-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         {/* 로고/헤더 영역 */}
         <div className="text-center mb-8">

@@ -70,7 +70,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white max-w-[430px] w-full mx-auto">
+    <div className="h-full flex flex-col bg-white max-w-[430px] w-full mx-auto">
       {/* 상단 뒤로가기 */}
       <div className="flex items-center justify-between py-4 px-2">
         <div className="flex items-center">

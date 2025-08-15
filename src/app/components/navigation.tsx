@@ -5,23 +5,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function Navigation() {
-  const { data: user } = useUser();
-  const userType = user?.data.userType ?? "ptjob";
+  const { data: user, isLoading, error } = useUser();
   const pathname = usePathname();
-  const basePath =
-    userType === "BUSINESS_OWNER" ? "/user/business" : "/user/ptjob";
-  // "/" 페이지에서는 안 보이게
-  // "/" 또는 "/signup" 경로에서는 네비게이션 안 보이게
-  if (
-    pathname === "/" ||
-    pathname === "/kakao-login" ||
-    pathname === "/signup" ||
-    pathname === "/signup/ptjob" ||
-    pathname === "/test-login" ||
-    pathname === "/signup/business/signup-1" ||
-    pathname === "/signup/business/success-signup"
-  )
+  
+  // 로딩 중이거나 에러가 있거나 사용자 데이터가 없으면 네비게이션 숨김
+  if (isLoading || error || !user?.data) {
     return null;
+  }
+  
+  const userType = user.data.userType ?? "PART_TIME_WORKER";
+  
+  // PENDING 상태인 경우 기본적으로 PART_TIME_WORKER로 처리
+  const effectiveUserType = userType === "PENDING" ? "PART_TIME_WORKER" : userType;
+  const basePath =
+    effectiveUserType === "BUSINESS_OWNER" ? "/user/business" : "/user/ptjob";
 
   return (
     <nav className=" max-w-[430px] w-full bg-white border-t border-gray2 py-5">
@@ -29,7 +26,7 @@ export default function Navigation() {
         {/* 알바 */}
         <Link
           href={
-            userType === "BUSINESS_OWNER"
+            effectiveUserType === "BUSINESS_OWNER"
               ? `${basePath}/add-business`
               : `${basePath}/job-list`
           }
@@ -51,7 +48,7 @@ export default function Navigation() {
           <span
             className={`text-xs ${
               (
-                userType === "BUSINESS_OWNER"
+                effectiveUserType === "BUSINESS_OWNER"
                   ? pathname.includes("add-business")
                   : pathname.includes("job-list")
               )
@@ -66,7 +63,7 @@ export default function Navigation() {
         {/* 출석 */}
         <Link
           href={
-            userType === "BUSINESS_OWNER"
+            effectiveUserType === "BUSINESS_OWNER"
               ? `${basePath}/mainpage`
               : "/attendance"
           }
@@ -97,7 +94,7 @@ export default function Navigation() {
         {/* MY */}
         <Link
           href={
-            userType === "BUSINESS_OWNER"
+            effectiveUserType === "BUSINESS_OWNER"
               ? `${basePath}/mypage`
               : `${basePath}/mypage`
           }
@@ -119,7 +116,7 @@ export default function Navigation() {
           <span
             className={`text-xs ${
               (
-                userType === "BUSINESS_OWNER"
+                effectiveUserType === "BUSINESS_OWNER"
                   ? pathname.includes("mypage")
                   : pathname.includes("my")
               )

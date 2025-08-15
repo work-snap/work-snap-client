@@ -99,7 +99,7 @@ export default function PtJobPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
+    <div className="h-full flex flex-col w-full relative min-h-0">
       <ToastModal
         message="인증코드가 복사되었습니다"
         isVisible={showToast}
@@ -168,7 +168,7 @@ export default function PtJobPage() {
 
       {/* 출근 카드 리스트 */}
       {isVerified && (
-        <div className="px-4 mt-4 flex flex-col gap-3">
+        <div className="px-4 mt-4 flex flex-col gap-3 overflow-y-auto">
           {localWorkPlaces.map((wp) => (
             <div
               key={wp.workplace.id}

@@ -96,7 +96,7 @@ export default function RegisterParttimer() {
   };
 
   return (
-    <div className="min-h-screen h-screen flex flex-col max-w-[430px] w-full mx-auto bg-white">
+    <div className="h-full h-screen flex flex-col max-w-[430px] w-full mx-auto bg-white">
       {/* 헤더 */}
       <Header />
 

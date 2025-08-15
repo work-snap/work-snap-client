@@ -1,3 +1,5 @@
+"use client";
+
 import { useUser } from "@/lib/queries/useUser";
 
 export default function Header() {

@@ -125,7 +125,7 @@ export default function TestLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="h-full bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* 헤더 */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-6 py-4">

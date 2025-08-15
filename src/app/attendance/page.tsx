@@ -81,9 +81,9 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-white max-w-[430px] w-full mx-auto relative">
-      {/* 헤더 - 고정 */}
-      <div className="absolute top-0 left-0 right-0 bg-white z-10 max-w-[430px] w-full mx-auto">
+    <div className="flex flex-col bg-white w-full h-screen max-w-[430px] mx-auto">
+      {/* 헤더 - 고정 높이 */}
+      <div className="bg-white w-full flex-shrink-0">
         <div className="flex justify-between items-center p-2 w-full space-x-2">
           {/* 왼쪽 고정 박스 */}
           <div className="w-16 h-16 bg-main rounded-xl flex items-center justify-center">
@@ -109,7 +109,7 @@ export default function AttendancePage() {
         </div>
       </div>
       {/* 리스트 - 스크롤 영역 */}
-      <div className="pt-20 h-full overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="flex flex-col gap-2 p-2">
           {userLoading || isLoading ? (
             <div className="flex justify-center items-center py-8">

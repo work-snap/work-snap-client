@@ -112,7 +112,7 @@ export default function AddWorkPage() {
   }, [selectedDate, startTime, endTime, createSchedule]);
 
   return (
-    <div className="min-h-screen bg-white max-w-[430px] mx-auto">
+    <div className="h-full bg-white max-w-[430px] mx-auto">
       {/* Work Snap 헤더 */}
       <header className="flex items-center justify-between px-5 pt-6 pb-3">
         <h1 className="text-main text-[26px] font-extrabold tracking-tight">
