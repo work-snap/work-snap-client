@@ -186,7 +186,12 @@ export default function RegisterParttimer() {
                 value={contractStartDate ? parseDate(contractStartDate) : null}
                 onChange={(newDate: CalendarDate | null) => {
                   if (newDate) {
-                    const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                    const formattedDate = `${newDate.year}-${String(
+                      newDate.month
+                    ).padStart(2, "0")}-${String(newDate.day).padStart(
+                      2,
+                      "0"
+                    )}`;
                     setContractStartDate(formattedDate);
                   }
                 }}
@@ -200,7 +205,12 @@ export default function RegisterParttimer() {
                 value={contractEndDate ? parseDate(contractEndDate) : null}
                 onChange={(newDate: CalendarDate | null) => {
                   if (newDate) {
-                    const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                    const formattedDate = `${newDate.year}-${String(
+                      newDate.month
+                    ).padStart(2, "0")}-${String(newDate.day).padStart(
+                      2,
+                      "0"
+                    )}`;
                     setContractEndDate(formattedDate);
                   }
                 }}
