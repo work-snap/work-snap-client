@@ -12,6 +12,8 @@ export interface JoinUserRequest {
   workplaceId: number;
   inviteCode: string;
   schedules: Schedule[];
+  contractStartDate: string;
+  contractEndDate: string;
 }
 
 export const useJoinUser = () => {
@@ -20,12 +22,16 @@ export const useJoinUser = () => {
       workplaceId,
       inviteCode,
       schedules,
+      contractStartDate,
+      contractEndDate,
     }: JoinUserRequest) => {
       const res = await api.post(
         `/api/business-owner/workplaces/${workplaceId}/employees/onboard`,
         {
           inviteCode,
           schedules,
+          contractStartDate,
+          contractEndDate,
         }
       );
       return res.data;
