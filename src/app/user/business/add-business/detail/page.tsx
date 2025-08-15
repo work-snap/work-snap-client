@@ -17,7 +17,7 @@ export default function BusinessDetail() {
   if (isError) return <div>에러: {(error as Error).message}</div>;
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto bg-white pb-[80px]">
+    <div className="h-full flex flex-col max-w-[430px] w-full mx-auto bg-white pb-[80px]">
       <Header />
 
       <div className="flex items-center px-2 py-4 ">

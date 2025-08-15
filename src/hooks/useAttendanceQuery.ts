@@ -7,8 +7,10 @@ import {
   fetchDailySchedules,
   checkIn,
   checkOut,
+  createAdditionalWork,
   CheckInRequest,
   CheckOutRequest,
+  AdditionalWorkCreateRequest,
 } from "@/api/attendanceApi";
 import { ScedulesProps } from "@/app/attendance/components/types";
 import { formatErrorMessage, logError } from "@/utils/errorHandler";
@@ -116,6 +118,40 @@ export const useCheckOut = () => {
     },
     onError: (error) => {
       logError(error, "Check-out mutation failed");
+    },
+  });
+};
+
+/**
+ * 추가근무 등록 뮤테이션 훅
+ */
+export const useCreateAdditionalWork = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<unknown, Error, AdditionalWorkCreateRequest>({
+    mutationFn: async (request: AdditionalWorkCreateRequest) => {
+      try {
+        return await createAdditionalWork(request);
+      } catch (error) {
+        logError(error, `Additional work creation - workplace:${request.workplaceId}, date:${request.workDate}`);
+        throw new Error(formatErrorMessage(error));
+      }
+    },
+    onSuccess: (data, variables) => {
+      // 해당 날짜의 스케줄 캐시 무효화
+      queryClient.invalidateQueries({
+        queryKey: ATTENDANCE_QUERY_KEYS.dailySchedules(variables.workDate),
+      });
+
+      // 전체 출석 데이터도 무효화 (안전을 위해)
+      queryClient.invalidateQueries({
+        queryKey: ["attendance"],
+      });
+
+      console.log("추가근무 등록 성공:", data);
+    },
+    onError: (error) => {
+      logError(error, "Additional work creation mutation failed");
     },
   });
 };

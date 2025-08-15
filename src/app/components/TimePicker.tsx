@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 
 interface TimeValue {
   period: "오전" | "오후";
@@ -31,60 +31,6 @@ const minutesToTime = (minutesOfDay: number): TimeValue => {
   return { period, hour: hour12, minute };
 };
 
-const ensureEndAfterStart = (start: TimeValue, end: TimeValue): TimeValue => {
-  const startMin = timeToMinutes(start);
-  const endMin = timeToMinutes(end);
-  const minAllowed = Math.min(startMin + 1, 23 * 60 + 59);
-  if (endMin < minAllowed) return minutesToTime(minAllowed);
-  return end;
-};
-
-const ensureEndAfterStartWithPriority = (
-  start: TimeValue,
-  end: TimeValue,
-  source: "period" | "hour" | "minute"
-): TimeValue => {
-  const startMin = timeToMinutes(start);
-  const minAllowed = Math.min(startMin + 1, 23 * 60 + 59);
-  const endMin = timeToMinutes(end);
-  if (endMin >= minAllowed) return end;
-
-  const reqHour24 = Math.floor(minAllowed / 60);
-  const reqMinute = minAllowed % 60;
-  const endHour24 = Math.floor(endMin / 60);
-
-  if (source === "minute") {
-    if (endHour24 > reqHour24)
-      return minutesToTime(endHour24 * 60 + end.minute);
-    if (endHour24 === reqHour24 && end.minute >= reqMinute)
-      return minutesToTime(endHour24 * 60 + end.minute);
-    return minutesToTime(reqHour24 * 60 + reqMinute);
-  }
-
-  if (source === "hour") {
-    let newHour24 = endHour24 < reqHour24 ? reqHour24 : endHour24;
-    let newMinute = end.minute;
-    if (newHour24 === reqHour24 && newMinute < reqMinute) newMinute = reqMinute;
-    const candidate = minutesToTime(newHour24 * 60 + newMinute);
-    if (timeToMinutes(candidate) >= minAllowed) return candidate;
-    return minutesToTime(minAllowed);
-  }
-
-  // source === 'period'
-  const reqIsAM = reqHour24 < 12;
-  const endIsAM = end.period === "오전";
-  if (endIsAM && !reqIsAM) {
-    return minutesToTime(minAllowed);
-  }
-  const periodFloorHour24 = endIsAM ? 0 : 12;
-  let newHour24 = Math.max(endHour24, Math.max(periodFloorHour24, reqHour24));
-  let newMinute = end.minute;
-  if (newHour24 === reqHour24 && newMinute < reqMinute) newMinute = reqMinute;
-  const candidate = minutesToTime(newHour24 * 60 + newMinute);
-  if (timeToMinutes(candidate) >= minAllowed) return candidate;
-  return minutesToTime(minAllowed);
-};
-
 const formatToHHMM = (t: TimeValue): string => {
   const hour12 = t.hour % 12;
   const hour24 = t.period === "오전" ? hour12 : hour12 + 12;
@@ -92,6 +38,10 @@ const formatToHHMM = (t: TimeValue): string => {
   const mm = t.minute.toString().padStart(2, "0");
   return `${hh}:${mm}`;
 };
+
+
+
+
 
 export default function TimePicker({
   onChange,
@@ -109,33 +59,42 @@ export default function TimePicker({
     minute: 0,
   });
 
+  // onChange 콜백을 ref로 저장하여 안정성 확보
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+
+
   const handleStartChange = (t: TimeValue) => {
     if (debug) console.log("[TimePicker] handleStartChange", t);
     setStartTime(t);
-    setEndTime((prev) => {
-      const adjusted = ensureEndAfterStart(t, prev);
-      if (debug) console.log("[TimePicker] adjusted endTime", adjusted);
-      return adjusted;
-    });
   };
 
-  const handleEndChange = (
-    t: TimeValue,
-    source: "period" | "hour" | "minute"
-  ) => {
-    const adjusted = ensureEndAfterStartWithPriority(startTime, t, source);
-    if (debug) console.log("[TimePicker] handleEndChange", { t, adjusted });
-    setEndTime(adjusted);
+  const handleEndChange = (t: TimeValue) => {
+    if (debug) console.log("[TimePicker] handleEndChange", t);
+    setEndTime(t);
   };
 
   useEffect(() => {
-    if (onChange) {
-      onChange({
-        startTime: formatToHHMM(startTime),
-        endTime: formatToHHMM(endTime),
+    if (onChangeRef.current) {
+      const startTimeFormatted = formatToHHMM(startTime);
+      const endTimeFormatted = formatToHHMM(endTime);
+      
+      if (debug) {
+        console.log("[TimePicker] useEffect - calling onChange:", {
+          startTime: startTimeFormatted,
+          endTime: endTimeFormatted,
+          startTimeRaw: startTime,
+          endTimeRaw: endTime
+        });
+      }
+      
+      onChangeRef.current({
+        startTime: startTimeFormatted,
+        endTime: endTimeFormatted,
       });
     }
-  }, [startTime, endTime, onChange]);
+  }, [startTime, endTime, debug]);
 
   const hours = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), []);
   const minutes = useMemo(() => Array.from({ length: 60 }, (_, i) => i), []);
@@ -146,10 +105,11 @@ export default function TimePicker({
         <div className="flex items-center justify-center gap-4">
           <TimeSection
             time={startTime}
-            onChange={(t, src) => handleStartChange(t)}
+            onChange={handleStartChange}
             hours={hours}
             minutes={minutes}
             ariaLabelPrefix="시작"
+            debug={debug}
           />
           <div className="text-gray3 select-none text-xl">-</div>
           <TimeSection
@@ -158,6 +118,7 @@ export default function TimePicker({
             hours={hours}
             minutes={minutes}
             ariaLabelPrefix="종료"
+            debug={debug}
           />
         </div>
       </div>
@@ -171,17 +132,16 @@ function TimeSection({
   hours,
   minutes,
   ariaLabelPrefix,
+  debug,
 }: {
   time: TimeValue;
-  onChange: (t: TimeValue, source: "period" | "hour" | "minute") => void;
+  onChange: (t: TimeValue) => void;
   hours: number[];
   minutes: number[];
   ariaLabelPrefix: string;
+  debug?: boolean;
 }) {
-  const update = (
-    partial: Partial<TimeValue>,
-    source: "period" | "hour" | "minute"
-  ) => onChange({ ...time, ...partial }, source);
+  const update = (partial: Partial<TimeValue>) => onChange({ ...time, ...partial });
 
   return (
     <div className="flex items-center justify-between gap-2 min-w-0">
@@ -190,23 +150,25 @@ function TimeSection({
         values={["오전", "오후"]}
         valueIndex={time.period === "오전" ? 0 : 1}
         onChange={(idx) =>
-          update({ period: idx === 0 ? "오전" : "오후" }, "period")
+          update({ period: idx === 0 ? "오전" : "오후" })
         }
         className="w-14"
         itemHeight={34}
         visibleCount={3}
         syncDep={time.period}
+        debug={debug}
       />
 
       <ScrollWheel
         ariaLabel={`${ariaLabelPrefix} 시간 선택`}
         values={hours.map((h) => String(h))}
         valueIndex={time.hour - 1}
-        onChange={(idx) => update({ hour: idx + 1 }, "hour")}
+        onChange={(idx) => update({ hour: idx + 1 })}
         className="w-12"
         itemHeight={34}
         visibleCount={3}
         syncDep={time.hour}
+        debug={debug}
       />
 
       <div className="px-1 text-gray3">:</div>
@@ -215,11 +177,12 @@ function TimeSection({
         ariaLabel={`${ariaLabelPrefix} 분 선택`}
         values={minutes.map((m) => m.toString().padStart(2, "0"))}
         valueIndex={time.minute}
-        onChange={(idx) => update({ minute: idx }, "minute")}
+        onChange={(idx) => update({ minute: idx })}
         className="w-14"
         itemHeight={34}
         visibleCount={3}
         syncDep={time.minute}
+        debug={debug}
       />
     </div>
   );
@@ -262,9 +225,14 @@ function ScrollWheel({
     const el = containerRef.current;
     if (!el) return;
 
+    // 값이 실제로 변경되었는지 확인
     if (lastValueIndex.current === valueIndex) return;
+    
+    if (debug) {
+      console.log(`[ScrollWheel] valueIndex changed from ${lastValueIndex.current} to ${valueIndex}`);
+    }
+    
     lastValueIndex.current = valueIndex;
-
     pendingScrolls.current++;
     const currentScrollId = pendingScrolls.current;
 
@@ -282,11 +250,18 @@ function ScrollWheel({
       isScrollingRef.current = true;
       const targetTop = valueIndex * itemHeight;
 
+      if (debug) {
+        console.log(`[ScrollWheel] scrolling to position: ${targetTop} for valueIndex: ${valueIndex}`);
+      }
+
       el.scrollTo({ top: targetTop, behavior: "smooth" });
 
       programmaticTimeoutRef.current = setTimeout(() => {
         programmaticRef.current = false;
         isScrollingRef.current = false;
+        if (debug) {
+          console.log(`[ScrollWheel] scroll animation completed`);
+        }
       }, 350);
     }, delay);
 
@@ -294,7 +269,42 @@ function ScrollWheel({
       if (programmaticTimeoutRef.current)
         clearTimeout(programmaticTimeoutRef.current);
     };
-  }, [valueIndex, itemHeight, syncDep]);
+  }, [valueIndex, itemHeight, syncDep, debug]);
+
+  // 컴포넌트 마운트 시 초기 위치 설정
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // 초기 스크롤 위치 설정 (즉시 실행)
+    const targetTop = valueIndex * itemHeight;
+    el.scrollTop = targetTop;
+    
+    if (debug) {
+      console.log(`[ScrollWheel] initial scroll position set to: ${targetTop} for valueIndex: ${valueIndex}`);
+    }
+  }, []); // 빈 의존성 배열로 마운트 시에만 실행
+
+  // valueIndex 변경 시 스크롤 위치 업데이트
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // 값이 실제로 변경되었는지 확인
+    if (lastValueIndex.current === valueIndex) return;
+    
+    if (debug) {
+      console.log(`[ScrollWheel] valueIndex changed from ${lastValueIndex.current} to ${valueIndex}`);
+    }
+    
+    lastValueIndex.current = valueIndex;
+    const targetTop = valueIndex * itemHeight;
+    el.scrollTop = targetTop;
+    
+    if (debug) {
+      console.log(`[ScrollWheel] immediate scroll position update to: ${targetTop} for valueIndex: ${valueIndex}`);
+    }
+  }, [valueIndex, itemHeight, debug]);
 
   // 컴포넌트 언마운트 시 모든 타이머 정리
   useEffect(() => {
@@ -323,9 +333,16 @@ function ScrollWheel({
       const clamped = Math.max(0, Math.min(values.length - 1, index));
       const targetTop = clamped * itemHeight;
 
+      if (debug) {
+        console.log(`[ScrollWheel] user scroll detected, snapping to index: ${clamped}`);
+      }
+
       el.scrollTo({ top: targetTop, behavior: "smooth" });
 
       if (clamped !== valueIndex) {
+        if (debug) {
+          console.log(`[ScrollWheel] onChange called with index: ${clamped}`);
+        }
         onChange(clamped);
       }
 

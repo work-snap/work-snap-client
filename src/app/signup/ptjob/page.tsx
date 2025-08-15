@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function SignupPtjobPage() {
   return (
-    <div className="min-h-screen flex flex-col justify-between items-center bg-white max-w-[430px] w-full mx-auto">
+    <div className="h-full flex flex-col justify-between items-center bg-white max-w-[430px] w-full mx-auto">
       {/* 중앙 환영 메시지 */}
       <div className="flex-1 flex flex-col justify-center items-center">
         <div className="text-center">

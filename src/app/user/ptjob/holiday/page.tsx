@@ -161,7 +161,7 @@ export default function HolidayPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
+    <div className="h-full flex flex-col max-w-[430px] w-full mx-auto relative pb-[80px]">
       {/* 헤더 */}
       <header className="flex items-center justify-between px-4 pt-6 pb-3">
         <h1 className="text-main text-[26px] font-extrabold tracking-tight">
@@ -228,8 +228,6 @@ export default function HolidayPage() {
         </div>
       </div>
 
-      {/* 하단 네비게이션 */}
-      <Navigation />
     </div>
   );
 }

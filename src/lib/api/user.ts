@@ -9,7 +9,7 @@ export interface User {
     nickname: string;
     profileImageUrl: string;
     email: string;
-    userType: string;
+    userType: "PENDING" | "BUSINESS_OWNER" | "PART_TIME_WORKER";
     userRole: string;
     createdAt: string;
     updatedAt: string;

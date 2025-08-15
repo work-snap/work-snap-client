@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 export default function SuccessSignup() {
   const router = useRouter();
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
+    <div className="h-full flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
       {/* 텍스트 */}
       <div className="flex flex-col items-center text-center ">
         <span className="text-[15px] text-gray5 leading-tight font-regular">
