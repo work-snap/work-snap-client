@@ -19,14 +19,16 @@ export default function RegisterParttimer() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const workplaceId = Number(searchParams.get("idx"));
-  const { data, isLoading } = useGetWorkplaceDetail(workplaceId);
+  const { data } = useGetWorkplaceDetail(workplaceId);
   const { toast } = useToast();
 
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+
+  // 날짜 변수명 일치
+  const [contractStartDate, setContractStartDate] = useState("");
+  const [contractEndDate, setContractEndDate] = useState("");
 
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
 
@@ -51,9 +53,11 @@ export default function RegisterParttimer() {
       });
     }
   };
+
   const handleSchedulesChange = useCallback((newSchedules: ScheduleItem[]) => {
     setSchedules(newSchedules);
   }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -70,7 +74,9 @@ export default function RegisterParttimer() {
       const res = await joinUserMutation.mutateAsync({
         workplaceId,
         inviteCode: code,
-        schedules, // 서버 포맷 그대로
+        schedules,
+        contractStartDate,
+        contractEndDate,
       });
 
       toast({ title: "등록 완료", description: res.message, duration: 5000 });
@@ -86,6 +92,7 @@ export default function RegisterParttimer() {
       });
     }
   };
+
   return (
     <div className="min-h-screen h-screen flex flex-col max-w-[430px] w-full mx-auto bg-white">
       {/* 헤더 */}
@@ -132,10 +139,7 @@ export default function RegisterParttimer() {
             <input
               type="text"
               value={code}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setCode(e.target.value)
-              }
-              // required
+              onChange={(e) => setCode(e.target.value)}
               className="border border-gray2 rounded-lg p-3 w-full"
               placeholder="예) 23FK99"
             />
@@ -147,6 +151,7 @@ export default function RegisterParttimer() {
               인증하기
             </button>
           </label>
+
           {/* 이름 */}
           <label className="flex flex-col gap-1">
             <span className="font-semibold text-gray4">이름</span>
@@ -158,6 +163,7 @@ export default function RegisterParttimer() {
               placeholder="이름 입력"
             />
           </label>
+
           {/* 번호 */}
           <label className="flex flex-col gap-1">
             <span className="font-semibold text-gray4">번호</span>
@@ -169,32 +175,30 @@ export default function RegisterParttimer() {
               placeholder="예) 010-1234-1234"
             />
           </label>
+
           {/* 계약 기간 */}
           <div className="flex flex-col gap-2">
             <span className="font-semibold text-gray4">계약 기간</span>
             <div className="flex items-center justify-center gap-2">
               <input
                 type="date"
-                value={startDate}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setStartDate(e.target.value)
-                }
-                // required
+                value={contractStartDate}
+                onChange={(e) => setContractStartDate(e.target.value)}
                 className="border border-gray2 rounded-lg p-2"
               />
               <span>-</span>
               <input
                 type="date"
-                value={endDate}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setEndDate(e.target.value)
-                }
-                // required
+                value={contractEndDate}
+                onChange={(e) => setContractEndDate(e.target.value)}
                 className="border border-gray2 rounded-lg p-2"
               />
             </div>
           </div>
+
+          {/* 근무 시간 */}
           <DayTimePicker onChange={handleSchedulesChange} />
+
           {/* 등록 버튼 */}
           <div className="w-full pt-6 pb-8">
             <Button
