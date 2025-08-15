@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AttendanceCard from "./components/AttendanceCard";
 import { ScedulesProps } from "./components/types";
 import { format, addDays, subDays } from "date-fns";
@@ -10,6 +11,7 @@ import { useUser } from "@/contexts/UserContext";
 import { useDailySchedules } from "@/hooks/useAttendanceQuery";
 
 export default function AttendancePage() {
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const { user, isLoading: userLoading } = useUser();
 
@@ -36,8 +38,7 @@ export default function AttendancePage() {
 
   // 근무 추가 핸들러
   const handleAddAttendance = () => {
-    // TODO: 근무 추가 API 연결
-    console.log("근무 추가 버튼 클릭됨");
+    router.push("/attendance/add-work");
   };
 
   // 날짜 포맷팅 함수
@@ -90,24 +91,18 @@ export default function AttendancePage() {
           </div>
           {/* 가운데 가변 박스 */}
           <div className="flex-1 bg-main rounded-xl p-2 flex items-center justify-between h-16 text-white font-semibold">
-            <button
-              onClick={handlePrevDay}
-              className="p-1 hover:bg-white/10 rounded"
-            >
+            <button onClick={handlePrevDay} className="p-1 rounded">
               <ChevronLeft size={28} strokeWidth={2.5} color="#fff" />
             </button>
             <div className="text-center">{formatDisplayDate(currentDate)}</div>
-            <button
-              onClick={handleNextDay}
-              className="p-1 hover:bg-white/10 rounded"
-            >
+            <button onClick={handleNextDay} className="p-1 rounded">
               <ChevronRight size={28} strokeWidth={2.5} color="#fff" />
             </button>
           </div>
           {/* 오른쪽 고정 박스 */}
           <button
             onClick={handleToday}
-            className="w-16 h-16 bg-main rounded-xl flex items-center justify-center text-white font-semibold hover:bg-main/90 transition-colors"
+            className="w-16 h-16 bg-main rounded-xl flex items-center justify-center text-white font-semibold transition-colors"
           >
             오늘
           </button>
@@ -137,14 +132,14 @@ export default function AttendancePage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => refetch()}
-                  className="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90"
+                  className="px-4 py-2 bg-main text-white rounded-lg"
                 >
                   다시 시도
                 </button>
                 {error.message?.includes("401") && (
                   <button
                     onClick={() => (window.location.href = "/test-login")}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg"
                   >
                     로그인하기
                   </button>
@@ -178,7 +173,7 @@ export default function AttendancePage() {
           {/* 근무 추가 버튼 */}
           {!userLoading && !isLoading && !error && (
             <div
-              className="w-full py-4 bg-gray-200 rounded-xl text-gray-600 font-bold flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
+              className="w-full py-4 bg-gray-200 rounded-xl text-gray-600 font-bold flex items-center justify-center cursor-pointer transition-colors"
               onClick={handleAddAttendance}
             >
               추가근무 +

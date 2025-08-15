@@ -12,6 +12,8 @@ import DayTimePicker, {
   type ScheduleItem,
 } from "@/src/app/components/DayTimePicker";
 import Header from "@/app/components/Header";
+import { DatePicker } from "@heroui/react";
+import { parseDate, CalendarDate } from "@internationalized/date";
 
 export default function RegisterParttimer() {
   const joinUserMutation = useJoinUser();
@@ -180,18 +182,32 @@ export default function RegisterParttimer() {
           <div className="flex flex-col gap-2">
             <span className="font-semibold text-gray4">계약 기간</span>
             <div className="flex items-center justify-center gap-2">
-              <input
-                type="date"
-                value={contractStartDate}
-                onChange={(e) => setContractStartDate(e.target.value)}
-                className="border border-gray2 rounded-lg p-2"
+              <DatePicker
+                value={contractStartDate ? parseDate(contractStartDate) : null}
+                onChange={(newDate: CalendarDate | null) => {
+                  if (newDate) {
+                    const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                    setContractStartDate(formattedDate);
+                  }
+                }}
+                aria-label="계약 시작일"
+                placeholder="시작일"
+                showMonthAndYearPickers
+                granularity="day"
               />
               <span>-</span>
-              <input
-                type="date"
-                value={contractEndDate}
-                onChange={(e) => setContractEndDate(e.target.value)}
-                className="border border-gray2 rounded-lg p-2"
+              <DatePicker
+                value={contractEndDate ? parseDate(contractEndDate) : null}
+                onChange={(newDate: CalendarDate | null) => {
+                  if (newDate) {
+                    const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                    setContractEndDate(formattedDate);
+                  }
+                }}
+                aria-label="계약 종료일"
+                placeholder="종료일"
+                showMonthAndYearPickers
+                granularity="day"
               />
             </div>
           </div>

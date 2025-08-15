@@ -9,6 +9,8 @@ import {
   CreateScheduleRequest,
 } from "@/services/scheduleService";
 import { BaseButton } from "@/app/components/BaseButton";
+import { DatePicker } from "@heroui/react";
+import { parseDate, CalendarDate } from "@internationalized/date";
 
 export default function AddWorkPage() {
   const router = useRouter();
@@ -175,14 +177,26 @@ export default function AddWorkPage() {
         {/* 날짜 선택 */}
         <div className="mb-4">
           <h2 className="text-lg font-bold mb-2">날짜</h2>
-          <div className="bg-gray1 rounded-lg p-4">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full bg-transparent text-gray4 focus:outline-none"
-            />
-          </div>
+          <DatePicker
+            value={parseDate(selectedDate)}
+            onChange={(newDate: CalendarDate | null) => {
+              if (newDate) {
+                const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                setSelectedDate(formattedDate);
+              }
+            }}
+            aria-label="날짜 선택"
+            // HeroUI 안정성 최적화 적용
+            disableAnimation={true}
+            classNames={{
+              base: "w-full",
+              inputWrapper: "bg-gray1 rounded-lg border-none",
+              input: "text-gray4 bg-transparent",
+              popoverContent: "rounded-xl shadow-lg"
+            }}
+            showMonthAndYearPickers
+            granularity="day"
+          />
         </div>
 
         {/* 시간 선택 */}

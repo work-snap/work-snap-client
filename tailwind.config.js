@@ -1,10 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+const { heroui } = require("@heroui/react");
+
 module.exports = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./node_modules/@heroui/react/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   safelist: [
     "data-[state=checked]:bg-main",
@@ -360,5 +362,14 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("tailwind-scrollbar-hide")],
+  plugins: [
+    heroui({
+      themes: {
+        light: {},
+        dark: {},
+      },
+    }),
+    require("tailwindcss-animate"), 
+    require("tailwind-scrollbar-hide")
+  ],
 };

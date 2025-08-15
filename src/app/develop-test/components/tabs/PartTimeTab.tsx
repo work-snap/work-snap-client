@@ -9,6 +9,8 @@ import {
   PartTimeInfo,
   WorkSchedule,
 } from "../../lib/types";
+import { DatePicker } from "@heroui/react";
+import { parseDate, CalendarDate } from "@internationalized/date";
 
 interface PartTimeTabProps {
   loading: LoadingState;
@@ -396,11 +398,28 @@ export const PartTimeTab: React.FC<PartTimeTabProps> = ({
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   희망 시작일 (선택사항)
                 </label>
-                <input
-                  type="date"
-                  value={preferredStartDate}
-                  onChange={(e) => setPreferredStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-orange-200/50 bg-white/70 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                <DatePicker
+                  value={preferredStartDate ? parseDate(preferredStartDate) : null}
+                  onChange={(newDate: CalendarDate | null) => {
+                    if (newDate) {
+                      const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                      setPreferredStartDate(formattedDate);
+                    } else {
+                      setPreferredStartDate("");
+                    }
+                  }}
+                  aria-label="희망 시작일"
+                  placeholder="희망 시작일 선택"
+                  // HeroUI 안정성 최적화 적용
+                  disableAnimation={true}
+                  classNames={{
+                    base: "w-full",
+                    inputWrapper: "border border-orange-200/50 bg-white/70 backdrop-blur-sm rounded-lg",
+                    input: "px-3 py-2",
+                    popoverContent: "rounded-xl shadow-lg"
+                  }}
+                  showMonthAndYearPickers
+                  granularity="day"
                 />
               </div>
             </div>

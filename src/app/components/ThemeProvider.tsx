@@ -13,7 +13,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   // 시스템 테마 감지
@@ -50,25 +50,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       // 로컬스토리지에서 테마 불러오기
       const savedTheme = localStorage.getItem("theme") as Theme;
-      if (savedTheme && ["light", "dark", "system"].includes(savedTheme)) {
-        setTheme(savedTheme);
 
-        // 즉시 테마 적용
-        const actualTheme =
-          savedTheme === "system" ? getSystemTheme() : savedTheme;
-        if (actualTheme === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
+      if (savedTheme === "dark") {
+        setTheme("dark");
+        document.documentElement.classList.add("dark");
+      } else if (savedTheme === "light") {
+        setTheme("light");
+        document.documentElement.classList.remove("dark");
+      } else if (savedTheme === "system") {
+        // 기존에 system으로 저장된 경우도 라이트로 고정
+        setTheme("light");
+        localStorage.setItem("theme", "light");
+        document.documentElement.classList.remove("dark");
       } else {
-        // 저장된 테마가 없으면 시스템 테마 적용
-        const systemTheme = getSystemTheme();
-        if (systemTheme === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
+        // 저장된 테마가 없으면 라이트로 고정
+        setTheme("light");
+        localStorage.setItem("theme", "light");
+        document.documentElement.classList.remove("dark");
       }
 
       // 시스템 테마 변경 감지
@@ -94,8 +92,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (mounted && typeof window !== "undefined") {
-      const actualTheme = theme === "system" ? getSystemTheme() : theme;
-      if (actualTheme === "dark") {
+      if (theme === "dark") {
         document.documentElement.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");

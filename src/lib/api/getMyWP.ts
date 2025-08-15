@@ -17,8 +17,8 @@ export interface Workplace {
   businessLicenseNumber: string | null;
   isMainWorkplace: boolean;
   isActive: boolean;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  createdAt: string;
+  updatedAt: string;
   workplaceColorIndex: number;
 }
 
@@ -51,16 +51,39 @@ export interface WorkplaceDetail {
   schedules: Schedule[];
 }
 
-// API 응답 타입
+// Summary 타입 (/my-workplaces/summary 응답)
+export interface WorkplaceSummary {
+  id: number;
+  workplaceName: string;
+  workplaceType: string | null;
+  workplaceAddress: string;
+  isMainWorkplace: boolean;
+  isActive: boolean;
+  workplaceColorIndex: number | null;
+}
+
 export interface GetWorkplacesResponse {
   success: boolean;
   message: string;
   data: WorkplaceDetail[];
 }
 
-// 사업장 목록 조회 API 함수
+export interface GetWorkplacesSummaryResponse {
+  success: boolean;
+  message: string;
+  data: WorkplaceSummary[];
+}
+
+// 상세 사업장 목록 조회 (기존 기능 유지)
 export const getMyWorkPlaces = async (): Promise<GetWorkplacesResponse> => {
   const res = await api.get("/api/v1/part-time/my-workplaces");
   console.log("👀 응답 데이터:", res.data);
   return res.data;
 };
+
+// 사업장 요약 목록 조회 (신규)
+export const getMyWorkplacesSummary =
+  async (): Promise<GetWorkplacesSummaryResponse> => {
+    const res = await api.get("/api/v1/part-time/my-workplaces/summary");
+    return res.data;
+  };

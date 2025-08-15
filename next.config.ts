@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, // Temporarily disable strict mode for HeroUI compatibility
   images: {
     domains: [
       "img1.kakaocdn.net",

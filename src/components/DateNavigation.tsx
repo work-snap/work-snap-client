@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { BaseButton } from "@/app/components/BaseButton";
 import { useDateNavigation } from "@/context/DateContext";
 import { formatDate, getDateLabel, isToday } from "@/utils/dateUtils";
+import { useGlobalKeyboard } from "@/hooks/useGlobalKeyboard";
 
 interface DateNavigationProps {
   className?: string;
@@ -45,34 +46,34 @@ export const DateNavigation: React.FC<DateNavigationProps> = ({
 
   // 키보드 이벤트 핸들러
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (disabled || isLoadingDate) return;
+    (event: KeyboardEvent): boolean => {
+      if (disabled || isLoadingDate) return false;
 
       switch (event.key) {
         case "ArrowLeft":
-          event.preventDefault();
           if (canGoToPreviousDay) {
             goToPreviousDay();
+            return true; // Stop propagation
           }
           break;
         case "ArrowRight":
-          event.preventDefault();
           if (canGoToNextDay) {
             goToNextDay();
+            return true; // Stop propagation
           }
           break;
         case "Home":
-          event.preventDefault();
           goToToday();
-          break;
+          return true; // Stop propagation
         case "t":
         case "T":
           if (event.ctrlKey || event.metaKey) {
-            event.preventDefault();
             goToToday();
+            return true; // Stop propagation
           }
           break;
       }
+      return false; // Allow other handlers
     },
     [
       disabled,
@@ -85,13 +86,15 @@ export const DateNavigation: React.FC<DateNavigationProps> = ({
     ]
   );
 
-  // 키보드 이벤트 리스너 등록
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [handleKeyDown]);
+  // 키보드 이벤트 처리 (글로벌 관리자 사용)
+  useGlobalKeyboard(
+    "date-navigation",
+    (event: KeyboardEvent) => {
+      return handleKeyDown(event);
+    },
+    20, // Higher priority than date context
+    true
+  );
 
   // 크기별 스타일 설정
   const getSizeStyles = (size: string) => {

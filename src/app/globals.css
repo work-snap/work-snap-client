@@ -1,9 +1,72 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+@import "../styles/zIndex.css";
+
+/* =================================================================
+   HeroUI 모달 안정성 최적화
+   
+   근본 원인: Framer Motion + Tailwind Variants 조합으로 인한
+   CSS 렌더링 타이밍 문제와 애니메이션 충돌
+   
+   해결책: 애니메이션 비활성화 및 즉시 렌더링 강제
+   ================================================================= */
+
+/* HeroUI 모달 즉시 렌더링 (Framer Motion 애니메이션 우회) */
+[data-slot="backdrop"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  z-index: 9998 !important;
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+[role="dialog"][aria-modal="true"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  z-index: 9999 !important;
+  transform: scale(1) !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* HeroUI 오버레이 컨테이너 안정화 */
+[data-overlay-container="true"] {
+  z-index: 9999 !important;
+  transition: none !important;
+  animation: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* HeroUI Select/Dropdown 안정화 */
+[data-slot="listbox"],
+[role="listbox"] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: scale(1) !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Framer Motion 애니메이션 완전 차단 */
+[class*="modal"] *,
+[class*="Modal"] *,
+[class*="backdrop"] *,
+[class*="overlay"] *,
+[class*="popover"] *,
+[class*="dropdown"] * {
+  transition: none !important;
+  animation: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* G마켓 산스 폰트 정의 */
+/* G마켓 산스 폰트 정의 (통합된 단일 패밀리) */
 @font-face {
   font-family: "GmarketSans";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff")
@@ -24,62 +87,6 @@
 
 @font-face {
   font-family: "GmarketSans";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
-    format("woff");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* 대체 G마켓 산스 폰트 (이미지와 동일한 스타일) */
-@font-face {
-  font-family: "GmarketSansAlt";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff")
-    format("woff");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "GmarketSansAlt";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
-    format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "GmarketSansAlt";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
-    format("woff");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* 실제 G마켓 산스 폰트 (이미지와 동일한 스타일) */
-@font-face {
-  font-family: "GmarketSansReal";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff")
-    format("woff");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "GmarketSansReal";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
-    format("woff");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "GmarketSansReal";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
     format("woff");
   font-weight: 700;
@@ -110,49 +117,43 @@
   font-display: swap;
 }
 
-/* TimePicker Custom Styles */
+/* TimePicker Custom Styles - 최적화됨 */
 .custom-time-picker {
-  background-color: transparent !important;
-  border: none !important;
-  font-family: inherit !important;
+  background-color: transparent;
+  border: none;
+  font-family: inherit;
 }
 
 .custom-time-picker .react-time-picker__wrapper {
-  border: none !important;
-  background: transparent !important;
+  border: none;
+  background: transparent;
 }
 
 .custom-time-picker .react-time-picker__inputGroup {
-  font-size: 1rem !important;
-  color: #6b7280 !important;
-  text-align: right !important;
+  font-size: 1rem;
+  color: #6b7280;
+  text-align: right;
 }
 
 .custom-time-picker .react-time-picker__inputGroup__input {
-  color: #6b7280 !important;
-  font-weight: 500 !important;
-}
-
-.custom-time-picker .react-time-picker__inputGroup__divider {
-  color: #6b7280 !important;
-  padding: 0 2px !important;
-}
-
-.custom-time-picker .react-time-picker__clock {
-  display: none !important;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .custom-time-picker .react-time-picker__inputGroup__input:focus {
-  outline: none !important;
-  background: transparent !important;
+  outline: none;
+  background: transparent;
 }
 
-.custom-time-picker .react-time-picker__button {
-  display: none !important;
+.custom-time-picker .react-time-picker__inputGroup__divider {
+  color: #6b7280;
+  padding: 0 2px;
 }
 
+.custom-time-picker .react-time-picker__clock,
+.custom-time-picker .react-time-picker__button,
 .custom-time-picker .react-time-picker__inputGroup__leadingZero {
-  display: none !important;
+  display: none;
 }
 
 html,

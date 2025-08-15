@@ -24,7 +24,7 @@ export default function Navigation() {
     return null;
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 max-w-[430px] w-full bg-white border-t border-gray2 py-5">
+    <nav className=" max-w-[430px] w-full bg-white border-t border-gray2 py-5">
       <div className="flex justify-around items-center h-[64px]">
         {/* 알바 */}
         <Link

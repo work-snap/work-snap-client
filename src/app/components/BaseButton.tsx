@@ -24,6 +24,7 @@ export interface BaseButtonProps {
   className?: string;
   title?: string;
   type?: "button" | "submit" | "reset";
+  disableHover?: boolean;
 }
 
 export const BaseButton: React.FC<BaseButtonProps> = ({
@@ -32,6 +33,7 @@ export const BaseButton: React.FC<BaseButtonProps> = ({
   className = "",
   title,
   type = "button",
+  disableHover = false,
 }) => {
   const {
     label,
@@ -59,7 +61,15 @@ export const BaseButton: React.FC<BaseButtonProps> = ({
         "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300",
     };
 
-    return `${baseStyles} ${variantStyles[variant]}`;
+    const style = variantStyles[variant];
+    const stripped = disableHover
+      ? style
+          .split(" ")
+          .filter((cls) => !cls.startsWith("hover:"))
+          .join(" ")
+      : style;
+
+    return `${baseStyles} ${stripped}`;
   };
 
   const isDisabled = disabled || loading;

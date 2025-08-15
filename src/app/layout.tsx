@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import CustomProvider from "./components/customProvider";
-import { Toaster } from "@/components/ui/toaster";
 import Navigation from "./components/navigation";
 
 const geistSans = Geist({
@@ -32,9 +31,11 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <CustomProvider>
-          {children} <Navigation />
+          <div className="h-dvh flex flex-col justify-between">
+            {children}
+            <Navigation />
+          </div>
         </CustomProvider>
-        <Toaster />
       </body>
     </html>
   );

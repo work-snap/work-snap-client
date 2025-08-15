@@ -10,6 +10,7 @@ import React, {
   ReactNode,
 } from "react";
 import { isToday, isSameDay, isValidDate } from "@/utils/dateUtils";
+import { useGlobalKeyboard } from "@/hooks/useGlobalKeyboard";
 
 // 날짜 네비게이션 상태 타입
 interface DateNavigationState {
@@ -293,36 +294,39 @@ export const DateNavigationProvider: React.FC<DateNavigationProviderProps> = ({
     return historyIndex < dateHistory.length - 1;
   }, [historyIndex, dateHistory.length]);
 
-  // 키보드 이벤트 핸들러
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+  // 키보드 이벤트 처리 (글로벌 관리자 사용)
+  useGlobalKeyboard(
+    "date-context-navigation",
+    (event: KeyboardEvent) => {
       // 입력 필드에서는 키보드 이벤트 무시
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement
       ) {
-        return;
+        return false;
       }
 
       if (event.altKey) {
         switch (event.key) {
           case "ArrowLeft":
-            event.preventDefault();
-            if (canGoBack) goBack();
+            if (canGoBack) {
+              goBack();
+              return true; // Stop propagation
+            }
             break;
           case "ArrowRight":
-            event.preventDefault();
-            if (canGoForward) goForward();
+            if (canGoForward) {
+              goForward();
+              return true; // Stop propagation
+            }
             break;
         }
       }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [canGoBack, canGoForward, goBack, goForward]);
+      return false; // Allow other handlers
+    },
+    10, // Priority: medium
+    true // enabled
+  );
 
   // 컨텍스트 값
   const contextValue = useMemo<DateNavigationContextType>(() => ({

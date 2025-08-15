@@ -690,7 +690,7 @@ export default function AttendanceCard({
         <div className="flex flex-col items-end gap-1">
           <button
             onClick={handleModeToggle}
-            className={`rounded-full px-4 py-2 font-semibold text-sm transition-all hover:scale-105 ${getStatusStyle(
+            className={`rounded-full px-4 py-2 font-semibold text-sm transition-all ${getStatusStyle(
               currentStatus,
               "activeButton"
             )} ${
@@ -766,7 +766,7 @@ export default function AttendanceCard({
                 </span>
               </div>
             </div>
-            <div className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors cursor-pointer">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full transition-colors cursor-pointer">
               <MoreHorizontal size={40} className="text-main2" />
             </div>
             <div className="space-y-2">
@@ -810,7 +810,7 @@ export default function AttendanceCard({
             // 지각 상황: 분할 버튼
             <div className="flex w-full border-t border-gray1">
               <button
-                className={`flex-1 flex justify-center items-center py-3 text-lg hover:opacity-80 transition-opacity ${getStatusStyle(
+                className={`flex-1 flex justify-center items-center py-3 text-lg transition-opacity ${getStatusStyle(
                   currentStatus,
                   "checkInButton"
                 )} ${
@@ -828,7 +828,7 @@ export default function AttendanceCard({
                   : selectedModeOption?.label || "출근하기"}
               </button>
               <button
-                className={`flex-1 flex justify-center items-center py-3 text-lg bg-main hover:bg-main2 text-white transition-opacity ${
+                className={`flex-1 flex justify-center items-center py-3 text-lg bg-main text-white transition-opacity ${
                   checkInMutation.isPending || checkOutMutation.isPending
                     ? "opacity-50 cursor-not-allowed"
                     : ""
@@ -846,7 +846,7 @@ export default function AttendanceCard({
           ) : (
             // 일반 상황: 단일 버튼
             <button
-              className={`w-full flex justify-center items-center py-3 text-lg border-t border-gray1 hover:opacity-80 transition-opacity ${getStatusStyle(
+              className={`w-full flex justify-center items-center py-3 text-lg border-t border-gray1 transition-opacity ${getStatusStyle(
                 currentStatus,
                 "checkInButton"
               )} ${

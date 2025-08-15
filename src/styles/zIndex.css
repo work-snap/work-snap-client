@@ -1,0 +1,68 @@
+/* Z-Index 체계 표준화 */
+:root {
+  /* Base layers */
+  --z-base: 0;
+  --z-behind: -1;
+
+  /* Content layers */
+  --z-content: 1;
+  --z-elevated: 10;
+  --z-overlay: 50;
+
+  /* UI Component layers */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-notification: 800;
+
+  /* System layers */
+  --z-loading: 900;
+  --z-debug: 999;
+  --z-maximum: 9999;
+}
+
+/* HeroUI 컴포넌트 z-index 오버라이드 */
+.heroui-dropdown-content {
+  z-index: var(--z-dropdown) !important;
+}
+
+.heroui-modal-backdrop {
+  z-index: var(--z-modal-backdrop) !important;
+}
+
+.heroui-modal-wrapper {
+  z-index: var(--z-modal) !important;
+}
+
+.heroui-popover-content {
+  z-index: var(--z-popover) !important;
+}
+
+.heroui-tooltip {
+  z-index: var(--z-tooltip) !important;
+}
+
+/* Utility classes */
+.z-dropdown {
+  z-index: var(--z-dropdown);
+}
+
+.z-modal {
+  z-index: var(--z-modal);
+}
+
+.z-popover {
+  z-index: var(--z-popover);
+}
+
+.z-tooltip {
+  z-index: var(--z-tooltip);
+}
+
+.z-notification {
+  z-index: var(--z-notification);
+}

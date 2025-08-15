@@ -226,6 +226,40 @@ export const checkOut = async (request: CheckOutRequest): Promise<unknown> => {
   }
 };
 
+// 추가 근무 생성 요청 타입
+export interface AdditionalWorkCreateRequest {
+  workplaceId: number;
+  workDate: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  reason?: string;
+}
+
+/**
+ * 추가 근무 생성
+ */
+export const createAdditionalWork = async (
+  request: AdditionalWorkCreateRequest
+): Promise<unknown> => {
+  try {
+    const response = await api.post<ApiResponse<unknown>>(
+      "/api/v1/attendance/additional-work",
+      request
+    );
+
+    if (response.data.success && response.data.data) {
+      return response.data.data as unknown;
+    } else {
+      throw new Error(
+        response.data.message || "추가 근무 생성에 실패했습니다."
+      );
+    }
+  } catch (error) {
+    console.error("추가 근무 생성 실패:", error);
+    throw error;
+  }
+};
+
 /**
  * 현재 위치 정보 가져오기
  */
