@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -108,7 +107,7 @@ export const WorkScheduleTab: React.FC<WorkScheduleTabProps> = ({
       ) {
         errorMessage = "🌐 네트워크 연결 오류";
         troubleshootingTips = [
-          "1. 백엔드 서버가 실행 중인지 확인 (localhost:8080)",
+          `1. 백엔드 서버가 실행 중인지 확인 (${process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:8080"})`,
           "2. 방화벽이나 보안 소프트웨어 설정 확인",
           "3. 브라우저의 네트워크 탭에서 요청 확인",
         ];

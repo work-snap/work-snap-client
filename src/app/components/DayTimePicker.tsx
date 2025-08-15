@@ -43,7 +43,7 @@ const DAY_NAMES_KR: Record<string, string> = {
 };
 
 // Debug logging utility
-const debugLog = (enabled: boolean, label: string, data?: any) => {
+const debugLog = (enabled: boolean, label: string, data?: unknown) => {
   if (enabled) {
     console.log(`[DayTimePicker] ${label}:`, data);
   }
@@ -124,7 +124,7 @@ export default function DayTimePicker({
     }
 
     if (source === "hour") {
-      let newHour24 = endHour24 < reqHour24 ? reqHour24 : endHour24;
+      const newHour24 = endHour24 < reqHour24 ? reqHour24 : endHour24;
       let newMinute = end.minute;
       if (newHour24 === reqHour24 && newMinute < reqMinute)
         newMinute = reqMinute;
@@ -140,7 +140,7 @@ export default function DayTimePicker({
       return minutesToTime(minAllowed);
     }
     const periodFloorHour24 = endIsAM ? 0 : 12;
-    let newHour24 = Math.max(endHour24, Math.max(periodFloorHour24, reqHour24));
+    const newHour24 = Math.max(endHour24, Math.max(periodFloorHour24, reqHour24));
     let newMinute = end.minute;
     if (newHour24 === reqHour24 && newMinute < reqMinute) newMinute = reqMinute;
     const candidate = minutesToTime(newHour24 * 60 + newMinute);

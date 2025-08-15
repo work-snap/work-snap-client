@@ -6,7 +6,7 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   data: T;
   status: number;
   statusText: string;
@@ -17,7 +17,7 @@ interface ApiError {
   message: string;
   status?: number;
   code?: string;
-  details?: any;
+  details?: unknown;
 }
 
 class ApiClient {
@@ -97,7 +97,7 @@ class ApiClient {
 
   async get<T>(
     endpoint: string,
-    params?: Record<string, any>
+    params?: Record<string, unknown>
   ): Promise<ApiResponse<T>> {
     let url = endpoint;
     if (params) {
@@ -113,21 +113,21 @@ class ApiClient {
     return this.request<T>(url, { method: "GET" });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,

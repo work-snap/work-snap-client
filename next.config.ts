@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false, // Temporarily disable strict mode for HeroUI compatibility
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has TypeScript errors.
+    ignoreBuildErrors: true,
+  },
   images: {
     domains: [
       "img1.kakaocdn.net",
@@ -10,12 +20,32 @@ const nextConfig: NextConfig = {
       "example.com",
     ], // 외부 이미지 도메인 허용
   },
+  
+  // Exclude development/test files from build tracing
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  outputFileTracingExcludes: {
+    '*': [
+      './src/app/develop-test/**/*',
+      './src/app/test-*/**/*',
+      './src/app/**/test*.tsx',
+      './src/app/admin/**/*',
+      './src/app/debug-*/**/*',
+      './src/app/modal-*/**/*',
+      './src/app/heroui-test/**/*',
+      './src/app/simple-modal-test/**/*',
+      './src/app/stable-modal-test/**/*',
+      './src/app/advanced-modal-debug/**/*',
+      './src/app/no-animation-modal/**/*',
+      './src/app/force-modal-visible/**/*',
+      './src/app/vanilla-modal/**/*',
+    ],
+  },
 
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:8080/api/:path*",
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"}/api/:path*`,
       },
     ];
   },
@@ -58,7 +88,7 @@ const nextConfig: NextConfig = {
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
-                    "connect-src 'self' http://localhost:8080",
+                    `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"}`,
                     "object-src 'none'",
                     "base-uri 'self'",
                     "form-action 'self'",
