@@ -81,7 +81,7 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="flex flex-col bg-white w-full h-screen max-w-[430px] mx-auto">
+    <div className="flex flex-col bg-white w-full h-dvh">
       {/* 헤더 - 고정 높이 */}
       <div className="bg-white w-full flex-shrink-0">
         <div className="flex justify-between items-center p-2 w-full space-x-2">
@@ -109,14 +109,16 @@ export default function AttendancePage() {
         </div>
       </div>
       {/* 리스트 - 스크롤 영역 */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <div className="flex flex-col gap-2 p-2">
+      {/* 리스트 - 스크롤 영역 */}
+      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+        {/* 메인 컨텐츠 영역 */}
+        <div className="flex-1 flex flex-col gap-2 p-2">
           {userLoading || isLoading ? (
-            <div className="flex justify-center items-center py-8">
+            <div className="flex flex-1 justify-center items-center">
               <div className="text-gray-500">로딩 중...</div>
             </div>
           ) : error ? (
-            <div className="flex flex-col justify-center items-center py-8 space-y-2">
+            <div className="flex flex-1 flex-col justify-center items-center space-y-2 p-4">
               <div className="text-red-500 text-center">
                 <div className="font-semibold">
                   {error.message?.includes("401")
@@ -152,7 +154,7 @@ export default function AttendancePage() {
               </div>
             </div>
           ) : workplaceGroups.length === 0 ? (
-            <div className="flex justify-center items-center py-8">
+            <div className="flex flex-1 justify-center items-center">
               <div className="text-gray-500">
                 해당 날짜에 스케줄이 없습니다.
               </div>
@@ -160,7 +162,6 @@ export default function AttendancePage() {
           ) : (
             workplaceGroups.map((workplace) => (
               <div key={`workplace-${workplace.workplaceId}`} className="mb-4">
-                {/* 해당 사업장의 스케줄들 */}
                 <div className="space-y-2">
                   {workplace.schedules.map((schedule) => (
                     <AttendanceCard key={schedule.id} {...schedule} />
@@ -169,17 +170,19 @@ export default function AttendancePage() {
               </div>
             ))
           )}
-
-          {/* 근무 추가 버튼 */}
-          {!userLoading && !isLoading && !error && (
-            <div
-              className="w-full py-4 bg-gray-200 rounded-xl text-gray-600 font-bold flex items-center justify-center cursor-pointer transition-colors"
-              onClick={handleAddAttendance}
-            >
-              추가근무 +
-            </div>
-          )}
         </div>
+
+        {/* 추가근무 버튼 - 항상 아래 고정 */}
+        {!userLoading && !isLoading && !error && (
+          <div
+            className="max-w-[400px] w-full mx-auto py-4 bg-gray-200 rounded-xl 
+             text-gray-600 font-bold flex items-center justify-center 
+             cursor-pointer transition-colors mb-2"
+            onClick={handleAddAttendance}
+          >
+            추가근무 +
+          </div>
+        )}
       </div>
     </div>
   );

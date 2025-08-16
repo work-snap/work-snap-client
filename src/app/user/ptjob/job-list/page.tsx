@@ -99,7 +99,7 @@ export default function PtJobPage() {
   };
 
   return (
-    <div className="h-full flex flex-col w-full relative min-h-0">
+    <div className="h-dvh flex flex-col w-full relative min-h-0 max-w-[430px]">
       <ToastModal
         message="인증코드가 복사되었습니다"
         isVisible={showToast}
@@ -175,7 +175,7 @@ export default function PtJobPage() {
               className="rounded-xl border border-gray2 p-4 flex justify-between relative mb-3"
             >
               {/* 이름 + 현재 색상 */}
-              <div className="flex flex-col gap-2 relative">
+              <div className="flex flex-col gap-1 relative">
                 <div className="flex items-center ">
                   <div
                     className="flex mr-2 w-4 h-4 rounded-full cursor-pointer"
@@ -212,7 +212,7 @@ export default function PtJobPage() {
                 )}
                 {/* 여기는 계약 기간 넣어야함 */}
                 <span className="text-md text-gray3 font-bold">
-                  {wp.contractStartDate} - {wp.contractEndDate}
+                  {wp.contractStartDate} ~ {wp.contractEndDate}
                 </span>
                 {/* 같은 시간대 묶어서 요일 순 정렬 + '요일' 제거 */}
                 <div className="text-md text-main2 font-bold">

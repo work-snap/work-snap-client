@@ -234,7 +234,7 @@ export default function DayTimePicker({
             {/* radix onCheckedChange 타입은 boolean | CheckedState 이므로 강제 boolean 변환 */}
             <Switch
               checked={applySameTime}
-              onCheckedChange={(v: boolean) => setApplySameTime(Boolean(v))}
+              onChange={(e) => setApplySameTime(e.target.checked)}
               aria-label="동일시간 적용 토글"
             />
           </label>
