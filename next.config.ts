@@ -20,31 +20,31 @@ const nextConfig: NextConfig = {
       "example.com",
     ], // 외부 이미지 도메인 허용
   },
-  
+
   // Exclude development/test files from build tracing
-  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  pageExtensions: ["tsx", "ts", "jsx", "js"],
   outputFileTracingExcludes: {
-    '*': [
-      './src/app/develop-test/**/*',
-      './src/app/test-*/**/*',
-      './src/app/**/test*.tsx',
-      './src/app/admin/**/*',
-      './src/app/debug-*/**/*',
-      './src/app/modal-*/**/*',
-      './src/app/heroui-test/**/*',
-      './src/app/simple-modal-test/**/*',
-      './src/app/stable-modal-test/**/*',
-      './src/app/advanced-modal-debug/**/*',
-      './src/app/no-animation-modal/**/*',
-      './src/app/force-modal-visible/**/*',
-      './src/app/vanilla-modal/**/*',
+    "*": [
+      "./src/app/develop-test/**/*",
+      "./src/app/test-*/**/*",
+      "./src/app/**/test*.tsx",
+      "./src/app/admin/**/*",
+      "./src/app/debug-*/**/*",
+      "./src/app/modal-*/**/*",
+      "./src/app/heroui-test/**/*",
+      "./src/app/simple-modal-test/**/*",
+      "./src/app/stable-modal-test/**/*",
+      "./src/app/advanced-modal-debug/**/*",
+      "./src/app/no-animation-modal/**/*",
+      "./src/app/force-modal-visible/**/*",
+      "./src/app/vanilla-modal/**/*",
     ],
   },
 
   async rewrites() {
     // 환경 변수 기반 API URL 설정
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-    
+
     return [
       {
         source: "/api/:path*",
@@ -91,8 +91,10 @@ const nextConfig: NextConfig = {
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
-<<<<<<< HEAD
-                    `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"} https://*.ngrok-free.app https://*.ngrok.io`,
+                    // <<<<<<< HEAD
+                    `connect-src 'self' ${
+                      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+                    } https://*.ngrok-free.app https://*.ngrok.io`,
                     "object-src 'none'",
                     "base-uri 'self'",
                     "form-action 'self'",
