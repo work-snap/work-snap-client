@@ -1,23 +1,41 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Navigation from "../../../components/navigation";
 import Benner from "@/src/app/components/benner";
 import { useGetWP } from "@/src/lib/queries/getWP";
 import { useDeleteWP } from "@/src/lib/queries/useDeleteWP";
 import Header from "@/app/components/Header";
-import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
+import { useState } from "react";
+import ToastModal from "@/app/components/ToastModal";
 
 export default function AddBusiness() {
   const router = useRouter();
-  const { toast } = useToast();
-
   const { data, isLoading, isError, error } = useGetWP();
   const deleteMutation = useDeleteWP();
-
   const workplaces = data?.workplaces ?? [];
+  const [toastMessage, setToastMessage] = useState("");
+  const [isToastVisible, setIsToastVisible] = useState(false);
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setIsToastVisible(true);
+  };
+
+  const hideToast = () => {
+    setIsToastVisible(false);
+  };
+  const handleDelete = (idx: number) => {
+    const workplaceId = workplaces[idx]?.id;
+    const workplaceName = workplaces[idx]?.workplaceName;
+    deleteMutation.mutate(workplaceId, {
+      onSuccess: () => {
+        showToast(`${workplaceName}이(가) 성공적으로 삭제되었습니다.`);
+      },
+      onError: (error) => {
+        showToast("삭제에 실패했습니다. 다시 시도해주세요.");
+      },
+    });
+  };
   if (isLoading) return <div className="text-center mt-8">로딩중...</div>;
   if (isError)
     return (
@@ -25,46 +43,26 @@ export default function AddBusiness() {
         에러 발생: {error instanceof Error ? error.message : "알 수 없는 에러"}
       </div>
     );
-  
-  const handleDelete = (idx: number) => {
-    const workplaceId = workplaces[idx]?.id;
-    const workplaceName = workplaces[idx]?.workplaceName;
-    
-    if (!workplaceId) return;
-
-    if (confirm("정말 삭제하시겠습니까?")) {
-      deleteMutation.mutate(workplaceId, {
-        onSuccess: () => {
-          toast({
-            title: "삭제 완료",
-            description: `${workplaceName}이(가) 성공적으로 삭제되었습니다.`,
-            variant: "default",
-          });
-        },
-        onError: (error) => {
-          toast({
-            title: "삭제 실패",
-            description: "사업장 삭제 중 오류가 발생했습니다.",
-            variant: "destructive",
-          });
-        },
-      });
-    }
-  };
 
   return (
-    <div className="min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
+    <div className="h-dvh min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
       <Header />
       <Benner />
-      
+
       {/* 메인 컨텐츠 영역 - 스크롤 가능 */}
-      <div className="flex-1 overflow-y-auto">
+      <div
+        className={`flex-1 overflow-y-auto ${
+          workplaces.length === 0
+            ? "flex justify-center items-center" // 비어있으면 중앙
+            : "flex flex-col gap-4 pb-4" // 있으면 위에서부터
+        }`}
+      >
         {workplaces.length === 0 ? (
           <div className="text-center text-gray-400 mt-8">
             등록된 사업장이 없습니다.
           </div>
         ) : (
-          <div className="flex flex-col gap-4 mt-8 px-4 pb-4">
+          <div className="flex flex-col gap-4 mt-4 px-4 pb-4">
             {workplaces.map((b, idx) => (
               <div
                 key={b.id}
@@ -115,7 +113,7 @@ export default function AddBusiness() {
       </div>
 
       {/* 하단 버튼 - 고정 위치 */}
-      <div className="w-full px-4 py-4 bg-white border-t border-gray-100">
+      <div className="w-full px-4 py-4 bg-white">
         <button
           onClick={() => router.push("/user/business/add-business/add")}
           className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-base"
@@ -123,9 +121,12 @@ export default function AddBusiness() {
           <span className="font-semibold text-lg">사업장 등록</span>
         </button>
       </div>
-      
-      {/* 토스트 알림 */}
-      <Toaster />
+
+      <ToastModal
+        message={toastMessage}
+        isVisible={isToastVisible}
+        onClose={hideToast}
+      />
     </div>
   );
 }

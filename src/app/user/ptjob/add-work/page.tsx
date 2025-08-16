@@ -47,7 +47,7 @@ export default function AddWorkPage() {
         return true;
       } catch (error) {
         console.error("충돌 검사 실패:", error);
-        return true; // 충돌 검사 실패 시 진행 허용
+        return true;
       } finally {
         setIsCheckingConflict(false);
       }
@@ -80,12 +80,8 @@ export default function AddWorkPage() {
     [checkConflict, router]
   );
 
-  // 추가근무 생성 핸들러
   const handleCreateWork = useCallback(async () => {
-    // 기본 직원 ID (실제로는 로그인한 사용자 정보에서 가져와야 함)
     const employeeId = "user-123";
-
-    // 요일 계산
     const date = new Date(selectedDate);
     const dayOfWeek = [
       "SUNDAY",
@@ -112,7 +108,7 @@ export default function AddWorkPage() {
   }, [selectedDate, startTime, endTime, createSchedule]);
 
   return (
-    <div className="h-full bg-white max-w-[430px] mx-auto">
+    <div className="h-dvh flex flex-col bg-white w-full max-w-[430px] mx-auto relative">
       {/* Work Snap 헤더 */}
       <header className="flex items-center justify-between px-5 pt-6 pb-3">
         <h1 className="text-main text-[26px] font-extrabold tracking-tight">
@@ -151,11 +147,11 @@ export default function AddWorkPage() {
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="px-5 mt-4">
+      <div className="px-5 mt-4 flex-1 overflow-y-auto">
         {/* 근무지 선택 */}
         <div className="mb-4">
           <h2 className="text-lg font-bold mb-2">알바선택</h2>
-          <div className="flex items-center justify-between border border-gray2 rounded-lg p-4 ">
+          <div className="flex items-center justify-between border border-gray2 rounded-lg p-4">
             <span className="text-gray4">스타벅스 해운대점</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -181,18 +177,19 @@ export default function AddWorkPage() {
             value={parseDate(selectedDate)}
             onChange={(newDate: CalendarDate | null) => {
               if (newDate) {
-                const formattedDate = `${newDate.year}-${String(newDate.month).padStart(2, '0')}-${String(newDate.day).padStart(2, '0')}`;
+                const formattedDate = `${newDate.year}-${String(
+                  newDate.month
+                ).padStart(2, "0")}-${String(newDate.day).padStart(2, "0")}`;
                 setSelectedDate(formattedDate);
               }
             }}
             aria-label="날짜 선택"
-            // HeroUI 안정성 최적화 적용
-            disableAnimation={true}
+            disableAnimation
             classNames={{
               base: "w-full",
               inputWrapper: "bg-gray1 rounded-lg border-none",
               input: "text-gray4 bg-transparent",
-              popoverContent: "rounded-xl shadow-lg"
+              popoverContent: "rounded-xl shadow-lg",
             }}
             showMonthAndYearPickers
             granularity="day"
@@ -229,8 +226,8 @@ export default function AddWorkPage() {
         </div>
       </div>
 
-      {/* 하단 버튼 */}
-      <div className="fixed bottom-[130px] left-0 right-0 px-6">
+      {/* 하단 버튼 고정 */}
+      <div className="p-4 w-full max-w-[430px] mx-auto bg-white z-10">
         <BaseButton
           buttonState={{
             label: isCheckingConflict ? "충돌 검사 중..." : "추가근무 만들기",
@@ -239,7 +236,7 @@ export default function AddWorkPage() {
             disabled: isLoading || isCheckingConflict,
           }}
           onClick={handleCreateWork}
-          className="w-full py-5 rounded-xl font-bold max-w-[430px] mx-auto"
+          className="w-full py-5 rounded-xl font-bold"
         />
       </div>
 

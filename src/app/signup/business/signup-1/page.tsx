@@ -30,7 +30,7 @@ export default function BusinessSignupStep1() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setImageFile(file);
-      
+
       // 이미지 미리보기 생성
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -44,9 +44,11 @@ export default function BusinessSignupStep1() {
     setImageFile(null);
     setImagePreview(null);
     // input 값 초기화
-    const fileInput = document.getElementById('business-license') as HTMLInputElement;
+    const fileInput = document.getElementById(
+      "business-license"
+    ) as HTMLInputElement;
     if (fileInput) {
-      fileInput.value = '';
+      fileInput.value = "";
     }
   };
 
@@ -75,7 +77,7 @@ export default function BusinessSignupStep1() {
         // ✅ 업로드 후 서버 분석 중일 때
         <LoadingAuthentication />
       ) : (
-        <div className="h-screen flex flex-col bg-white max-w-[430px] w-full mx-auto">
+        <div className="h-dvh flex flex-col bg-white max-w-[430px] w-full mx-auto">
           {/* 헤더 */}
           <div className="flex items-center py-4 px-2 flex-shrink-0">
             <button onClick={() => router.push("/signup")} className="p-2">

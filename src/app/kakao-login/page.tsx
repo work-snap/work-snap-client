@@ -255,7 +255,7 @@ export default function KakaoLogin() {
   const code = searchParams.get("code");
   if (!code) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="h-dvh flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-16 h-16 bg-main rounded-full mx-auto mb-4 flex items-center justify-center">
             <svg

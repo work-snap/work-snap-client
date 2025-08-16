@@ -4,17 +4,16 @@ import Header from "../components/Header";
 import Navigation from "../components/navigation";
 
 export default function AttendanceLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <div className="h-dvh flex flex-col justify-between min-h-0">
-            <div>
-                <Header />
-                {children}
-            </div>
-            <Navigation />
-        </div>
-    );
+  return (
+    <div className="h-dvh flex flex-col justify-between max-w-[430px] min-h-0 mx-auto">
+      <Header />
+      {children}
+
+      <Navigation />
+    </div>
+  );
 }

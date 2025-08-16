@@ -25,7 +25,7 @@ const ToastModal = memo(function ToastModal({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="fixed bottom-48 left-1/2 transform -translate-x-1/2 z-50">
       <div className="bg-gray5 text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium">
         {message}
       </div>

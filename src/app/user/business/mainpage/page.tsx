@@ -1,10 +1,3 @@
-import Navigation from "@/src/app/components/navigation";
-
 export default function MainPage() {
-  return (
-    <div>
-      MainPage
-      <Navigation userType="business" />
-    </div>
-  );
+  return <div className="h-dvh">MainPage</div>;
 }

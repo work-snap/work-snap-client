@@ -1,7 +1,6 @@
 // src/app/user/business/mypage/page.tsx
 "use client";
 
-import Navigation from "@/src/app/components/navigation";
 import { useDeleteUser } from "@/src/lib/queries/deleteUser";
 import { useUser } from "@/src/lib/queries/useUser";
 
@@ -37,7 +36,7 @@ export default function MyPage() {
   };
 
   return (
-    <div className="h-full bg-white max-w-[430px] mx-auto flex flex-col">
+    <div className="h-dvh mx-auto w-full bg-white max-w-[430px]  flex flex-col">
       <div className="p-4 flex flex-col gap-6 flex-grow pt-[60px]">
         <h1 className="text-2xl font-bold">MY</h1>
 
@@ -69,7 +68,7 @@ export default function MyPage() {
         </div>
       </div>
 
-      <div className="px-6 pb-[140px]">
+      <div className="px-6 pb-4">
         <div className="flex gap-4">
           <button
             onClick={handleLogout}
@@ -85,8 +84,6 @@ export default function MyPage() {
           </button>
         </div>
       </div>
-
-      <Navigation userType="business" />
     </div>
   );
 }

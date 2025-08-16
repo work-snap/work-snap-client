@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function LoadingAuthentication() {
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
+    <div className="h-dvh flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
       {/* 임시 체크리스트 일러스트 */}
       <div className="mt-12 mb-8">
         <Image

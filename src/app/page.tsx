@@ -11,9 +11,9 @@ export default function Home() {
   };
 
   return (
-    <div className="h-full flex flex-col items-center justify-between bg-white max-w-[430px] w-full mx-auto ">
+    <div className="h-dvh flex flex-col items-center justify-between bg-white max-w-[430px] w-full mx-auto ">
       {/* 중앙 컨텐츠 */}
-      <div className="flex flex-col items-center justify-center flex-1 pt-24">
+      <div className="flex flex-col items-center justify-center flex-1">
         {/* 로고 */}
         <div className="">
           <svg

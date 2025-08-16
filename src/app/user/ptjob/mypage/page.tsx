@@ -37,7 +37,7 @@ export default function MyPage() {
   };
 
   return (
-    <div className="h-full bg-white max-w-[430px] mx-auto flex flex-col">
+    <div className="h-dvh bg-white max-w-[430px] w-full flex flex-col">
       <div className="p-4 flex flex-col gap-6 flex-grow pt-[60px]">
         <h1 className="text-2xl font-bold">MY</h1>
 
@@ -63,7 +63,7 @@ export default function MyPage() {
         </div>
       </div>
 
-      <div className="px-6 pb-[140px]">
+      <div className="px-6 pb-4">
         <div className="flex gap-4">
           <button
             onClick={handleLogout}
