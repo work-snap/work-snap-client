@@ -2,7 +2,7 @@
  * 출석 관련 API 함수들
  */
 
-import { api } from "@/services/api";
+import api from "@/lib/api";
 import { ApiResponse } from "@/types/api";
 import { ScedulesProps } from "@/app/attendance/components/types";
 
@@ -77,7 +77,7 @@ export const fetchDailySchedules = async (
   try {
     const response = await api.get<ApiResponse<UserDailySchedulesRes>>(
       "/api/v1/attendance/my-daily-schedules",
-      { date }
+      { params: { date } }
     );
 
     if (response.data.success && response.data.data) {

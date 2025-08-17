@@ -2,7 +2,7 @@
  * 시간 동기화 API 관련 함수들
  */
 
-import { api } from "@/services/api";
+import api from "@/lib/api";
 
 // 서버 시간 응답 타입
 export interface ServerTimeResponse {

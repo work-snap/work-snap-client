@@ -2,7 +2,7 @@
  * 위치 인증 관련 API 서비스
  */
 
-import { api } from './api';
+import api from '@/lib/api';
 import { LocationData } from '@/hooks/useGeolocation';
 
 // 사업장 위치 정보 타입

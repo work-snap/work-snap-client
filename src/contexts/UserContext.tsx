@@ -5,7 +5,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { api } from "@/services/api";
+import api from "@/lib/api";
 
 export interface User {
   id: number;

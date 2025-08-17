@@ -5,6 +5,13 @@
 // API 기본 URL 설정 - 환경 변수에서 가져오거나 빈 문자열 사용
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
+// 개발환경에서 디버깅을 위한 로그
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  console.log("🔧 API Client 설정:");
+  console.log("  - NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+  console.log("  - API_BASE_URL:", API_BASE_URL);
+}
+
 interface ApiResponse<T = unknown> {
   data: T;
   status: number;
@@ -42,7 +49,20 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
+    // URL 결합시 중복 슬래시 방지
+    const cleanBaseURL = this.baseURL.endsWith('/') ? this.baseURL.slice(0, -1) : this.baseURL;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${cleanBaseURL}${cleanEndpoint}`;
+    
+    // 개발환경에서 URL 디버깅
+    if (process.env.NODE_ENV === "development") {
+      console.log("🌐 API Request URL 구성:");
+      console.log("  - baseURL:", this.baseURL);
+      console.log("  - cleanBaseURL:", cleanBaseURL);
+      console.log("  - endpoint:", endpoint);
+      console.log("  - cleanEndpoint:", cleanEndpoint);
+      console.log("  - final URL:", url);
+    }
 
     // 매 요청마다 최신 토큰 확인 및 설정
     if (typeof window !== "undefined") {

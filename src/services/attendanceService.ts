@@ -2,7 +2,7 @@
  * 출석 관련 API 서비스
  */
 
-import { api } from './api';
+import api from '@/lib/api';
 import { LocationData } from '@/hooks/useGeolocation';
 
 // 출석 상태 enum
@@ -131,15 +131,7 @@ class AttendanceService {
    */
   async getAttendanceRecords(filter: AttendanceFilter = {}): Promise<AttendanceRecord[]> {
     try {
-      const params = new URLSearchParams();
-      
-      Object.entries(filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value));
-        }
-      });
-
-      const response = await api.get(`${this.baseUrl}?${params.toString()}`);
+      const response = await api.get(this.baseUrl, { params: filter });
       return response.data;
     } catch (error) {
       console.error('출석 기록 조회 실패:', error);

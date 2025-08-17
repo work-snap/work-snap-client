@@ -2,7 +2,7 @@
  * 스케줄 관련 API 서비스
  */
 
-import { api } from "./api";
+import api from "@/lib/api";
 
 // 스케줄 타입 정의
 export interface WorkSchedule {
@@ -87,15 +87,7 @@ class ScheduleService {
    */
   async getSchedules(filter: ScheduleFilter = {}): Promise<WorkSchedule[]> {
     try {
-      const params = new URLSearchParams();
-
-      Object.entries(filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value));
-        }
-      });
-
-      const response = await api.get(`${this.baseUrl}?${params.toString()}`);
+      const response = await api.get(this.baseUrl, { params: filter });
       return response.data;
     } catch (error) {
       console.error("스케줄 조회 실패:", error);
