@@ -273,6 +273,7 @@ export default function KakaoLogin() {
       const requestData: KakaoLoginRequest = {
         code,
         ...(userType && { userType }), // userType이 있을 때만 포함 (신규 가입시)
+        redirectUri: getRedirectUri(), // 프론트엔드에서 사용한 redirect_uri 포함
       };
       console.log("서버 요청 데이터:", requestData);
 

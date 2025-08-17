@@ -2,6 +2,7 @@
 export interface KakaoLoginRequest {
   code: string;
   userType?: string;
+  redirectUri?: string; // 프론트엔드에서 사용한 redirect_uri (환경에 따른 동적 처리용)
 }
 
 export const UserType = {
