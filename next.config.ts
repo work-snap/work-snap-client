@@ -65,10 +65,13 @@ const nextConfig: NextConfig = {
 
     console.log("✅ API URL 설정:", apiUrl);
 
+    // URL 끝의 슬래시 제거하여 중복 방지
+    const cleanApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+    
     return [
       {
         source: "/api/:path*",
-        destination: `${apiUrl}/api/:path*`,
+        destination: `${cleanApiUrl}/api/:path*`,
       },
     ];
   },
