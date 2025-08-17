@@ -10,11 +10,13 @@ import { useUser } from "@/src/lib/queries/useUser";
 import { useGetMyWP } from "@/lib/queries/getMyWP";
 import Header from "@/app/components/Header";
 import { updateWorkPlaceColor } from "@/lib/queries/updateWPColor";
+import { useRouter } from "next/navigation";
 
 // 색상 값값
 const colorMap = ["#eeace3", "#fcdd2c", "#08fd31", "#44d1fc", "#b700ff"];
 
 export default function PtJobPage() {
+  const router = useRouter();
   const { data: user } = useUser();
   const { data: workPlaces } = useGetMyWP();
   const [localWorkPlaces, setLocalWorkPlaces] = useState(
@@ -251,7 +253,15 @@ export default function PtJobPage() {
                 </div>
               </div>
 
-              <button className="flex flex-col items-center justify-center bg-gray2 rounded-lg px-8 text-gray4 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/attendance/calendar?workplaceId=${wp.workplace.id}`
+                  )
+                }
+                className="flex flex-col items-center justify-center bg-gray2 rounded-lg px-8 text-gray4 text-xs font-semibold"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
