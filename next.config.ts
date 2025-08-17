@@ -53,6 +53,8 @@ const nextConfig: NextConfig = {
     const apiUrl =
       process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
+    console.log("🔧 API URL 설정:", apiUrl);
+
     return [
       {
         source: "/api/:path*",

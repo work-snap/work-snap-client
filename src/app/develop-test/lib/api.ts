@@ -68,13 +68,13 @@ export const authTestApis = {
 
   // 개발 토큰 생성 (사용자 ID)
   generateDevToken: (userId: string) => {
-    return api.post(`/api/auth/dev/tokens/${userId}`);
+    return api.post(`/api/auth/dev-token/${userId}`);
   },
 
   // 개발 토큰 생성 (닉네임)
   generateDevTokenByNickname: (nickname: string) => {
     return api.post(
-      `/api/auth/dev/tokens/by-nickname/${encodeURIComponent(nickname)}`
+      `/api/auth/dev-token/nickname/${encodeURIComponent(nickname)}`
     );
   },
 };
