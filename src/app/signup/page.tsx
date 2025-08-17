@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import api from "@/lib/api";
 import { IoArrowBack } from "react-icons/io5";
 
 export default function SignupPage() {
@@ -16,26 +16,7 @@ export default function SignupPage() {
     try {
       setIsLoading(true);
 
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        alert("로그인이 필요합니다.");
-        router.push("/");
-        return;
-      }
-
-      const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
-      await axios.post(
-        `${API_URL}/api/v1/users/select-type`,
-        { userType },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
+      await api.post("/api/v1/users/select-type", { userType });
 
       // 사용자 정보 업데이트
       const userStr = localStorage.getItem("user");
