@@ -197,6 +197,7 @@ export default function RegisterParttimer() {
                 }}
                 aria-label="계약 시작일"
                 placeholder="시작일"
+                disableAnimation // 날짜 선택 클릭 시 자동꺼짐현상 없앰
                 showMonthAndYearPickers
                 granularity="day"
               />
@@ -216,6 +217,7 @@ export default function RegisterParttimer() {
                 }}
                 aria-label="계약 종료일"
                 placeholder="종료일"
+                disableAnimation // 날짜 선택 클릭 시 자동꺼짐현상 없앰
                 showMonthAndYearPickers
                 granularity="day"
               />
