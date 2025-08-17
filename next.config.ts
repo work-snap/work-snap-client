@@ -52,12 +52,18 @@ const nextConfig: NextConfig = {
     // 환경 변수 기반 API URL 설정
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+    console.log("🔧 Next.js Rewrites 설정:");
+    console.log("  - NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+    console.log("  - NODE_ENV:", process.env.NODE_ENV);
+    console.log("  - VERCEL_ENV:", process.env.VERCEL_ENV);
+
     if (!apiUrl) {
       console.warn("⚠️ NEXT_PUBLIC_API_BASE_URL이 설정되지 않았습니다. API 리다이렉트가 비활성화됩니다.");
+      console.warn("⚠️ Vercel에서 환경 변수를 설정해주세요: NEXT_PUBLIC_API_BASE_URL=https://31106af31d6e.ngrok-free.app");
       return [];
     }
 
-    console.log("🔧 API URL 설정:", apiUrl);
+    console.log("✅ API URL 설정:", apiUrl);
 
     return [
       {

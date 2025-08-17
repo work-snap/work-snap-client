@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// API 기본 URL 설정 - Next.js rewrites 사용
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+// API 기본 URL 설정 - 환경 변수에서 가져오거나 Next.js rewrites 사용
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 // axios 인스턴스 생성
 const api = axios.create({
