@@ -91,7 +91,6 @@ const nextConfig: NextConfig = {
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
-<<<<<<< HEAD
                     `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"} https://*.ngrok-free.app https://*.ngrok.io`,
                     "object-src 'none'",
                     "base-uri 'self'",
@@ -102,8 +101,8 @@ const nextConfig: NextConfig = {
                   ].join("; ")
                 : [
                     "default-src 'self'",
-                    "script-src 'self'",
-                    "style-src 'self' https://cdn.jsdelivr.net",
+                    "script-src 'self' 'unsafe-inline'",
+                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
                     `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"}`,
