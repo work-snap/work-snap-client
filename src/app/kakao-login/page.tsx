@@ -133,6 +133,36 @@ export default function KakaoLogin() {
     },
   });
 
+  // 환경에 따른 동적 리다이렉트 URI 설정
+  const getRedirectUri = () => {
+    // 현재 도메인 확인
+    const currentHostname = window.location.hostname;
+    const currentOrigin = window.location.origin;
+
+    // Vercel 배포 환경 감지 (간단하고 확실한 방법)
+    const isVercel =
+      currentHostname !== "localhost" && currentHostname !== "127.0.0.1";
+
+    console.log("🔍 환경 감지:", {
+      hostname: currentHostname,
+      origin: currentOrigin,
+      isVercel: isVercel,
+      NODE_ENV: process.env.NODE_ENV,
+    });
+
+    if (isVercel) {
+      // Vercel 배포 환경에서는 현재 도메인 사용
+      const redirectUri = `${currentOrigin}/kakao-login`;
+      console.log("🚀 Vercel 환경 감지됨, 리다이렉트 URI:", redirectUri);
+      return redirectUri;
+    }
+
+    // 로컬 개발 환경
+    const localRedirectUri = "http://localhost:3000/kakao-login";
+    console.log("🏠 로컬 환경 감지됨, 리다이렉트 URI:", localRedirectUri);
+    return localRedirectUri;
+  };
+
   useEffect(() => {
     const handleKakaoLogin = async () => {
       // 이미 실행되었거나 처리 중이면 중복 실행 방지
@@ -167,7 +197,7 @@ export default function KakaoLogin() {
 
         // 코드가 없으면 즉시 카카오 로그인 페이지로 리다이렉트 (로딩 없이)
         const KAKAO_CLIENT_ID = "f5d47f3b1a3544fbb879afa0f57c2470";
-        const REDIRECT_URI = "http://localhost:3000/kakao-login";
+        const REDIRECT_URI = getRedirectUri();
 
         if (!KAKAO_CLIENT_ID || !REDIRECT_URI) {
           console.error("필수 환경 변수가 설정되지 않았습니다.");
@@ -181,7 +211,7 @@ export default function KakaoLogin() {
           Math.random().toString(36).substring(2, 15);
         sessionStorage.setItem("kakao_login_state", state);
 
-        // 카카오 인증 URL 생성 (기본 설정)
+        // 카카오 인증 URL 생성 (동적 설정)
         const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(
           REDIRECT_URI
         )}&response_type=code&state=${state}`;
@@ -190,6 +220,8 @@ export default function KakaoLogin() {
         console.log("카카오 로그인 URL:", kakaoAuthUrl);
         console.log("클라이언트 ID:", KAKAO_CLIENT_ID);
         console.log("리다이렉트 URI:", REDIRECT_URI);
+        console.log("현재 환경:", process.env.NODE_ENV);
+        console.log("현재 도메인:", window.location.hostname);
         console.log("State:", state);
 
         // 즉시 리다이렉트 (로딩 화면 없이)
@@ -254,6 +286,9 @@ export default function KakaoLogin() {
   // code가 없는 경우 (즉시 리다이렉트 되는 경우) 간단한 메시지만 표시
   const code = searchParams.get("code");
   if (!code) {
+    // 디버깅을 위한 환경 정보 표시 (개발 환경에서만)
+    const isDev = process.env.NODE_ENV === "development";
+
     return (
       <div className="h-dvh flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -273,6 +308,25 @@ export default function KakaoLogin() {
             </svg>
           </div>
           <p className="text-gray-600">카카오 로그인 페이지로 이동 중...</p>
+
+          {/* 개발 환경에서만 환경 정보 표시 */}
+          {isDev && (
+            <div className="mt-4 p-3 bg-gray-100 rounded-lg text-xs text-left max-w-md mx-auto">
+              <p className="font-semibold mb-2">🔍 환경 정보 (개발용):</p>
+              <p>
+                Hostname:{" "}
+                {typeof window !== "undefined"
+                  ? window.location.hostname
+                  : "N/A"}
+              </p>
+              <p>
+                Origin:{" "}
+                {typeof window !== "undefined" ? window.location.origin : "N/A"}
+              </p>
+              <p>Redirect URI: {getRedirectUri()}</p>
+              <p>NODE_ENV: {process.env.NODE_ENV}</p>
+            </div>
+          )}
         </div>
       </div>
     );

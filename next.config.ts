@@ -12,6 +12,13 @@ const nextConfig: NextConfig = {
     // your project has TypeScript errors.
     ignoreBuildErrors: true,
   },
+
+  // Vercel 환경 변수를 클라이언트에서 사용할 수 있도록 설정
+  env: {
+    NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV,
+    NEXT_PUBLIC_VERCEL_URL: process.env.VERCEL_URL,
+  },
+
   images: {
     domains: [
       "img1.kakaocdn.net",
@@ -43,8 +50,9 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     // 환경 변수 기반 API URL 설정
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-    
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
     return [
       {
         source: "/api/:path*",
@@ -91,7 +99,10 @@ const nextConfig: NextConfig = {
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
-                    `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"} https://*.ngrok-free.app https://*.ngrok.io`,
+                    `connect-src 'self' ${
+                      process.env.NEXT_PUBLIC_API_BASE_URL ||
+                      "http://localhost:8080"
+                    } https://*.ngrok-free.app https://*.ngrok.io`,
                     "object-src 'none'",
                     "base-uri 'self'",
                     "form-action 'self'",
@@ -105,7 +116,10 @@ const nextConfig: NextConfig = {
                     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
-                    `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"}`,
+                    `connect-src 'self' ${
+                      process.env.NEXT_PUBLIC_API_BASE_URL ||
+                      "http://localhost:8080"
+                    }`,
                     "object-src 'none'",
                     "base-uri 'self'",
                     "form-action 'self'",
