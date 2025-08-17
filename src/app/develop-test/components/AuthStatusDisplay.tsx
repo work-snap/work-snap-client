@@ -63,7 +63,7 @@ export const AuthStatusDisplay: React.FC<AuthStatusDisplayProps> = ({
           💡 네트워크 에러 발생 시 확인사항
         </h4>
         <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-          <li>1. 백엔드 서버가 실행 중인지 확인 ({process.env.NEXT_PUBLIC_API_BASE_URL || "localhost:8080"})</li>
+                          <li>1. 백엔드 서버가 실행 중인지 확인 ({process.env.NEXT_PUBLIC_API_BASE_URL || "API URL 미설정"})</li>
           <li>2. 브라우저 개발자 도구 → 네트워크 탭에서 요청 상태 확인</li>
           <li>3. 토큰이 유효한지 확인 (만료되었을 수 있음)</li>
           <li>4. CORS 설정이나 방화벽 설정 확인</li>

@@ -50,8 +50,12 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     // 환경 변수 기반 API URL 설정
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    if (!apiUrl) {
+      console.warn("⚠️ NEXT_PUBLIC_API_BASE_URL이 설정되지 않았습니다. API 리다이렉트가 비활성화됩니다.");
+      return [];
+    }
 
     console.log("🔧 API URL 설정:", apiUrl);
 
@@ -71,7 +75,7 @@ const nextConfig: NextConfig = {
           {
             key: "Access-Control-Allow-Origin",
             value:
-              process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
+              process.env.NEXT_PUBLIC_FRONTEND_URL || "*",
           },
           {
             key: "Access-Control-Allow-Methods",
@@ -102,8 +106,7 @@ const nextConfig: NextConfig = {
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
                     `connect-src 'self' ${
-                      process.env.NEXT_PUBLIC_API_BASE_URL ||
-                      "http://localhost:8080"
+                      process.env.NEXT_PUBLIC_API_BASE_URL || ""
                     } https://*.ngrok-free.app https://*.ngrok.io`,
                     "object-src 'none'",
                     "base-uri 'self'",
@@ -119,8 +122,7 @@ const nextConfig: NextConfig = {
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
                     `connect-src 'self' ${
-                      process.env.NEXT_PUBLIC_API_BASE_URL ||
-                      "http://localhost:8080"
+                      process.env.NEXT_PUBLIC_API_BASE_URL || ""
                     }`,
                     "object-src 'none'",
                     "base-uri 'self'",

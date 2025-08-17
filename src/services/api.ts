@@ -2,9 +2,8 @@
  * API 클라이언트 설정
  */
 
-// 개발 편의를 위해 로컬 기본값을 제공. 배포환경은 환경변수로 주입됨
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+// API 기본 URL 설정 - 환경 변수에서 가져오거나 빈 문자열 사용
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 interface ApiResponse<T = unknown> {
   data: T;

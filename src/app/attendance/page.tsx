@@ -149,8 +149,7 @@ export default function AttendancePage() {
               </div>
               <div className="text-xs text-gray-400 mt-2">
                 API:{" "}
-                {process.env.NEXT_PUBLIC_API_BASE_URL ||
-                  "http://localhost:8080"}
+                {process.env.NEXT_PUBLIC_API_BASE_URL || "API URL 미설정"}
               </div>
             </div>
           ) : workplaceGroups.length === 0 ? (
