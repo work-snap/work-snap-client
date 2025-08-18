@@ -48,6 +48,16 @@ export function useKakaoLogin(options = {}) {
       // AccessToken을 localStorage에 저장
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // 디버깅: 실제 사용자 정보 로깅
+      console.log("✅ 카카오 로그인 성공:", {
+        userId: data.user.id,
+        nickname: data.user.nickname,
+        email: data.user.email,
+        phoneNumber: data.user.phoneNumber,
+        userType: data.user.userType,
+        isNewUser: data.isNewUser
+      });
     },
     ...options,
   });

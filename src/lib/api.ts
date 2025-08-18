@@ -59,6 +59,15 @@ api.interceptors.response.use(
       localStorage.removeItem("refreshToken");
       window.location.href = "/login";
     }
+    
+    // 403 에러 시 권한 문제 로깅
+    if (error.response?.status === 403) {
+      console.error("🚫 403 Forbidden - 권한이 없습니다:", {
+        url: error.config?.url,
+        method: error.config?.method,
+        token: localStorage.getItem("accessToken") ? "존재함" : "없음"
+      });
+    }
     return Promise.reject(error);
   }
 );

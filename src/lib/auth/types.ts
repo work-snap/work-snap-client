@@ -27,6 +27,8 @@ export interface User {
   id: number;
   nickname: string;
   profileImageUrl?: string;
+  email: string;
+  phoneNumber?: string;
   userType: UserType;
   userRole: UserRoleType;
   createdAt: string;

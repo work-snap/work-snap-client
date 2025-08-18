@@ -85,6 +85,11 @@ export const authApis = {
   resisterBusiness: (
     request: ResisterBusinessRequest
   ): Promise<AxiosResponse<ResisterBusinessResponse>> => {
+    console.log("🔍 사업자 등록 요청:", {
+      url: `/api/business-owner/register`,
+      request: request,
+      token: localStorage.getItem("accessToken") ? "존재함" : "없음"
+    });
     return api.post<ResisterBusinessResponse>(
       `/api/business-owner/register`,
       request

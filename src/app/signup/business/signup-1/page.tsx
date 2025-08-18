@@ -17,6 +17,16 @@ export default function BusinessSignupStep1() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // 인증 상태 확인
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const user = localStorage.getItem("user");
+    console.log("🔐 인증 상태 확인:", {
+      token: token ? "존재함" : "없음",
+      user: user ? JSON.parse(user) : "없음"
+    });
+  }, []);
+
   function toBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -52,10 +62,23 @@ export default function BusinessSignupStep1() {
     }
   };
 
+  // 에러 처리 함수
+  const handleError = (error: any) => {
+    console.error("❌ 사업자 등록 실패:", error);
+    console.error("❌ 에러 상세:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
+    alert("사업자 등록에 실패했습니다. 다시 시도해주세요.");
+  };
+
   const {
     mutate: ResisterBusiness,
     data: resisterBusinessData,
     isPending, // ✅ 업로드 & 분석 중 상태
+    error: resisterBusinessError,
   }: UseMutationResult<
     ResisterBusinessResponse,
     Error,
@@ -65,9 +88,16 @@ export default function BusinessSignupStep1() {
   // 서버 응답 확인용
   useEffect(() => {
     if (resisterBusinessData !== undefined) {
-      console.log("서버 응답:", resisterBusinessData);
+      console.log("✅ 서버 응답:", resisterBusinessData);
     }
   }, [resisterBusinessData]);
+
+  // 에러 확인용
+  useEffect(() => {
+    if (resisterBusinessError) {
+      handleError(resisterBusinessError);
+    }
+  }, [resisterBusinessError]);
 
   const businessInfo = resisterBusinessData;
 
