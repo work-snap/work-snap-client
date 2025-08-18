@@ -174,7 +174,7 @@ export default function PtJobPage() {
           {localWorkPlaces.map((wp) => (
             <div
               key={wp.workplace.id}
-              className="rounded-xl border border-gray2 p-4 flex justify-between relative mb-3"
+              className="rounded-xl border border-gray2 p-4 flex justify-between items-center relative mb-3"
             >
               {/* 이름 + 현재 색상 */}
               <div className="flex flex-col gap-1 relative">
@@ -260,7 +260,7 @@ export default function PtJobPage() {
                     `/attendance/calendar?workplaceId=${wp.workplace.id}`
                   )
                 }
-                className="flex flex-col items-center justify-center bg-gray2 rounded-lg px-8 text-gray4 text-xs font-semibold"
+                className="w-24 h-20 flex flex-col items-center justify-center bg-gray2 rounded-lg text-gray4 text-xs font-semibold"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

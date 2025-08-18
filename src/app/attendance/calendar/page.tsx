@@ -27,6 +27,15 @@ interface AddWorkForm {
   notes: string;
 }
 
+interface Schedule {
+  id: number;
+  workplaceId: number;
+  dayOfWeek: string; // SUNDAY, MONDAY, ...
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+}
+
 interface WorkplaceSummary {
   id: number;
   workplaceName: string;
@@ -35,11 +44,14 @@ interface WorkplaceSummary {
   isMainWorkplace: boolean;
   isActive: boolean;
   workplaceColorIndex: number;
+  schedules?: Schedule[];
 }
+
 const getColorFromIndex = (index: number) => {
   const colors = ["#eeace3", "#fcdd2c", "#08fd31", "#44d1fc", "#b700ff"];
   return colors[index % colors.length];
 };
+
 export default function WorkCalendar() {
   const searchParams = useSearchParams();
   const workplaceIdFromQuery = searchParams.get("workplaceId");
@@ -56,6 +68,14 @@ export default function WorkCalendar() {
       isMainWorkplace: wp.workplace.isMainWorkplace,
       isActive: wp.workplace.isActive,
       workplaceColorIndex: wp.workplace.workplaceColorIndex,
+      schedules: wp.schedules?.map((s) => ({
+        id: s.id,
+        workplaceId: s.workplaceId,
+        dayOfWeek: s.dayOfWeek,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        isActive: s.isActive,
+      })),
     })) || [];
 
   const getTodayDate = (): string => {
@@ -68,7 +88,7 @@ export default function WorkCalendar() {
 
   const [form, setForm] = useState<AddWorkForm>({
     date: getTodayDate(),
-    workplaceId: null, // 처음엔 null
+    workplaceId: null,
     startTime: "",
     endTime: "",
     notes: "",
@@ -77,15 +97,15 @@ export default function WorkCalendar() {
   // 초기값 세팅용 useEffect (한 번만)
   useEffect(() => {
     if (!workplaces || workplaces.length === 0) return;
-    if (form.workplaceId !== null) return; // 이미 세팅되어 있으면 무시
+    if (form.workplaceId !== null) return;
 
     const initialId = workplaceIdFromQuery
       ? Number(workplaceIdFromQuery)
       : workplaces[0].id;
 
     setForm((prev) => ({ ...prev, workplaceId: initialId }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workplaces, workplaceIdFromQuery]);
+
   const handleInputChange = useCallback(
     (field: keyof AddWorkForm, value: string | number) => {
       setForm((prev) => ({ ...prev, [field]: value }));
@@ -96,17 +116,37 @@ export default function WorkCalendar() {
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
-  const workDaysByWorkplace: Record<number, number[]> = {
-    1: [1, 2, 4, 6, 11, 13],
-    2: [3, 5, 7, 8, 12, 14],
-  };
-  const workDays = form.workplaceId
-    ? workDaysByWorkplace[form.workplaceId] || []
-    : [];
-
   const firstDay = startOfMonth(currentMonth);
   const startWeekDay = getDay(firstDay);
   const daysInMonth = getDaysInMonth(currentMonth);
+
+  const selectedWorkplace = workplaces.find((wp) => wp.id === form.workplaceId);
+
+  const isWorkday = (date: number) => {
+    if (!selectedWorkplace || !selectedWorkplace.schedules) return false;
+
+    const fullDate = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      date
+    );
+
+    const dayIndex = getDay(fullDate); // 0: 일요일, 1: 월요일 ...
+    const dayOfWeekMap = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
+    const dayOfWeekStr = dayOfWeekMap[dayIndex];
+
+    return selectedWorkplace.schedules.some(
+      (s) => s.dayOfWeek === dayOfWeekStr && s.isActive
+    );
+  };
 
   return (
     <div className="h-dvh flex flex-col bg-white p-4 rounded-2xl">
@@ -116,13 +156,8 @@ export default function WorkCalendar() {
           <span
             className="w-4 h-4 rounded-full"
             style={{
-              backgroundColor: workplaces.find(
-                (wp) => wp.id === form.workplaceId
-              )
-                ? getColorFromIndex(
-                    workplaces.find((wp) => wp.id === form.workplaceId)!
-                      .workplaceColorIndex
-                  )
+              backgroundColor: selectedWorkplace
+                ? getColorFromIndex(selectedWorkplace.workplaceColorIndex)
                 : "#ccc",
             }}
           ></span>
@@ -199,27 +234,30 @@ export default function WorkCalendar() {
             date
           );
           const today = isToday(fullDate);
-          const isWorkday = workDays.includes(date);
+          const workday = isWorkday(date);
 
           return (
             <div
               key={date}
-              className={`flex flex-col items-center gap-2 rounded-lg ${
-                today ? "border border-main" : ""
+              className={`flex flex-col items-center gap-1 rounded-lg justify-evenly ${
+                today ? "border border-gray4" : ""
               }`}
             >
               <div
-                className={`w-5 h-5 flex justify-center rounded-full ${
-                  isWorkday ? "text-black" : "text-gray-400"
+                className={`w-8 h-8 flex justify-center items-center bg-gray2 rounded-full ${
+                  workday ? "text-black" : "text-gray-400"
                 }`}
+                style={{
+                  border: workday ? "2px solid #3B82F6" : "none", // 출근일 색상 고정
+                }}
               >
                 {date}
               </div>
-              {isWorkday && (
-                <span className="text-[10px] text-pink-500 leading-none mt-0.5">
-                  근무
-                </span>
-              )}
+              <span className="text-[10px] leading-none mt-0.5 h-[12px] text-pink-500">
+                {workday && selectedWorkplace
+                  ? selectedWorkplace.workplaceName.split(" ")[0]
+                  : ""}
+              </span>
             </div>
           );
         })}
