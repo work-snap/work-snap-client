@@ -73,9 +73,6 @@ export default function Add() {
 
   return (
     <div className="h-dvh bg-white w-full flex flex-col max-w-[430px]">
-      {/* 상단 헤더 */}
-      <Header />
-
       {/* 스크롤 가능한 메인 컨텐츠 */}
       <div className="flex-1 overflow-y-auto px-5">
         {/* 서브 헤더 */}

@@ -240,13 +240,13 @@ export const workScheduleTestApis = {
 
   // 사업장별 파트타임 직원 목록 조회 (새로 추가)
   getWorkplaceEmployees: (workplaceId: number) => {
-    return api.get(`/api/business-owner/workplaces/${workplaceId}/employees`);
+    return api.get(`/api/business-owner/workplace/${workplaceId}/employees`);
   },
 
   // 특정 직원의 근무 스케줄 상세 조회 (새로 추가)
   getEmployeeScheduleDetail: (workplaceId: number, employeeUserId: number) => {
     return api.get(
-      `/api/business-owner/workplaces/${workplaceId}/employees/${employeeUserId}`
+      `/api/business-owner/workplace/${workplaceId}/employee/${employeeUserId}`
     );
   },
 };
