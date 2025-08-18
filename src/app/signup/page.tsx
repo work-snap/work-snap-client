@@ -16,14 +16,21 @@ export default function SignupPage() {
     try {
       setIsLoading(true);
 
-      await api.post("/api/v1/users/select-type", { userType });
-
-      // 사용자 정보 업데이트
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        user.userType = userType;
-        localStorage.setItem("user", JSON.stringify(user));
+      const response = await api.post("/api/v1/users/select-type", { userType });
+      
+      // 서버에서 반환하는 실제 사용자 정보로 업데이트
+      if (response.data && response.data.data) {
+        const updatedUser = response.data.data;
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        console.log("✅ 서버에서 반환된 사용자 정보로 업데이트:", updatedUser);
+      } else {
+        // 서버 응답이 없는 경우 기존 방식으로 업데이트
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          user.userType = userType;
+          localStorage.setItem("user", JSON.stringify(user));
+        }
       }
 
       console.log("✅ 사용자 타입 선택 완료:", userType);
