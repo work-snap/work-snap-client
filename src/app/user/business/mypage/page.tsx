@@ -48,11 +48,23 @@ export default function MyPage() {
             height={48}
             className="rounded-full object-cover"
           />
-          <div>
+          <div className="flex-1">
             <p className="font-semibold">{user?.data.nickname || "사용자"}</p>
             <p className="text-sm text-gray-400">
               {user?.data.email || "이메일 없음"}
             </p>
+            {user?.data.phoneNumber && (
+              <div className="flex items-center gap-1 mt-1">
+                <p className="text-sm text-gray-400">
+                  {user.data.phoneNumber}
+                </p>
+                {user.data.phoneNumber.startsWith("010-1234-") && (
+                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                    임시번호
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -169,13 +169,20 @@ export default function RegisterParttimer() {
           {/* 번호 */}
           <label className="flex flex-col gap-1">
             <span className="font-semibold text-gray4">번호</span>
-            <input
-              type="text"
-              value={phone}
-              disabled
-              className="border border-gray2 rounded-lg p-3 w-full"
-              placeholder="예) 010-1234-1234"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={phone}
+                disabled
+                className="border border-gray2 rounded-lg p-3 w-full"
+                placeholder="예) 010-1234-1234"
+              />
+              {phone && phone.startsWith("010-1234-") && (
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                  임시번호
+                </span>
+              )}
+            </div>
           </label>
 
           {/* 계약 기간 */}

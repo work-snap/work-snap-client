@@ -211,16 +211,17 @@ export default function KakaoLogin() {
           Math.random().toString(36).substring(2, 15);
         sessionStorage.setItem("kakao_login_state", state);
 
-        // 카카오 인증 URL 생성 (동적 설정) - 휴대폰 번호 scope 추가
+        // 카카오 인증 URL 생성 (동적 설정) - 전화번호 scope 제거 (임시)
         const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(
           REDIRECT_URI
-        )}&response_type=code&state=${state}&scope=profile_nickname,profile_image,account_email,phone_number`;
+        )}&response_type=code&state=${state}&scope=profile_nickname,profile_image,account_email`;
 
         // 디버깅을 위한 로그
         console.log("카카오 로그인 URL:", kakaoAuthUrl);
         console.log("클라이언트 ID:", KAKAO_CLIENT_ID);
         console.log("리다이렉트 URI:", REDIRECT_URI);
-        console.log("요청 scope:", "profile_nickname,profile_image,account_email,phone_number");
+        console.log("요청 scope:", "profile_nickname,profile_image,account_email (전화번호 제외 - 임시)");
+        console.log("📞 전화번호는 임시로 010-1234-XXXX 형태로 생성됩니다.");
         console.log("현재 환경:", process.env.NODE_ENV);
         console.log("현재 도메인:", window.location.hostname);
         console.log("State:", state);
