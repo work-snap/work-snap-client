@@ -97,9 +97,6 @@ export default function RegisterParttimer() {
 
   return (
     <div className="h-dvh min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
-      {/* 헤더 */}
-      <Header />
-
       {/* 상단 네비게이션 */}
       <div className="flex flex-col px-2 py-2">
         <button

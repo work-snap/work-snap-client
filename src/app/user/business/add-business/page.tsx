@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import Benner from "@/src/app/components/benner";
 import { useGetWP } from "@/src/lib/queries/getWP";
 import { useDeleteWP } from "@/src/lib/queries/useDeleteWP";
-import Header from "@/app/components/Header";
 import { useState } from "react";
 import ToastModal from "@/app/components/ToastModal";
 
@@ -46,9 +45,7 @@ export default function AddBusiness() {
 
   return (
     <div className="h-dvh min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
-      <Header />
       <Benner />
-
       {/* 메인 컨텐츠 영역 - 스크롤 가능 */}
       <div
         className={`flex-1 overflow-y-auto ${

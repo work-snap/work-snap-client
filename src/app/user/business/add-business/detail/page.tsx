@@ -18,8 +18,6 @@ export default function BusinessDetail() {
 
   return (
     <div className="h-full flex flex-col max-w-[430px] w-full mx-auto bg-white pb-[80px]">
-      <Header />
-
       <div className="flex items-center px-2 py-4 ">
         <button
           onClick={() => router.push("/user/business/add-business")}
