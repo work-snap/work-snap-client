@@ -1,8 +1,23 @@
 import axios from "axios";
 import { tokenManager } from "./auth/token";
 
+// API 기본 URL 설정 - 환경 변수에서 가져오거나 기본값 사용
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+  
+  // 개발 환경에서는 기본값 사용
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:8080";
+  }
+  
+  // 프로덕션에서는 빈 문자열 (상대 경로 사용)
+  return "";
+};
+
 export const axiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: getBaseUrl(),
   withCredentials: true,
 });
 
@@ -51,7 +66,7 @@ axiosInstance.interceptors.response.use(
         try {
           // Attempt to refresh token
           const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+            `${getBaseUrl()}/api/auth/refresh`,
             {},
             { withCredentials: true }
           );
