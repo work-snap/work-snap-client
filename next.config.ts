@@ -57,16 +57,13 @@ const nextConfig: NextConfig = {
     console.log("  - NODE_ENV:", process.env.NODE_ENV);
     console.log("  - VERCEL_ENV:", process.env.VERCEL_ENV);
 
-    if (!apiUrl) {
-      console.warn("⚠️ NEXT_PUBLIC_API_BASE_URL이 설정되지 않았습니다. API 리다이렉트가 비활성화됩니다.");
-      console.warn("⚠️ Vercel에서 환경 변수를 설정해주세요: NEXT_PUBLIC_API_BASE_URL=https://31106af31d6e.ngrok-free.app");
-      return [];
-    }
+    // API URL이 설정되지 않은 경우 기본값 사용
+    const targetApiUrl = apiUrl || "http://localhost:8080";
 
-    console.log("✅ API URL 설정:", apiUrl);
+    console.log("✅ API URL 설정:", targetApiUrl);
 
     // URL 끝의 슬래시 제거하여 중복 방지
-    const cleanApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+    const cleanApiUrl = targetApiUrl.endsWith('/') ? targetApiUrl.slice(0, -1) : targetApiUrl;
     
     return [
       {
@@ -115,7 +112,7 @@ const nextConfig: NextConfig = {
                     "img-src 'self' data: https:",
                     "font-src 'self' https://cdn.jsdelivr.net",
                     `connect-src 'self' ${
-                      process.env.NEXT_PUBLIC_API_BASE_URL || ""
+                      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080"
                     } https://*.ngrok-free.app https://*.ngrok.io`,
                     "object-src 'none'",
                     "base-uri 'self'",
