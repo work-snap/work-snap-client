@@ -1,29 +1,17 @@
 # API 설정 가이드
 
-## 🔧 현재 문제 해결
+## 🔧 자동 설정 (환경 변수 불필요)
 
-### 1. 환경 변수 설정
+이제 환경 변수 설정 없이도 자동으로 작동합니다!
 
-프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가하세요:
+### 기본 설정
+- **프론트엔드**: `http://localhost:3000`
+- **백엔드**: `http://localhost:8080`
+- **카카오 리다이렉트**: `http://localhost:3000/kakao-login`
 
-```bash
-# API 설정
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+## 🚀 시작하기
 
-# 프론트엔드 URL (선택사항)
-NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
-
-# 환경 설정
-NODE_ENV=development
-
-# 카카오 로그인 설정 (필요시)
-NEXT_PUBLIC_KAKAO_CLIENT_ID=f5d47f3b1a3544fbb879afa0f57c2470
-```
-
-### 2. 서버 실행 확인
-
-백엔드 서버가 실행 중인지 확인하세요:
-
+### 1. 서버 실행
 ```bash
 # 서버 디렉토리로 이동
 cd work-snap-server
@@ -34,14 +22,19 @@ cd work-snap-server
 # 또는 IDE에서 실행
 ```
 
-### 3. 서버 상태 확인
+### 2. 클라이언트 실행
+```bash
+# 클라이언트 디렉토리에서
+npm run dev
+```
 
+### 3. 서버 상태 확인
 개발 환경에서 브라우저 우하단에 서버 상태 표시기가 나타납니다:
 - 🟢 온라인: 서버가 정상 실행 중
 - 🔴 오프라인: 서버에 연결할 수 없음
 - 🟡 오류: API 엔드포인트 문제
 
-### 4. API 엔드포인트 테스트
+## 🔍 API 엔드포인트 테스트
 
 브라우저에서 다음 URL을 확인하세요:
 - `http://localhost:8080/actuator/health` - 서버 헬스체크
@@ -56,15 +49,13 @@ cd work-snap-server
 **원인**: API 엔드포인트를 찾을 수 없음
 **해결방법**:
 1. 서버가 실행 중인지 확인
-2. 환경 변수 `NEXT_PUBLIC_API_BASE_URL` 설정
-3. Next.js 개발 서버 재시작
+2. Next.js 개발 서버 재시작
 
 ### 서버가 HTML 반환
 **원인**: API 요청이 Next.js 페이지로 라우팅됨
 **해결방법**:
 1. Next.js rewrites 설정 확인
-2. API URL이 올바른지 확인
-3. 서버 포트가 올바른지 확인
+2. 서버 포트가 올바른지 확인 (8080)
 
 ## 🔍 디버깅
 
@@ -80,7 +71,18 @@ cd work-snap-server
 2. 응답 상태 코드 확인
 3. 요청/응답 헤더 확인
 
-## 📝 추가 설정
+## 📝 고급 설정 (선택사항)
+
+### 환경 변수 사용 시
+만약 다른 URL을 사용하고 싶다면 `.env.local` 파일을 생성할 수 있습니다:
+
+```bash
+# API 설정
+NEXT_PUBLIC_API_BASE_URL=http://your-custom-server:8080
+
+# 프론트엔드 URL (선택사항)
+NEXT_PUBLIC_FRONTEND_URL=http://your-custom-frontend:3000
+```
 
 ### ngrok 사용 시
 외부 접근이 필요한 경우 ngrok을 사용할 수 있습니다:
@@ -107,3 +109,10 @@ NEXT_PUBLIC_API_BASE_URL=https://your-ngrok-url.ngrok-free.app
 1. 서버 상태 표시기가 🟢 온라인으로 표시
 2. 카카오 로그인이 정상 작동
 3. 콘솔에 API 요청/응답 로그가 정상 출력
+
+## ✨ 자동화된 기능
+
+- **자동 기본값 설정**: 환경 변수 없이도 자동으로 localhost:3000/8080 사용
+- **서버 상태 모니터링**: 개발 환경에서 실시간 서버 상태 확인
+- **상세한 디버깅 로그**: API 요청/응답 상세 정보
+- **자동 토큰 관리**: JWT 토큰 자동 갱신 및 관리

@@ -157,8 +157,8 @@ export default function KakaoLogin() {
       return redirectUri;
     }
 
-    // 로컬 개발 환경
-    const localRedirectUri = `${process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000"}/kakao-login`;
+    // 로컬 개발 환경 - 기본값 사용
+    const localRedirectUri = "http://localhost:3000/kakao-login";
     console.log("🏠 로컬 환경 감지됨, 리다이렉트 URI:", localRedirectUri);
     return localRedirectUri;
   };

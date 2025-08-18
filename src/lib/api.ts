@@ -1,20 +1,18 @@
 import axios, { AxiosInstance } from "axios";
 
-// API 기본 URL 설정 - 환경 변수에서 가져오거나 Next.js rewrites 사용
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
-// 개발 환경에서 기본 서버 URL 설정
+// 개발 환경에서 기본 서버 URL 설정 (환경 변수 없이도 작동)
 const getBaseUrl = () => {
-  if (BASE_URL) {
-    return BASE_URL;
+  // 환경 변수가 있으면 사용
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
   
-  // 개발 환경에서 기본값 설정
+  // 개발 환경에서는 기본값 사용
   if (process.env.NODE_ENV === "development") {
-    // ngrok URL이나 로컬 서버 URL을 여기에 설정
-    return "http://localhost:8080"; // 또는 실제 서버 URL
+    return "http://localhost:8080";
   }
   
+  // 프로덕션에서는 빈 문자열 (상대 경로 사용)
   return "";
 };
 

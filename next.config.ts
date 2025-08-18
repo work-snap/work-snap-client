@@ -49,21 +49,18 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    // 환경 변수 기반 API URL 설정
-    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // 환경 변수 기반 API URL 설정 (기본값 제공)
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
     console.log("🔧 Next.js Rewrites 설정:");
-    console.log("  - NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+    console.log("  - NEXT_PUBLIC_API_BASE_URL:", process.env.NEXT_PUBLIC_API_BASE_URL || "기본값 사용");
     console.log("  - NODE_ENV:", process.env.NODE_ENV);
     console.log("  - VERCEL_ENV:", process.env.VERCEL_ENV);
 
-    // API URL이 설정되지 않은 경우 기본값 사용
-    const targetApiUrl = apiUrl || "http://localhost:8080";
-
-    console.log("✅ API URL 설정:", targetApiUrl);
+    console.log("✅ API URL 설정:", apiUrl);
 
     // URL 끝의 슬래시 제거하여 중복 방지
-    const cleanApiUrl = targetApiUrl.endsWith('/') ? targetApiUrl.slice(0, -1) : targetApiUrl;
+    const cleanApiUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
     
     return [
       {
@@ -81,7 +78,7 @@ const nextConfig: NextConfig = {
           {
             key: "Access-Control-Allow-Origin",
             value:
-              process.env.NEXT_PUBLIC_FRONTEND_URL || "*",
+              process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
           },
           {
             key: "Access-Control-Allow-Methods",
