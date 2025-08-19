@@ -1,15 +1,13 @@
 "use client";
 
 import WorkplaceDropdown from "@/app/attendance/add-work/components/WorkplaceDropdown";
-import { useState, useEffect } from "react";
-import { format, subDays, addDays } from "date-fns";
+import { useState } from "react";
+import { format, subDays, addDays, parse } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  workplaceTestApis,
-  workScheduleTestApis,
-} from "@/app/develop-test/lib/api";
+import { workplaceTestApis } from "@/app/develop-test/lib/api";
+import { useGetDailyTimeLine } from "@/lib/queries/getDailyTimeLine";
 
 interface WorkplaceSummary {
   id: number;
@@ -29,23 +27,6 @@ interface AddWorkForm {
   notes: string;
 }
 
-interface Employee {
-  userId: number;
-  name: string;
-  email?: string | null;
-  inviteCode?: string;
-  activeScheduleCount: number;
-  totalScheduleCount: number;
-  lastWorkDate?: string | null;
-  createdAt: string;
-}
-
-// 날짜 → 한글 요일 반환
-function getDayKorean(dateStr: string) {
-  const date = new Date(dateStr);
-  return format(date, "eeee", { locale: ko }); // ex: "월요일"
-}
-
 export default function MainPage() {
   const [form, setForm] = useState<AddWorkForm>({
     date: getTodayDate(),
@@ -54,8 +35,6 @@ export default function MainPage() {
     endTime: "",
     notes: "",
   });
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [attendance, setAttendance] = useState<Record<number, any[]>>({});
   const [currentDay, setCurrentDay] = useState(new Date());
 
   // 하루 단위 이전/다음
@@ -95,52 +74,10 @@ export default function MainPage() {
       })) as WorkplaceSummary[];
     },
   });
-
-  // 직원 목록 조회
-  useEffect(() => {
-    if (!form.workplaceId) return;
-
-    const fetchEmployees = async () => {
-      try {
-        const res = await workScheduleTestApis.getWorkplaceEmployees(
-          form.workplaceId!
-        );
-        setEmployees(res.data.data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchEmployees();
-  }, [form.workplaceId]);
-
-  // 직원별 근무 기록 조회 (요일 기준 필터링)
-  useEffect(() => {
-    if (!form.workplaceId || employees.length === 0) return;
-
-    const fetchAttendance = async () => {
-      const newAttendance: Record<number, any[]> = {};
-      const todayKorean = getDayKorean(form.date); // ex: "월요일"
-
-      for (const emp of employees) {
-        const res = await workScheduleTestApis.getEmployeeScheduleDetail(
-          form.workplaceId!,
-          emp.userId
-        );
-        const schedules = res.data?.data?.schedules ?? [];
-
-        // 선택한 날짜 요일 기준 필터링
-        const todayRecords = schedules.filter(
-          (s: any) => s.dayOfWeekKorean === todayKorean
-        );
-
-        newAttendance[emp.userId] = todayRecords;
-      }
-
-      setAttendance(newAttendance);
-    };
-
-    fetchAttendance();
-  }, [form.workplaceId, form.date, employees]);
+  const { data: timelineData } = useGetDailyTimeLine(
+    form.workplaceId,
+    form.date
+  );
 
   return (
     <div className="h-dvh flex flex-col bg-white p-4 rounded-2xl">
@@ -188,31 +125,59 @@ export default function MainPage() {
 
       {/* 직원별 출퇴근 기록 */}
       <div className="mt-6 space-y-4">
-        {employees.map((emp) => (
-          <div key={emp.userId} className="flex flex-col gap-2 border-b pb-2">
-            <div className="bg-gray2 p-2">
-              <span className="font-medium">{emp.name}</span>
-            </div>
+        {isLoading ? (
+          <p>출퇴근 기록 불러오는 중...</p>
+        ) : isError ? (
+          <p>출퇴근 기록 조회 실패</p>
+        ) : timelineData?.data.employees?.length ? (
+          timelineData.data.employees.map((emp) => (
+            <div key={emp.userId} className="flex flex-col gap-2 border-b pb-2">
+              <div className="bg-gray2 p-2">
+                <span className="font-medium">{emp.employeeName}</span>
+              </div>
+              <div className="mt-1 text-md text-gray-600  space-y-1 p-1">
+                {emp.items.map((item, idx) => {
+                  // 기본 색상 매핑
+                  const actionColor = item.badges?.includes("조퇴")
+                    ? "text-yellow-500"
+                    : item.actionKorean === "출근"
+                    ? "text-blue-500"
+                    : item.actionKorean === "퇴근"
+                    ? "text-red-500"
+                    : item.actionKorean === "무단결근"
+                    ? "text-black"
+                    : "text-gray-600";
 
-            <div className="mt-1 text-sm text-gray-600">
-              {attendance[emp.userId] && attendance[emp.userId].length > 0 ? (
-                attendance[emp.userId].map((rec, idx) => (
-                  <div key={idx} className="flex justify-between">
-                    <span>
-                      {rec.startTime ? `출근 ${rec.startTime}` : "미출근"}
-                    </span>
-                    <span>
-                      {rec.endTime ? `퇴근 ${rec.endTime}` : "미퇴근"}
-                    </span>
-                    <span className="text-main">{rec.currentStatus ?? ""}</span>
-                  </div>
-                ))
-              ) : (
-                <span className="text-gray-400">기록 없음</span>
-              )}
+                  return (
+                    <div key={idx} className="flex justify-between">
+                      {item.badges?.length > 0 ? (
+                        <>
+                          <span className={`${actionColor} text-md`}>
+                            {formatTime(item.time)}
+                          </span>
+                          <span className={`${actionColor} text-md`}>
+                            {item.badges.join(", ")}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className={`font-medium ${actionColor}`}>
+                            {formatTime(item.time)}
+                          </span>
+                          <span className={`font-medium ${actionColor}`}>
+                            {item.actionKorean}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <span className="text-gray-400">기록 없음</span>
+        )}
       </div>
     </div>
   );
@@ -225,4 +190,25 @@ function getTodayDate(): string {
     2,
     "0"
   )}-${String(today.getDate()).padStart(2, "0")}`;
+}
+function formatTime(timeString: string) {
+  if (!timeString) return "";
+
+  // 초까지 있는 경우: 16:48:49.181719 → 16:48:49
+  const withSeconds = timeString.match(/^\d{2}:\d{2}:\d{2}/)?.[0];
+  if (withSeconds) {
+    return format(parse(withSeconds, "HH:mm:ss", new Date()), "a h:mm", {
+      locale: ko,
+    });
+  }
+
+  // 초 없이 시:분만 있는 경우: 18:00
+  const withMinutes = timeString.match(/^\d{2}:\d{2}/)?.[0];
+  if (withMinutes) {
+    return format(parse(withMinutes, "HH:mm", new Date()), "a h:mm", {
+      locale: ko,
+    });
+  }
+
+  return timeString; // fallback
 }

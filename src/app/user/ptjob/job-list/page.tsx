@@ -108,7 +108,6 @@ export default function PtJobPage() {
         onClose={handleCloseToast}
       />
 
-      <Header />
       <Benner />
 
       {/* 인증코드 */}
