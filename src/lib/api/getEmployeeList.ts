@@ -1,16 +1,23 @@
 // src/lib/api/getEmployeeList.ts
-
 import api from "../api";
 
-// 응답값 구조
+// 타입 정의
+export interface EmployeeSchedule {
+  dayOfWeekKorean: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface Employee {
   userId: number;
-  name: string | null;
-  email: string | null;
+  name: string;
+  phoneNumber: string;
   inviteCode: string;
+  contractStartDate: string;
+  contractEndDate: string;
+  schedules: EmployeeSchedule[];
   activeScheduleCount: number;
   totalScheduleCount: number;
-  lastWorkDate: string | null;
   createdAt: string;
 }
 
@@ -19,11 +26,12 @@ export interface GetEmployeeListResponse {
   data: Employee[];
   totalCount: number;
 }
+
 // 상세 사업장 직원 스케줄 조회
 export const getEmployeeList = async (
   workplaceId: number
 ): Promise<GetEmployeeListResponse> => {
-  const res = await api.get(
+  const res = await api.get<GetEmployeeListResponse>(
     `/api/business-owner/workplace/${workplaceId}/employees`
   );
   console.log("👀 직원 스케줄 응답 데이터:", res.data);

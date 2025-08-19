@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGetWorkplaceDetail } from "@/src/lib/queries/getWPDetail";
 import { useGetEmployeeList } from "@/lib/queries/getEmployeeList";
+import { ChevronRight } from "lucide-react";
 
 export default function BusinessDetail() {
   const router = useRouter();
@@ -32,11 +33,11 @@ export default function BusinessDetail() {
     return <div>에러: {(employeeError as Error).message}</div>;
 
   return (
-    <div className="h-full flex flex-col max-w-[430px] w-full mx-auto bg-white pb-[80px]">
+    <div className="flex-1 overflow-y-auto min-h-0 flex flex-col max-w-[430px] w-full mx-auto">
       {/* 헤더 */}
-      <div className="flex items-center px-2 py-4 ">
+      <div className="flex items-center px-2 py-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push("/user/business/add-business")}
           className="flex items-center text-gray5 font-semibold text-lg"
         >
           <svg
@@ -78,21 +79,34 @@ export default function BusinessDetail() {
             {employeeData.data.map((emp) => (
               <li
                 key={emp.userId}
-                className="p-3 border rounded-xl shadow-sm flex flex-col bg-gray-50"
+                className="p-4 border rounded-xl shadow-sm bg-white flex flex-col"
               >
-                <div className="flex justify-between">
-                  <span className="font-semibold">
-                    {emp.name ?? "이름 없음"}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    스케줄 {emp.activeScheduleCount}/{emp.totalScheduleCount}
-                  </span>
+                {/* 이름 + 전화번호 */}
+                <div className="flex justify-between items-center mb-1">
+                  <div className="flex gap-4">
+                    <span className="font-semibold text-main">{emp.name}</span>
+                    <span className="text-md text-main2">
+                      {emp.phoneNumber}
+                    </span>
+                  </div>
+                  <div>
+                    <ChevronRight />
+                  </div>
                 </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  초대 코드: {emp.inviteCode}
+
+                {/* 계약기간 */}
+                <div className="text-xs text-gray-400 mb-2">
+                  {emp.contractStartDate ?? "미등록"} -{" "}
+                  {emp.contractEndDate ?? "미등록"}
                 </div>
-                <div className="text-xs text-gray-400">
-                  최근 근무일: {emp.lastWorkDate ?? "없음"}
+
+                {/* 근무 스케줄 */}
+                <div className="text-sm text-main2 space-y-1">
+                  {emp.schedules.map((sch, idx) => (
+                    <div key={idx}>
+                      {sch.dayOfWeekKorean} {sch.startTime} ~ {sch.endTime}
+                    </div>
+                  ))}
                 </div>
               </li>
             ))}
@@ -102,23 +116,13 @@ export default function BusinessDetail() {
         )}
       </div>
 
-      {/* 직원 수 요약 */}
-      {typeof employeeData?.totalCount === "number" && (
-        <div className="px-4 mt-8">
-          <h2 className="font-bold text-lg mb-2">통계</h2>
-          <div className="p-4 border rounded-xl bg-gray-50 shadow-sm space-y-1 text-sm">
-            <div>총 등록 직원: {employeeData.totalCount}명</div>
-          </div>
-        </div>
-      )}
-
       {/* 알바 등록 버튼 */}
-      <div className="w-full px-4 mt-8">
+      <div className="w-full px-4 mt-4 mb-4">
         <button
           className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-lg"
           onClick={() => {
             router.push(
-              `/user/business/add-business/detail/register-parttimer?idx=${workplace?.id}`
+              `/user/business/add-business/detail/register-parttimer?idx=${workplaceId}`
             );
           }}
         >
