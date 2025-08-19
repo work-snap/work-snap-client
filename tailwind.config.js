@@ -369,7 +369,19 @@ module.exports = {
         dark: {},
       },
     }),
-    require("tailwindcss-animate"), 
-    require("tailwind-scrollbar-hide")
+    require("tailwindcss-animate"),
+    require("tailwind-scrollbar-hide"),
+
+    function ({ addBase }) {
+      addBase({
+        "*": {
+          WebkitTapHighlightColor: "transparent", // 모바일 Safari 파란색 터치 하이라이트 제거
+        },
+        "button, [role='button'], input, textarea, select": {
+          outline: "none",
+          boxShadow: "none",
+        },
+      });
+    },
   ],
 };
