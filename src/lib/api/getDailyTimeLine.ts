@@ -3,9 +3,8 @@ import api from "../api";
 
 export interface DailyTimelineItem {
   time: string; // "09:13"
-  action: string; // "CHECK_IN" | "CHECK_OUT"
-  actionKorean: string; // "출근" | "퇴근"
-  badges: string[]; // ["지각"] 같은 표시
+  action: string; // "CHECK_IN" | "CHECK_OUT" | "OVERTIME" | "ABSENT"
+  badges: string[]; // ["지각", "조기출근", "조퇴", "연장근무"] 같은 표시
 }
 
 export interface DailyTimelineEmployee {
