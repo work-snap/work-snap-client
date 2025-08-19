@@ -14,6 +14,7 @@ export interface JoinUserRequest {
   schedules: Schedule[];
   contractStartDate: string;
   contractEndDate: string;
+  hourlyWage: number; // 시급 정보 추가
 }
 
 export const useJoinUser = () => {
@@ -24,6 +25,7 @@ export const useJoinUser = () => {
       schedules,
       contractStartDate,
       contractEndDate,
+      hourlyWage,
     }: JoinUserRequest) => {
       const res = await api.post(
         `/api/business-owner/workplaces/${workplaceId}/employees/onboard`,
@@ -32,6 +34,7 @@ export const useJoinUser = () => {
           schedules,
           contractStartDate,
           contractEndDate,
+          hourlyWage,
         }
       );
       return res.data;

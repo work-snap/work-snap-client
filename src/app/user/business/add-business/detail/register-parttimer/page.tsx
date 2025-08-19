@@ -27,6 +27,7 @@ export default function RegisterParttimer() {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [hourlyWage, setHourlyWage] = useState(""); // 시급 입력 필드 추가
 
   // 날짜 변수명 일치
   const [contractStartDate, setContractStartDate] = useState("");
@@ -60,6 +61,15 @@ export default function RegisterParttimer() {
     setSchedules(newSchedules);
   }, []);
 
+  // 시급 입력 핸들러
+  const handleHourlyWageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 숫자만 입력 가능하도록 제한
+    if (value === "" || /^\d+$/.test(value)) {
+      setHourlyWage(value);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -67,7 +77,15 @@ export default function RegisterParttimer() {
       toast({
         title: "입력 누락",
         description: "인증코드와 근무 시간을 모두 입력해주세요.",
-        duration: 5000,
+      });
+      return;
+    }
+
+    // 시급 입력 검증
+    if (!hourlyWage || isNaN(Number(hourlyWage)) || Number(hourlyWage) <= 0) {
+      toast({
+        title: "시급 입력",
+        description: "올바른 시급을 입력해주세요.",
       });
       return;
     }
@@ -79,9 +97,10 @@ export default function RegisterParttimer() {
         schedules,
         contractStartDate,
         contractEndDate,
+        hourlyWage: Number(hourlyWage),
       });
 
-      toast({ title: "등록 완료", description: res.message, duration: 5000 });
+      toast({ title: "등록 완료", description: res.message });
       router.push(`/user/business/add-business/detail?idx=${workplaceId}`);
     } catch (err: any) {
       toast({
@@ -90,7 +109,6 @@ export default function RegisterParttimer() {
           err?.response?.data?.message ||
           err?.message ||
           "잠시 후 다시 시도해주세요.",
-        duration: 5000,
       });
     }
   };
@@ -227,6 +245,29 @@ export default function RegisterParttimer() {
               />
             </div>
           </div>
+
+          {/* 시급 입력 */}
+          <label className="flex flex-col gap-1">
+            <span className="font-semibold text-gray4">시급</span>
+            <div className="relative">
+              <input
+                type="text"
+                value={hourlyWage}
+                onChange={handleHourlyWageChange}
+                className="border border-gray2 rounded-lg p-3 w-full pr-16"
+                placeholder="예: 10000"
+                maxLength={6}
+              />
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray3 text-sm">
+                원/시간
+              </span>
+            </div>
+            {hourlyWage && (
+              <div className="text-xs text-gray3 mt-1">
+                입력된 시급: {Number(hourlyWage).toLocaleString()}원/시간
+              </div>
+            )}
+          </label>
 
           {/* 근무 시간 */}
           <DayTimePicker onChange={handleSchedulesChange} />
