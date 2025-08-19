@@ -142,7 +142,7 @@ export default function RegisterParttimer() {
       </div>
 
       {/* 컨텐츠 */}
-      <div className="flex-1 max-h-[1137px] overflow-y-auto pb-[80px]">
+      <div className="flex-1 max-h-[1137px] overflow-y-auto ">
         <div className="px-4 mb-2">
           <div className="bg-gray-100 rounded-lg px-4 py-2 text-gray4 font-semibold text-base">
             사업장 : {data?.workplaceName || "-"}
