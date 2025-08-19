@@ -137,14 +137,25 @@ export default function MainPage() {
               </div>
               <div className="mt-1 text-md text-gray-600  space-y-1 p-1">
                 {emp.items.map((item, idx) => {
+                  // 액션 타입에 따른 한글 라벨 매핑
+                  const getActionKorean = (action: string) => {
+                    switch (action) {
+                      case "CHECK_IN": return "출근";
+                      case "CHECK_OUT": return "퇴근";
+                      case "OVERTIME": return "연장근무";
+                      case "ABSENT": return "무단결근";
+                      default: return action;
+                    }
+                  };
+
                   // 기본 색상 매핑
                   const actionColor = item.badges?.includes("조퇴")
                     ? "text-yellow-500"
-                    : item.actionKorean === "출근"
+                    : item.action === "CHECK_IN"
                     ? "text-blue-500"
-                    : item.actionKorean === "퇴근"
+                    : item.action === "CHECK_OUT"
                     ? "text-red-500"
-                    : item.actionKorean === "무단결근"
+                    : item.action === "ABSENT"
                     ? "text-black"
                     : "text-gray-600";
 
@@ -165,7 +176,7 @@ export default function MainPage() {
                             {formatTime(item.time)}
                           </span>
                           <span className={`font-medium ${actionColor}`}>
-                            {item.actionKorean}
+                            {getActionKorean(item.action)}
                           </span>
                         </>
                       )}
