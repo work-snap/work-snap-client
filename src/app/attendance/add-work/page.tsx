@@ -190,12 +190,6 @@ export default function AddWorkPage() {
             <Button
               type="submit"
               className="w-full h-14 bg-main text-white font-bold rounded-xl"
-              disabled={
-                !form.workplaceId ||
-                !form.startTime ||
-                !form.endTime ||
-                createAdditionalWorkMutation.isPending
-              }
               isLoading={createAdditionalWorkMutation.isPending}
             >
               {createAdditionalWorkMutation.isPending

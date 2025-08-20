@@ -1,5 +1,6 @@
 "use client";
 
+import { Toaster } from "@/components/ui/toaster";
 import Header from "../components/Header";
 import Navigation from "../components/navigation";
 
@@ -12,6 +13,7 @@ export default function AttendanceLayout({
     <div className="h-dvh flex flex-col justify-between max-w-[430px] min-h-0 mx-auto">
       <Header />
       {children}
+      <Toaster />
 
       <Navigation />
     </div>
