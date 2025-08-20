@@ -137,40 +137,71 @@ export default function MainPage() {
               </div>
               <div className="mt-1 text-md text-gray-600  space-y-1 p-1">
                 {emp.items.map((item, idx) => {
-                  // 액션 타입에 따른 한글 라벨 매핑
+                  const isLate = item.badges?.includes("지각");
+                  const isEarlyLeave = item.badges?.includes("조퇴");
+                  const isEarlyCheckIn = item.badges?.includes("조기출근");
+
                   const getActionKorean = (action: string) => {
                     switch (action) {
-                      case "CHECK_IN": return "출근";
-                      case "CHECK_OUT": return "퇴근";
-                      case "OVERTIME": return "연장근무";
-                      case "ABSENT": return "무단결근";
-                      default: return action;
+                      case "CHECK_IN":
+                        return "출근";
+                      case "CHECK_OUT":
+                        return "퇴근";
+                      case "OVERTIME":
+                        return "연장근무";
+                      case "ABSENT":
+                        return "무단결근";
+                      default:
+                        return action;
                     }
                   };
 
-                  // 기본 색상 매핑
-                  const actionColor = item.badges?.includes("조퇴")
-                    ? "text-yellow-500"
-                    : item.action === "CHECK_IN"
-                    ? "text-blue-500"
-                    : item.action === "CHECK_OUT"
-                    ? "text-red-500"
-                    : item.action === "ABSENT"
-                    ? "text-black"
-                    : "text-gray-600";
+                  const actionColor =
+                    item.action === "CHECK_IN"
+                      ? "text-blue-500"
+                      : item.action === "CHECK_OUT"
+                      ? "text-red-500"
+                      : item.action === "ABSENT"
+                      ? "text-black"
+                      : "text-gray-600";
 
                   return (
                     <div key={idx} className="flex justify-between">
-                      {item.badges?.length > 0 ? (
+                      {/* 지각 케이스 */}
+                      {isLate ? (
                         <>
-                          <span className={`${actionColor} text-md`}>
+                          <span className="text-gray4 font-medium">
+                            {formatTime(item.time)}
+                            <span className=" text-white text-md ml-1 border border-gray4 bg-gray4 px-2 py-0.5 rounded-md">
+                              지각
+                            </span>
+                          </span>
+                          <span className="text-blue-500 font-medium">
+                            출근
+                          </span>
+                        </>
+                      ) : isEarlyLeave ? (
+                        // 조퇴 케이스
+                        <>
+                          <span className="text-yellow-500 font-medium">
                             {formatTime(item.time)}
                           </span>
-                          <span className={`${actionColor} text-md`}>
-                            {item.badges.join(", ")}
+                          <span className="text-yellow-500 font-medium">
+                            조퇴
+                          </span>
+                        </>
+                      ) : isEarlyCheckIn ? (
+                        // 조기출근 케이스
+                        <>
+                          <span className={`font-medium ${actionColor}`}>
+                            {formatTime(item.time)}
+                          </span>
+                          <span className="text-blue-500 font-medium">
+                            조기출근
                           </span>
                         </>
                       ) : (
+                        // 일반 케이스
                         <>
                           <span className={`font-medium ${actionColor}`}>
                             {formatTime(item.time)}
