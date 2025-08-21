@@ -1,5 +1,6 @@
 "use client";
 
+import { Toaster } from "@/components/ui/toaster";
 import Header from "../components/Header";
 import Navigation from "../components/navigation";
 import { usePathname } from "next/navigation";
@@ -21,6 +22,7 @@ export default function UserLayout({
     <div className="h-dvh flex flex-col justify-between max-w-[430px] min-h-0 mx-auto">
       {showHeader && <Header />}
       {children}
+      <Toaster />
       <Navigation />
     </div>
   );

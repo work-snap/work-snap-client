@@ -90,7 +90,14 @@ export default function BusinessDetail() {
                     </span>
                   </div>
                   <div>
-                    <ChevronRight />
+                    <ChevronRight
+                      onClick={() =>
+                        router.push(
+                          `/user/business/edit-employee/?idx=${workplaceId}&userId=${emp.userId}`
+                        )
+                      }
+                      className="cursor-pointer"
+                    />
                   </div>
                 </div>
 
