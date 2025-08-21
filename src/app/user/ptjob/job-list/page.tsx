@@ -8,7 +8,6 @@ import ToastModal from "../../../components/ToastModal";
 import Benner from "@/src/app/components/benner";
 import { useUser } from "@/src/lib/queries/useUser";
 import { useGetMyWP } from "@/lib/queries/getMyWP";
-import Header from "@/app/components/Header";
 import { updateWorkPlaceColor } from "@/lib/queries/updateWPColor";
 import { useRouter } from "next/navigation";
 
