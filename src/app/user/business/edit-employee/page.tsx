@@ -274,6 +274,68 @@ export default function EditEmployee() {
                 className="border border-gray2 rounded-lg p-3 w-full pr-16"
                 placeholder="예: 10000"
                 maxLength={6}
+                disabled
+              />
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray3 text-sm">
+                원/시간
+              </span>
+            </div>
+            {hourlyWage && (
+              <div className="text-xs text-gray3 mt-1">
+                입력된 시급: {Number(hourlyWage).toLocaleString()}원/시간
+              </div>
+            )}
+          </label>
+          {/* 시급 변경 입력 */}
+          <span className="font-semibold text-gray4">시급 변경하기</span>
+          <div className="flex items-center justify-center gap-2">
+            <DatePicker
+              value={contractStartDate ? parseDate(contractStartDate) : null}
+              onChange={(newDate: CalendarDate | null) => {
+                if (newDate) {
+                  setContractStartDate(
+                    `${newDate.year}-${String(newDate.month).padStart(
+                      2,
+                      "0"
+                    )}-${String(newDate.day).padStart(2, "0")}`
+                  );
+                }
+              }}
+              aria-label="계약 시작일"
+              placeholder="시작일"
+              disableAnimation
+              showMonthAndYearPickers
+              granularity="day"
+            />
+            <span>-</span>
+            <DatePicker
+              value={contractEndDate ? parseDate(contractEndDate) : null}
+              onChange={(newDate: CalendarDate | null) => {
+                if (newDate) {
+                  setContractEndDate(
+                    `${newDate.year}-${String(newDate.month).padStart(
+                      2,
+                      "0"
+                    )}-${String(newDate.day).padStart(2, "0")}`
+                  );
+                }
+              }}
+              aria-label="계약 종료일"
+              placeholder="종료일"
+              disableAnimation
+              showMonthAndYearPickers
+              granularity="day"
+            />
+          </div>
+          <label className="flex flex-col gap-1">
+            <div className="relative">
+              <input
+                type="text"
+                value={hourlyWage}
+                onChange={handleHourlyWageChange}
+                className="border border-gray2 rounded-lg p-3 w-full pr-16"
+                placeholder="예: 10000"
+                maxLength={6}
               />
               <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray3 text-sm">
                 원/시간
