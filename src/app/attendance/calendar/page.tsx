@@ -18,6 +18,7 @@ import { ko } from "date-fns/locale";
 import WorkplaceDropdown from "../add-work/components/WorkplaceDropdown";
 import { useGetMyWP } from "@/lib/queries/getMyWP";
 import { useSearchParams } from "next/navigation";
+import ColorWorkplaceDropdown from "../add-work/components/ColorWorkplaceDropDown";
 
 interface AddWorkForm {
   date: string;
@@ -150,24 +151,15 @@ export default function WorkCalendar() {
 
   return (
     <div className="h-dvh flex flex-col bg-white p-4 rounded-2xl">
-      <div className="flex flex-col items-center justify-between gap-7">
+      <div className="flex flex-col items-center gap-7">
         {/* 선택된 사업장 색상 */}
-        <div className="w-full flex justify-between items-center border border-gray1 px-4 py-2 rounded-lg">
-          <span
-            className="w-4 h-4 rounded-full"
-            style={{
-              backgroundColor: selectedWorkplace
-                ? getColorFromIndex(selectedWorkplace.workplaceColorIndex)
-                : "#ccc",
-            }}
-          ></span>
-          <WorkplaceDropdown
-            workplaces={workplaces}
-            selectedWorkplaceId={form.workplaceId}
-            onChange={(id) => handleInputChange("workplaceId", id)}
-            label="사업장을 선택하세요"
-          />
-        </div>
+
+        <ColorWorkplaceDropdown
+          workplaces={workplaces}
+          selectedWorkplaceId={form.workplaceId}
+          onChange={(id) => handleInputChange("workplaceId", id)}
+          label="사업장을 선택하세요"
+        />
 
         <div className="w-full flex justify-between items-center gap-2">
           <button
