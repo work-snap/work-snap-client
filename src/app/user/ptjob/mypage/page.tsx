@@ -54,9 +54,7 @@ export default function MyPage() {
             <p className="text-sm text-gray-400">{user?.data.email}</p>
             {user?.data.phoneNumber && (
               <div className="flex items-center gap-1 mt-1">
-                <p className="text-sm text-gray-400">
-                  {user.data.phoneNumber}
-                </p>
+                <p className="text-sm text-gray-400">{user.data.phoneNumber}</p>
                 {user.data.phoneNumber.startsWith("010-1234-") && (
                   <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
                     임시번호
@@ -70,6 +68,17 @@ export default function MyPage() {
         <div className="space-y-2 pt-[20px]">
           <button className="w-full flex justify-between items-center p-3 border rounded-xl">
             <span>알림설정</span>
+            <span className="text-xl text-gray-400">›</span>
+          </button>
+          <button
+            onClick={() => router.push("/user/ptjob/mypage/change/user_type")}
+            className="w-full flex justify-between items-center p-3 border rounded-xl"
+          >
+            <span>
+              {user?.data.userType === "BUSINESS_OWNER"
+                ? "알바님으로 변경"
+                : "사업자로 변경"}
+            </span>
             <span className="text-xl text-gray-400">›</span>
           </button>
         </div>

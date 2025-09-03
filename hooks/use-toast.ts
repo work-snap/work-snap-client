@@ -8,7 +8,7 @@ import type {
 } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 3; // 동시에 보여질 최대 toast 개수
-const TOAST_REMOVE_DELAY = 3000; // 3초
+const TOAST_REMOVE_DELAY = 3000; // 기본 3초
 
 type ToasterToast = ToastComponentProps & {
   id: string;
@@ -16,6 +16,7 @@ type ToasterToast = ToastComponentProps & {
   description?: React.ReactNode;
   action?: ToastActionElement;
   open?: boolean; // 상태 관리용
+  duration?: number; // 개별 지속 시간
 };
 
 const actionTypes = {
@@ -83,10 +84,11 @@ function toast(props: Toast) {
     toast: { ...props, id, open: true },
   });
 
-  // 3초 뒤 자동 제거
+  // 개별 duration 또는 기본값 사용
+  const delay = props.duration || TOAST_REMOVE_DELAY;
   setTimeout(() => {
     dispatch({ type: "REMOVE_TOAST", toastId: id });
-  }, TOAST_REMOVE_DELAY);
+  }, delay);
 
   const dismiss = () => dispatch({ type: "REMOVE_TOAST", toastId: id });
   const update = (updateProps: Partial<ToasterToast>) =>

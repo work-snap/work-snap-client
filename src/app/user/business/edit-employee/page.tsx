@@ -5,13 +5,14 @@ import { useCallback, useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 
 import DayTimePicker, {
   type ScheduleItem,
 } from "@/src/app/components/DayTimePicker";
 import { DatePicker } from "@heroui/react";
 import { parseDate, CalendarDate } from "@internationalized/date";
-import { useGetEmployeeList } from "@/lib/queries/getEmployeeList";
+import { useGetEmployeeDetail } from "@/lib/queries/getEmployeeDetail";
 import { useGetWorkplaceDetail } from "@/lib/queries/getWPDetail";
 import { useUpdateEmployee } from "@/lib/queries/updateEmployee";
 
@@ -27,7 +28,13 @@ export default function EditEmployee() {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [hourlyWage, setHourlyWage] = useState("");
+  const [currentHourlyWage, setCurrentHourlyWage] = useState(""); // 현재 시급 (읽기전용)
+  const [newHourlyWage, setNewHourlyWage] = useState(""); // 새 시급 입력
+  const [enableHourlyWageChange, setEnableHourlyWageChange] = useState(false); // 시급 변경 활성화
+  const [changeType, setChangeType] = useState<"IMMEDIATE" | "SCHEDULED">(
+    "IMMEDIATE"
+  );
+  const [scheduledChangeDate, setScheduledChangeDate] = useState("");
   const [contractStartDate, setContractStartDate] = useState("");
   const [contractEndDate, setContractEndDate] = useState("");
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
@@ -35,26 +42,31 @@ export default function EditEmployee() {
   // 사업장 상세
   const { data: workplace, isLoading: isWorkplaceLoading } =
     useGetWorkplaceDetail(workplaceId);
-  // 직원 목록
-  const { data: employeeList } = useGetEmployeeList(workplaceId);
+  // ✅ 개별 직원 상세 정보
+  const { data: employeeDetail, isLoading: isEmployeeLoading } =
+    useGetEmployeeDetail(workplaceId, employeeId);
 
   const handleSchedulesChange = useCallback((newSchedules: ScheduleItem[]) => {
     setSchedules(newSchedules);
   }, []);
 
-  const handleHourlyWageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ✅ 새 시급 입력 핸들러 추가
+  const handleNewHourlyWageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const value = e.target.value;
     if (value === "" || /^\d+$/.test(value)) {
-      setHourlyWage(value);
+      setNewHourlyWage(value);
     }
   };
 
-  // 🔹 기존 알바 정보 초기값 세팅
+  // ✅ useEffect 수정 - 개별 직원 상세 데이터 로딩
   useEffect(() => {
-    if (!employeeList?.data || employeeList.data.length === 0) return;
+    if (!employeeDetail?.data) return;
 
-    const employeeData = employeeList.data[0]; // 배열의 첫 번째 요소 접근
-    console.log("employeeData:", employeeData);
+    const employeeData = employeeDetail.data;
+    console.log("전체 employeeData:", employeeData);
+    console.log("currentHourlyWage 필드:", employeeData.currentHourlyWage);
 
     setCode(employeeData.inviteCode || "");
     setName(employeeData.name || "");
@@ -62,60 +74,120 @@ export default function EditEmployee() {
     setContractStartDate(employeeData.contractStartDate || "");
     setContractEndDate(employeeData.contractEndDate || "");
 
-    if ((employeeData as any).hourlyWage) {
-      setHourlyWage(String((employeeData as any).hourlyWage));
+    // ✅ 현재 시급 설정 (수정 불가)
+    if (employeeData.currentHourlyWage) {
+      setCurrentHourlyWage(String(employeeData.currentHourlyWage));
+      console.log("현재 시급 설정됨:", employeeData.currentHourlyWage);
+    } else {
+      console.log("⚠️ currentHourlyWage 필드가 없거나 값이 없습니다.");
     }
-  }, [employeeList]);
+  }, [employeeDetail]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!hourlyWage || isNaN(Number(hourlyWage)) || Number(hourlyWage) <= 0) {
-      toast({
-        title: "시급 입력",
-        description: "올바른 시급을 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (schedules.length === 0) {
-      toast({
-        title: "입력 누락",
-        description: "근무 시간을 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
+
+    // ✅ 시급 변경 관련 유효성 검사
+    if (enableHourlyWageChange) {
+      if (
+        !newHourlyWage ||
+        isNaN(Number(newHourlyWage)) ||
+        Number(newHourlyWage) <= 0
+      ) {
+        toast({
+          title: "시급 입력 오류",
+          description: "올바른 새 시급을 입력해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 최저임금 검사
+      if (Number(newHourlyWage) < 9860) {
+        toast({
+          title: "시급 입력 오류",
+          description: "시급은 최저임금(9,860원) 이상이어야 합니다.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 현재 시급과 동일한지 검사
+      if (
+        currentHourlyWage &&
+        Number(newHourlyWage) === Number(currentHourlyWage)
+      ) {
+        toast({
+          title: "시급 입력 오류",
+          description: "현재 시급과 동일합니다. 다른 금액을 입력해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 예정 변경일 검사
+      if (changeType === "SCHEDULED" && !scheduledChangeDate) {
+        toast({
+          title: "입력 누락",
+          description: "시급 변경 예정일을 선택해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 예정 변경일이 과거인지 검사
+      if (changeType === "SCHEDULED" && scheduledChangeDate) {
+        const changeDate = new Date(scheduledChangeDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (changeDate <= today) {
+          toast({
+            title: "날짜 선택 오류",
+            description: "변경 예정일은 내일 이후로 선택해주세요.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
+    // ❌ 기존 스케줄 필수 검사 제거 (선택사항이므로)
+    // if (schedules.length === 0) { ... }
+
     try {
+      // ✅ 수정된 payload 구성
       const payload = {
         contractStartDate,
-        contractEndDate,
-        hourlyWageUpdate: {
-          newHourlyWage: Number(hourlyWage),
-          changeType: "IMMEDIATE" as "IMMEDIATE" | "DEFERRED",
-        },
-        schedules,
+        contractEndDate: contractEndDate || undefined, // 빈 문자열이면 undefined
+        hourlyWageUpdate: enableHourlyWageChange
+          ? {
+              newHourlyWage: Number(newHourlyWage),
+              changeType: changeType as "IMMEDIATE" | "SCHEDULED", // 수정됨
+              ...(changeType === "SCHEDULED" && { scheduledChangeDate }),
+            }
+          : undefined, // 시급 변경 비활성화 시 undefined
+        schedules:
+          schedules.length > 0
+            ? schedules.map((item) => ({
+                ...item,
+                dayOfWeek: item.dayOfWeek.toUpperCase() as
+                  | "MONDAY"
+                  | "TUESDAY"
+                  | "WEDNESDAY"
+                  | "THURSDAY"
+                  | "FRIDAY"
+                  | "SATURDAY"
+                  | "SUNDAY",
+              }))
+            : undefined, // 스케줄이 없으면 undefined
       };
+
+      console.log("전송할 payload:", payload); // 디버깅용
 
       const res = await updateEmployeeMutation.mutateAsync({
         workplaceId,
         employeeId,
-        payload: {
-          ...payload,
-          schedules: schedules.map((item) => ({
-            ...item,
-            // DayTimePicker의 ScheduleItem의 dayOfWeek(string)를
-            // updateEmployee의 ScheduleItem의 dayOfWeek(enum)으로 변환
-            dayOfWeek: item.dayOfWeek.toUpperCase() as
-              | "MONDAY"
-              | "TUESDAY"
-              | "WEDNESDAY"
-              | "THURSDAY"
-              | "FRIDAY"
-              | "SATURDAY"
-              | "SUNDAY",
-          })),
-        },
+        payload,
       });
 
       toast({
@@ -125,6 +197,7 @@ export default function EditEmployee() {
       });
       router.push(`/user/business/add-business/detail?idx=${workplaceId}`);
     } catch (err: any) {
+      console.error("수정 실패:", err); // 디버깅용
       toast({
         title: "수정 실패",
         description:
@@ -136,7 +209,7 @@ export default function EditEmployee() {
     }
   };
 
-  if (isWorkplaceLoading) return <div>로딩 중...</div>;
+  if (isWorkplaceLoading || isEmployeeLoading) return <div>로딩 중...</div>;
 
   return (
     <div className="h-dvh min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
@@ -263,90 +336,142 @@ export default function EditEmployee() {
             </div>
           </div>
 
-          {/* 시급 입력 */}
-          <label className="flex flex-col gap-1">
-            <span className="font-semibold text-gray4">시급</span>
+          {/* ✅ 1. 현재 시급 표시 + 시급 변경 옵션 (통합) */}
+          <div className="flex flex-col gap-3 rounded-xl border border-gray2 bg-white px-4 py-3">
+            {/* 헤더: 현재 시급 제목 + 시급 변경 토글 */}
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-gray4">현재 시급</span>
+              <label className="flex items-center gap-2 text-gray4">
+                <span className="text-sm">시급 변경</span>
+                <Switch
+                  checked={enableHourlyWageChange}
+                  onChange={(e) => setEnableHourlyWageChange(e.target.checked)}
+                  aria-label="시급 변경 토글"
+                />
+              </label>
+            </div>
+
+            {/* 현재 시급 입력 필드 */}
             <div className="relative">
               <input
                 type="text"
-                value={hourlyWage}
-                onChange={handleHourlyWageChange}
-                className="border border-gray2 rounded-lg p-3 w-full pr-16"
-                placeholder="예: 10000"
-                maxLength={6}
+                value={currentHourlyWage}
                 disabled
+                className="border border-gray2 rounded-lg p-3 w-full pr-16 bg-gray-50"
+                placeholder="현재 설정된 시급"
               />
               <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray3 text-sm">
                 원/시간
               </span>
             </div>
-            {hourlyWage && (
-              <div className="text-xs text-gray3 mt-1">
-                입력된 시급: {Number(hourlyWage).toLocaleString()}원/시간
+            {currentHourlyWage && (
+              <div className="text-xs text-gray3">
+                현재 시급: {Number(currentHourlyWage).toLocaleString()}원/시간
               </div>
             )}
-          </label>
-          {/* 시급 변경 입력 */}
-          <span className="font-semibold text-gray4">시급 변경하기</span>
-          <div className="flex items-center justify-center gap-2">
-            <DatePicker
-              value={contractStartDate ? parseDate(contractStartDate) : null}
-              onChange={(newDate: CalendarDate | null) => {
-                if (newDate) {
-                  setContractStartDate(
-                    `${newDate.year}-${String(newDate.month).padStart(
-                      2,
-                      "0"
-                    )}-${String(newDate.day).padStart(2, "0")}`
-                  );
-                }
-              }}
-              aria-label="계약 시작일"
-              placeholder="시작일"
-              disableAnimation
-              showMonthAndYearPickers
-              granularity="day"
-            />
-            <span>-</span>
-            <DatePicker
-              value={contractEndDate ? parseDate(contractEndDate) : null}
-              onChange={(newDate: CalendarDate | null) => {
-                if (newDate) {
-                  setContractEndDate(
-                    `${newDate.year}-${String(newDate.month).padStart(
-                      2,
-                      "0"
-                    )}-${String(newDate.day).padStart(2, "0")}`
-                  );
-                }
-              }}
-              aria-label="계약 종료일"
-              placeholder="종료일"
-              disableAnimation
-              showMonthAndYearPickers
-              granularity="day"
-            />
+
+            {/* ✅ 시급 변경 옵션 (조건부 렌더링) - border 안에 포함 */}
+            {enableHourlyWageChange && (
+              <>
+                {/* 구분선 */}
+                <div className="border-t border-gray2 pt-3">
+                  {/* 변경 타입 선택 */}
+                  <div className="flex flex-col gap-2 mb-3">
+                    <span className="font-semibold text-gray4">변경 방식</span>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="changeType"
+                          value="IMMEDIATE"
+                          checked={changeType === "IMMEDIATE"}
+                          onChange={(e) =>
+                            setChangeType(
+                              e.target.value as "IMMEDIATE" | "SCHEDULED"
+                            )
+                          }
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">즉시 변경</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="changeType"
+                          value="SCHEDULED"
+                          checked={changeType === "SCHEDULED"}
+                          onChange={(e) =>
+                            setChangeType(
+                              e.target.value as "IMMEDIATE" | "SCHEDULED"
+                            )
+                          }
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">예정 변경</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 새 시급 입력 */}
+                  <div className="flex flex-col gap-1 mb-3">
+                    <span className="font-semibold text-gray4">새 시급</span>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={newHourlyWage}
+                        onChange={handleNewHourlyWageChange}
+                        className="border border-gray2 rounded-lg p-3 w-full pr-16"
+                        placeholder="예: 12000"
+                        maxLength={6}
+                      />
+                      <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray3 text-sm">
+                        원/시간
+                      </span>
+                    </div>
+                    {newHourlyWage && (
+                      <div className="text-xs text-gray3 mt-1">
+                        새 시급: {Number(newHourlyWage).toLocaleString()}원/시간
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 예정 변경일 (SCHEDULED 선택 시만 표시) */}
+                  {changeType === "SCHEDULED" && (
+                    <div className="flex flex-col gap-1">
+                      <span className="font-semibold text-gray4">
+                        변경 예정일
+                      </span>
+                      <DatePicker
+                        value={
+                          scheduledChangeDate
+                            ? parseDate(scheduledChangeDate)
+                            : null
+                        }
+                        onChange={(newDate: CalendarDate | null) => {
+                          if (newDate) {
+                            setScheduledChangeDate(
+                              `${newDate.year}-${String(newDate.month).padStart(
+                                2,
+                                "0"
+                              )}-${String(newDate.day).padStart(2, "0")}`
+                            );
+                          }
+                        }}
+                        aria-label="시급 변경 예정일"
+                        placeholder="변경 예정일 선택"
+                        disableAnimation
+                        showMonthAndYearPickers
+                        granularity="day"
+                        minValue={parseDate(
+                          new Date().toISOString().split("T")[0]
+                        )} // 오늘 이후만 선택 가능
+                      />
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-          <label className="flex flex-col gap-1">
-            <div className="relative">
-              <input
-                type="text"
-                value={hourlyWage}
-                onChange={handleHourlyWageChange}
-                className="border border-gray2 rounded-lg p-3 w-full pr-16"
-                placeholder="예: 10000"
-                maxLength={6}
-              />
-              <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray3 text-sm">
-                원/시간
-              </span>
-            </div>
-            {hourlyWage && (
-              <div className="text-xs text-gray3 mt-1">
-                입력된 시급: {Number(hourlyWage).toLocaleString()}원/시간
-              </div>
-            )}
-          </label>
 
           {/* 근무 시간 */}
           <DayTimePicker onChange={handleSchedulesChange} />

@@ -13,7 +13,12 @@ export default function UserLayout({
   const pathname = usePathname();
 
   // Header를 숨길 경로 배열
-  const hideHeaderPaths = ["/user/ptjob/mypage", "/user/business/mypage"];
+  const hideHeaderPaths = [
+    "/user/ptjob/mypage",
+    "/user/business/mypage",
+    "/user/business/mypage/change/user_type",
+    "/user/ptjob/mypage/change/user_type",
+  ];
 
   // 현재 경로가 배열에 포함되면 Header 숨기기
   const showHeader = !hideHeaderPaths.includes(pathname);
