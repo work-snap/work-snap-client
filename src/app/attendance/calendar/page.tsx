@@ -15,7 +15,6 @@ import {
   isToday,
 } from "date-fns";
 import { ko } from "date-fns/locale";
-import WorkplaceDropdown from "../add-work/components/WorkplaceDropdown";
 import { useGetMyWP } from "@/lib/queries/getMyWP";
 import { useSearchParams } from "next/navigation";
 import ColorWorkplaceDropdown from "../add-work/components/ColorWorkplaceDropDown";
@@ -181,9 +180,10 @@ export default function WorkCalendar() {
               onClick={nextMonth}
             />
           </div>
-          <button className="border px-4 py-2 rounded-md">
+          <div className="px-7"></div>
+          {/* <button className="border px-4 py-2 rounded-md">
             <CalendarIcon size={16} />
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -195,9 +195,9 @@ export default function WorkCalendar() {
         <span className="flex items-center gap-1">
           <span className="w-4 h-4 bg-red-500 rounded-full"></span> 출근완료
         </span>
-        <span className="flex items-center gap-1">
+        {/* <span className="flex items-center gap-1">
           <span className="w-4 h-4 bg-green-500 rounded-full"></span> 휴무
-        </span>
+        </span> */}
         <span className="flex items-center gap-1">
           <span className="w-4 h-4 bg-orange-500 rounded-full"></span> 조퇴
         </span>

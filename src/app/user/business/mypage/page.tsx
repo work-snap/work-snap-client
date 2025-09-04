@@ -37,7 +37,7 @@ export default function MyPage() {
 
   return (
     <div className="h-dvh mx-auto w-full bg-white max-w-[430px]  flex flex-col">
-      <div className="p-4 flex flex-col gap-6 flex-grow pt-[60px]">
+      <div className="p-4 flex flex-col gap-6 flex-grow pt-[40px]">
         <h1 className="text-2xl font-bold">MY</h1>
 
         <div className="flex items-center gap-4 p-4 rounded-xl border">
