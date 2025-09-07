@@ -15,9 +15,11 @@ import { parseDate, CalendarDate } from "@internationalized/date";
 import { useGetEmployeeDetail } from "@/lib/queries/getEmployeeDetail";
 import { useGetWorkplaceDetail } from "@/lib/queries/getWPDetail";
 import { useUpdateEmployee } from "@/lib/queries/updateEmployee";
+import { useDeleteEmployee } from "@/lib/queries/useDeleteEmployee";
 
 export default function EditEmployee() {
   const updateEmployeeMutation = useUpdateEmployee();
+  const deleteEmployeeMutation = useDeleteEmployee();
   const router = useRouter();
   const searchParams = useSearchParams();
   const workplaceId = Number(searchParams.get("idx"));
@@ -38,6 +40,11 @@ export default function EditEmployee() {
   const [contractStartDate, setContractStartDate] = useState("");
   const [contractEndDate, setContractEndDate] = useState("");
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+
+  // 삭제 관련 상태
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [terminationDate, setTerminationDate] = useState("");
+  const [terminationReason, setTerminationReason] = useState("");
 
   // 사업장 상세
   const { data: workplace, isLoading: isWorkplaceLoading } =
@@ -200,6 +207,65 @@ export default function EditEmployee() {
       console.error("수정 실패:", err); // 디버깅용
       toast({
         title: "수정 실패",
+        description:
+          err?.response?.data?.message ||
+          err?.message ||
+          "잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // 알바 삭제 처리
+  const handleDeleteEmployee = async () => {
+    if (!terminationDate) {
+      toast({
+        title: "입력 누락",
+        description: "종료일을 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 종료일이 과거인지 검사
+    const termDate = new Date(terminationDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (termDate < today) {
+      toast({
+        title: "날짜 선택 오류",
+        description: "종료일은 오늘 이후로 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deleteEmployeeMutation.mutateAsync({
+        workplaceId,
+        employeeId,
+        payload: {
+          terminationDate,
+          terminationReason: terminationReason || undefined,
+        },
+      });
+
+      toast({
+        title: "삭제 완료",
+        description: "알바 계약이 성공적으로 종료되었습니다.",
+        variant: "success",
+      });
+
+      // 삭제 모달 닫기
+      setShowDeleteModal(false);
+
+      // 사업장 상세 페이지로 돌아가기
+      router.push(`/user/business/add-business/detail?idx=${workplaceId}`);
+    } catch (err: any) {
+      console.error("삭제 실패:", err);
+      toast({
+        title: "삭제 실패",
         description:
           err?.response?.data?.message ||
           err?.message ||
@@ -476,17 +542,166 @@ export default function EditEmployee() {
           {/* 근무 시간 */}
           <DayTimePicker onChange={handleSchedulesChange} />
 
-          {/* 등록 버튼 */}
-          <div className="w-full pt-6 pb-8">
+          {/* 버튼들 */}
+          <div className="w-full pt-6 pb-8 flex flex-col gap-3">
+            {/* 수정 버튼 */}
             <Button
               type="submit"
               className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-lg"
             >
               알바 수정하기
             </Button>
+
+            {/* 삭제 버튼 */}
+            <Button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl h-[50px] text-base"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                />
+              </svg>
+              알바 삭제하기
+            </Button>
           </div>
         </form>
       </div>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full mx-auto p-6">
+            <div className="flex flex-col gap-4">
+              {/* 모달 헤더 */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">알바 삭제</h3>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* 경고 메시지 */}
+              <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">
+                    주의: 이 작업은 되돌릴 수 없습니다
+                  </p>
+                  <p className="text-xs text-red-600 mt-1">
+                    알바 계약을 종료하면 관련된 스케줄과 미래 출근 기록이
+                    삭제됩니다.
+                  </p>
+                </div>
+              </div>
+
+              {/* 종료일 선택 */}
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-gray-700">
+                  계약 종료일 <span className="text-red-500">*</span>
+                </label>
+                <DatePicker
+                  value={terminationDate ? parseDate(terminationDate) : null}
+                  onChange={(newDate: CalendarDate | null) => {
+                    if (newDate) {
+                      setTerminationDate(
+                        `${newDate.year}-${String(newDate.month).padStart(
+                          2,
+                          "0"
+                        )}-${String(newDate.day).padStart(2, "0")}`
+                      );
+                    }
+                  }}
+                  aria-label="계약 종료일"
+                  placeholder="종료일 선택"
+                  disableAnimation
+                  showMonthAndYearPickers
+                  granularity="day"
+                  minValue={parseDate(new Date().toISOString().split("T")[0])}
+                />
+              </div>
+
+              {/* 종료 사유 (선택사항) */}
+              <div className="flex flex-col gap-2">
+                <label className="font-semibold text-gray-700">
+                  종료 사유 (선택사항)
+                </label>
+                <textarea
+                  value={terminationReason}
+                  onChange={(e) => setTerminationReason(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-3 w-full resize-none"
+                  placeholder="예: 계약 만료, 업무 부적응 등"
+                  rows={3}
+                  maxLength={500}
+                />
+                <div className="text-xs text-gray-500 text-right">
+                  {terminationReason.length}/500
+                </div>
+              </div>
+
+              {/* 버튼들 */}
+              <div className="flex gap-3 mt-2">
+                <Button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg h-[50px]"
+                >
+                  취소
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleDeleteEmployee}
+                  disabled={
+                    deleteEmployeeMutation.isPending || !terminationDate
+                  }
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg h-[50px] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteEmployeeMutation.isPending ? "처리 중..." : "삭제하기"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
