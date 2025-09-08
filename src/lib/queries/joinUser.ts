@@ -1,6 +1,7 @@
 // src/lib/queries/joinUser.ts
 import { useMutation } from "@tanstack/react-query";
 import api from "../api"; // axios instance
+import { ApiResponse, OnboardResponse } from "@/src/types/api";
 
 export interface Schedule {
   dayOfWeek: string;
@@ -18,7 +19,7 @@ export interface JoinUserRequest {
 }
 
 export const useJoinUser = () => {
-  return useMutation({
+  return useMutation<ApiResponse<OnboardResponse>, Error, JoinUserRequest>({
     mutationFn: async ({
       workplaceId,
       inviteCode,
