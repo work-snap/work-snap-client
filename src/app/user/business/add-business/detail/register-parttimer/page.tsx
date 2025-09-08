@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useJoinUser } from "@/src/lib/queries/joinUser";
 import { useGetWorkplaceDetail } from "@/src/lib/queries/getWPDetail";
 import { useValidateInviteCode } from "@/src/lib/queries/validateInviteCode";
+import { EmployeeRegistrationStatus } from "@/src/types/api";
 import DayTimePicker, {
   type ScheduleItem,
 } from "@/src/app/components/DayTimePicker";
@@ -34,6 +35,30 @@ export default function RegisterParttimer() {
   const [contractEndDate, setContractEndDate] = useState("");
 
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+
+  // 등록 결과 메시지 생성 함수
+  const getRegistrationMessage = (
+    registrationType?: EmployeeRegistrationStatus,
+    restoredData?: any
+  ) => {
+    switch (registrationType) {
+      case EmployeeRegistrationStatus.NEW_USER:
+        return "새로운 아르바이트생이 등록되었습니다.";
+
+      case EmployeeRegistrationStatus.RETURNING_INACTIVE:
+        return `이전 설정으로 복구되었습니다. (${
+          restoredData?.reactivationCount || 1
+        }번째 재등록)`;
+
+      case EmployeeRegistrationStatus.TERMINATED:
+        return `새로운 계약으로 재등록되었습니다.\n이전 계약: ${
+          restoredData?.previousContractPeriod || "기록 없음"
+        }`;
+
+      default:
+        return "등록이 완료되었습니다.";
+    }
+  };
 
   const handleValidateCode = async () => {
     if (!code) {
@@ -100,16 +125,59 @@ export default function RegisterParttimer() {
         hourlyWage: Number(hourlyWage),
       });
 
-      toast({ title: "등록 완료", description: res.message });
+      // 새로운 응답 형식에 따른 처리
+      if (res.success && res.data) {
+        const registrationType = res.data.registrationType;
+        const restoredData = res.data.restoredData;
+
+        // 상태별 맞춤 메시지 표시
+        const customMessage = getRegistrationMessage(
+          registrationType,
+          restoredData
+        );
+
+        toast({
+          title: "등록 완료",
+          description: customMessage,
+        });
+
+        // 복구된 설정이 있는 경우 추가 알림
+        if (restoredData?.restoredPreferences) {
+          setTimeout(() => {
+            toast({
+              title: "설정 복구",
+              description: "✅ 이전 설정이 복구되었습니다.",
+              variant: "default",
+            });
+          }, 1500);
+        }
+      } else {
+        // 기존 방식 호환성
+        toast({
+          title: "등록 완료",
+          description: res.message || "등록이 완료되었습니다.",
+        });
+      }
+
       router.push(`/user/business/add-business/detail?idx=${workplaceId}`);
     } catch (err: any) {
-      toast({
-        title: "등록 실패",
-        description:
-          err?.response?.data?.message ||
-          err?.message ||
-          "잠시 후 다시 시도해주세요.",
-      });
+      // 이미 등록된 사용자 처리 (RETURNING_ACTIVE)
+      if (err?.response?.status === 409) {
+        toast({
+          title: "등록 불가",
+          description: "이미 등록된 아르바이트생입니다.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "등록 실패",
+          description:
+            err?.response?.data?.message ||
+            err?.message ||
+            "잠시 후 다시 시도해주세요.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -138,7 +206,9 @@ export default function RegisterParttimer() {
             />
           </svg>
         </button>
-        <span className="px-2 py-4 font-extrabold text-2xl">알바 등록</span>
+        <span className="px-2 py-4 font-extrabold text-2xl">
+          알바 등록/재등록
+        </span>
       </div>
 
       {/* 컨텐츠 */}
@@ -150,6 +220,16 @@ export default function RegisterParttimer() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-4 mt-2">
+          {/* 안내 메시지 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+            <p className="text-sm text-blue-800">
+              💡 <strong>신규/재등록 자동 처리</strong>
+              <br />
+              이전에 등록했던 알바생은 자동으로 복구되며, 새로운 알바생은 신규
+              등록됩니다.
+            </p>
+          </div>
+
           {/* 인증코드 */}
           <span className="font-semibold text-gray4">인증코드</span>
           <label className="flex gap-2">
@@ -278,7 +358,7 @@ export default function RegisterParttimer() {
               type="submit"
               className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-lg"
             >
-              알바 등록하기
+              알바 등록/재등록하기
             </Button>
           </div>
         </form>
