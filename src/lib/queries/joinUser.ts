@@ -11,11 +11,13 @@ export interface Schedule {
 
 export interface JoinUserRequest {
   workplaceId: number;
-  inviteCode: string;
-  schedules: Schedule[];
-  contractStartDate: string;
-  contractEndDate: string;
-  hourlyWage: number; // 시급 정보 추가
+  inviteCode: string; // 알바 초대코드
+  contractStartDate: string; // 계약 시작일 (YYYY-MM-DD)
+  contractEndDate?: string; // 계약 종료일 (YYYY-MM-DD, 선택)
+  hourlyWage?: number; // 시급 (원)
+  schedules?: Schedule[]; // 요일 기반 스케줄 (선택)
+  forceCreate?: boolean; // ✨ 강제 등록 여부 (기본값: false)
+  restoreExisting?: boolean; // ✨ 기존 데이터 복구 여부 (선택)
 }
 
 export const useJoinUser = () => {
@@ -27,6 +29,8 @@ export const useJoinUser = () => {
       contractStartDate,
       contractEndDate,
       hourlyWage,
+      forceCreate = false,
+      restoreExisting = false,
     }: JoinUserRequest) => {
       const res = await api.post(
         `/api/business-owner/workplaces/${workplaceId}/employees/onboard`,
@@ -36,6 +40,8 @@ export const useJoinUser = () => {
           contractStartDate,
           contractEndDate,
           hourlyWage,
+          forceCreate,
+          restoreExisting,
         }
       );
       return res.data;
