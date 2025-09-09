@@ -12,7 +12,8 @@ type AttendanceMode =
   | "CHECK_IN_LATE" // 지각
   | "CHECK_OUT_NORMAL" // 퇴근 하기
   | "CHECK_OUT_EARLY" // 조퇴 하기
-  | "CHECK_OUT_OVERTIME"; // 연장 근무 하기
+  | "CHECK_OUT_OVERTIME" // 연장 근무 하기
+  | "ABSENT"; // 무단결근
 
 interface AttendanceModeOption {
   mode: AttendanceMode;
@@ -63,6 +64,15 @@ export default function AttendanceCard({
     return () => clearInterval(timer);
   }, []);
 
+  // 무단결근 여부 검증
+  const isAbsent = useMemo(() => {
+    if (currentStatus !== "NOT_STARTED") return false;
+    const now = new Date();
+    const scheduleEnd = new Date(scheduledEndDate);
+    // 퇴근 시간이 지나면 무단결근으로 간주
+    return now > scheduleEnd;
+  }, [currentStatus, scheduledEndDate, currentTime]);
+
   // 현재 시간과 스케줄을 비교하여 사용 가능한 모드 결정
   const getAvailableModes = (): AttendanceModeOption[] => {
     const now = new Date();
@@ -70,6 +80,17 @@ export default function AttendanceCard({
     const scheduleEnd = new Date(scheduledEndDate);
 
     if (currentStatus === "NOT_STARTED") {
+      // 무단결근 상태인 경우
+      if (isAbsent) {
+        return [
+          {
+            mode: "ABSENT",
+            label: "무단결근",
+            description: "출근 시간이 지났습니다",
+          },
+        ];
+      }
+
       // 추가 근무인 경우 조기 출근만 표시
       if (type === "ADDITIONAL") {
         return [
@@ -134,6 +155,17 @@ export default function AttendanceCard({
           mode: "CHECK_IN_NORMAL",
           label: "업무종료",
           description: "완료된 근무",
+        },
+      ];
+    }
+
+    // ABSENT 상태에서는 무단결근 표시
+    if (currentStatus === "ABSENT") {
+      return [
+        {
+          mode: "ABSENT",
+          label: "무단결근",
+          description: "출근하지 않았습니다",
         },
       ];
     }
@@ -209,8 +241,8 @@ export default function AttendanceCard({
   const handleAttendanceClick = async () => {
     if (!selectedModeOption) return;
 
-    // COMPLETED 상태에서는 아무 동작하지 않음
-    if (currentStatus === "COMPLETED") {
+    // COMPLETED 상태나 ABSENT 상태에서는 아무 동작하지 않음
+    if (currentStatus === "COMPLETED" || selectedMode === "ABSENT") {
       return;
     }
 
@@ -612,12 +644,26 @@ export default function AttendanceCard({
       dateBadge: "text-main border-main",
       checkInButton: "text-gray4 bg-gray2",
     },
+    ABSENT: {
+      timeDisplay: "text-red-500",
+      startEndTime: "text-red-400",
+      realtime: "text-red-400",
+      activeButton: "text-red-500 bg-red-50",
+      headerBg: "bg-red-100",
+      workplaceName: "text-red-600",
+      dateBadge: "text-red-500 border-red-500",
+      checkInButton: "text-red-500 bg-red-50 cursor-not-allowed",
+    },
   };
 
   const getStatusStyle = (
     status: string,
     styleType: keyof StatusStyles
   ): string => {
+    // 무단결근 상태인 경우 ABSENT 스타일 적용
+    if (isAbsent && status === "NOT_STARTED") {
+      return statusStyles.ABSENT[styleType];
+    }
     return (
       statusStyles[status]?.[styleType] || statusStyles.NOT_STARTED[styleType]
     );
@@ -627,6 +673,7 @@ export default function AttendanceCard({
     before: "아직 출근 전입니다",
     ing: "열심히 일하고 있어요",
     after: "오늘 업무 완료",
+    absent: "무단결근",
   };
 
   const getAttendanceTimeDisplay = (
@@ -719,7 +766,9 @@ export default function AttendanceCard({
                 getStatusStyle(currentStatus, "dateBadge").split(" ")[0]
               }`}
             >
-              {currentStatus === "NOT_STARTED"
+              {isAbsent
+                ? workText.absent
+                : currentStatus === "NOT_STARTED"
                 ? workText.before
                 : currentStatus === "IN_PROGRESS"
                 ? workText.ing
@@ -806,8 +855,8 @@ export default function AttendanceCard({
       </div>
       {availableModes.length > 0 && (
         <>
-          {isLateCheckIn ? (
-            // 지각 상황: 분할 버튼
+          {isLateCheckIn && !isAbsent ? (
+            // 지각 상황: 분할 버튼 (무단결근이 아닌 경우에만)
             <div className="flex w-full border-t border-gray1">
               <button
                 className={`flex-1 flex justify-center items-center py-3 text-lg transition-opacity ${getStatusStyle(
@@ -852,7 +901,8 @@ export default function AttendanceCard({
               )} ${
                 checkInMutation.isPending ||
                 checkOutMutation.isPending ||
-                currentStatus === "COMPLETED"
+                currentStatus === "COMPLETED" ||
+                isAbsent
                   ? "opacity-50 cursor-not-allowed"
                   : ""
               }`}
@@ -860,7 +910,8 @@ export default function AttendanceCard({
               disabled={
                 checkInMutation.isPending ||
                 checkOutMutation.isPending ||
-                currentStatus === "COMPLETED"
+                currentStatus === "COMPLETED" ||
+                isAbsent
               }
             >
               {checkInMutation.isPending || checkOutMutation.isPending
