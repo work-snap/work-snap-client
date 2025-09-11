@@ -509,9 +509,7 @@ export default function RegisterParttimer() {
             />
           </svg>
         </button>
-        <span className="px-2 py-4 font-extrabold text-2xl">
-          알바 등록/재등록
-        </span>
+        <span className="px-2 py-4 font-extrabold text-2xl">알바 등록</span>
       </div>
 
       {/* 컨텐츠 */}
@@ -523,16 +521,6 @@ export default function RegisterParttimer() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-4 mt-2">
-          {/* 안내 메시지 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
-            <p className="text-sm text-blue-800">
-              💡 <strong>Vemontes 방식 등록</strong>
-              <br />
-              기존 등록 정보가 있으면 사용자가 직접 선택할 수 있습니다. 새로운
-              알바생은 신규 등록됩니다.
-            </p>
-          </div>
-
           {/* 인증코드 */}
           <span className="font-semibold text-gray4">인증코드</span>
           <label className="flex gap-2">
@@ -661,7 +649,7 @@ export default function RegisterParttimer() {
               type="submit"
               className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-lg"
             >
-              알바 등록/재등록하기
+              알바 등록하기
             </Button>
           </div>
         </form>

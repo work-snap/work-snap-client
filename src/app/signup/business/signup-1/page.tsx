@@ -9,23 +9,121 @@ import {
   ResisterBusinessResponse,
 } from "@/src/lib/auth/types";
 import { useResisterBusiness } from "@/src/lib/auth/auth.query";
+import { authApis } from "@/src/lib/auth/auth";
 import LoadingAuthentication from "@/src/app/components/loadingAuthentication";
+import Loading from "@/src/app/components/loading";
 import { BusinessInfoDisplay, ImageUploadSection } from "./components";
 
 export default function BusinessSignupStep1() {
   const router = useRouter();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isCheckingBusinessOwner, setIsCheckingBusinessOwner] = useState(false);
 
-  // 인증 상태 확인
+  // 사업자 정보 확인 및 리다이렉트 로직
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    const user = localStorage.getItem("user");
-    console.log("🔐 인증 상태 확인:", {
-      token: token ? "존재함" : "없음",
-      user: user ? JSON.parse(user) : "없음"
-    });
-  }, []);
+    const checkBusinessOwnerStatus = async () => {
+      const token = localStorage.getItem("accessToken");
+      const user = localStorage.getItem("user");
+
+      console.log("🔐 인증 상태 확인:", {
+        token: token ? "존재함" : "없음",
+        user: user ? JSON.parse(user) : "없음",
+      });
+
+      // 토큰이 없으면 확인하지 않음
+      if (!token) {
+        console.log("🔒 토큰 없음 - 사업자 정보 확인 건너뜀");
+        return;
+      }
+
+      setIsCheckingBusinessOwner(true);
+
+      try {
+        // 1차: 사업자 검증 상태 확인
+        console.log("🔍 사업자 검증 상태 확인 시도...");
+        const verificationResponse = await authApis.getVerificationStatus();
+
+        // 검증 상태가 존재하고 승인된 경우에만 리다이렉트
+        if (
+          verificationResponse?.data &&
+          verificationResponse.data.verificationStatus === "APPROVED"
+        ) {
+          console.log("✅ 사업자 검증 상태 승인됨 - 메인페이지로 리다이렉트");
+          router.replace("/user/business/add-business");
+          return;
+        } else if (verificationResponse?.data) {
+          console.log(
+            "ℹ️ 사업자 검증 상태 존재하지만 미승인 - 사업자 정보 확인으로 진행"
+          );
+        }
+      } catch (verificationError: any) {
+        console.log(
+          "⚠️ 사업자 검증 상태 확인 실패:",
+          verificationError?.response?.status,
+          verificationError?.response?.data?.message
+        );
+        // 404, 400 에러는 정상적인 상황 (사업자 정보 없음)
+        if (
+          verificationError?.response?.status === 404 ||
+          verificationError?.response?.status === 400 ||
+          verificationError?.response?.data?.message?.includes(
+            "사업자 등록 정보를 찾을 수 없습니다"
+          )
+        ) {
+          console.log("ℹ️ 사업자 검증 상태 없음 - 사업자 정보 확인으로 진행");
+        }
+      }
+
+      // 2차: 사업자 정보 존재 여부 확인 (서버 API 문제로 임시 비활성화)
+      // TODO: 서버에 /api/business-owner/info 엔드포인트 구현 후 활성화
+      /*
+      try {
+        console.log("🔍 사업자 정보 존재 여부 확인 시도...");
+        const businessOwnerResponse = await authApis.getBusinessOwner();
+
+        // 사업자 정보가 존재하고 활성화된 경우에만 리다이렉트
+        if (
+          businessOwnerResponse?.data &&
+          businessOwnerResponse.data.isActive === true &&
+          businessOwnerResponse.data.verificationStatus === "APPROVED"
+        ) {
+          console.log(
+            "✅ 사업자 정보 존재 및 승인됨 - 메인페이지로 리다이렉트"
+          );
+          router.replace("/user/business/mainpage");
+          return;
+        } else if (businessOwnerResponse?.data) {
+          console.log(
+            "ℹ️ 사업자 정보 존재하지만 미승인 또는 비활성 - 등록 페이지 표시"
+          );
+        }
+      } catch (businessOwnerError: any) {
+        console.log(
+          "⚠️ 사업자 정보 확인 실패:",
+          businessOwnerError?.response?.status,
+          businessOwnerError?.response?.data?.message
+        );
+        // 404, 400 에러는 정상적인 상황 (사업자 정보 없음)
+        if (
+          businessOwnerError?.response?.status === 404 ||
+          businessOwnerError?.response?.status === 400 ||
+          businessOwnerError?.response?.data?.message?.includes(
+            "사업자 등록 정보를 찾을 수 없습니다"
+          )
+        ) {
+          console.log("ℹ️ 사업자 정보 없음 - 등록 페이지 표시");
+        }
+        // 모든 확인 실패 시 등록 페이지 유지
+      }
+      */
+
+      // 로딩 상태 해제
+      setIsCheckingBusinessOwner(false);
+    };
+
+    checkBusinessOwnerStatus();
+  }, [router]);
 
   function toBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -69,7 +167,7 @@ export default function BusinessSignupStep1() {
       status: error.response?.status,
       statusText: error.response?.statusText,
       data: error.response?.data,
-      headers: error.response?.headers
+      headers: error.response?.headers,
     });
     alert("사업자 등록에 실패했습니다. 다시 시도해주세요.");
   };
@@ -104,9 +202,13 @@ export default function BusinessSignupStep1() {
   return (
     <>
       {isPending ? (
-        // ✅ 업로드 후 서버 분석 중일 때
+        // ✅ 사업자등록증 분석 중일 때
         <LoadingAuthentication />
+      ) : isCheckingBusinessOwner ? (
+        // ✅ 사업자 정보 확인 중일 때
+        <Loading />
       ) : (
+        // ✅ 일반 등록 페이지
         <div className="h-dvh flex flex-col bg-white max-w-[430px] w-full mx-auto">
           {/* 헤더 */}
           <div className="flex items-center py-4 px-2 flex-shrink-0">

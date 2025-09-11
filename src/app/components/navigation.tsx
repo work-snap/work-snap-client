@@ -22,7 +22,7 @@ export default function Navigation() {
     effectiveUserType === "BUSINESS_OWNER" ? "/user/business" : "/user/ptjob";
 
   return (
-    <nav className=" max-w-[430px] w-full bg-white border-t border-gray2 py-5">
+    <nav className=" max-w-[430px] w-full bg-white border-t border-gray2 py-3">
       <div className="flex justify-around items-center h-[64px]">
         {/* 알바 */}
         <Link
