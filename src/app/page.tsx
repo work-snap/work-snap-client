@@ -1,14 +1,49 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/UserContext";
+import { useEffect } from "react";
 
 export default function Home() {
   const router = useRouter();
+  const { user, isLoading } = useUser();
+
+  // 자동 로그인 시 메인 페이지로 리디렉션
+  useEffect(() => {
+    if (!isLoading && user) {
+      console.log("[WORK-SNAP] 사용자 인증됨, 메인 페이지로 이동:", user);
+      router.replace("/user/business/mainpage");
+    }
+  }, [user, isLoading, router]);
 
   const handleKakaoLogin = () => {
     // Next.js API 라우트로 리다이렉트
     router.push("/kakao-login");
   };
+
+  // 로딩 중이면 로딩 화면 표시
+  if (isLoading) {
+    return (
+      <div className="h-dvh flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="text-main text-2xl font-bold mb-2">Work Snap</div>
+          <div className="text-main2">로그인 상태 확인 중...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // 이미 로그인된 상태면 메인 페이지로 리디렉션 중
+  if (user) {
+    return (
+      <div className="h-dvh flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="text-main text-2xl font-bold mb-2">Work Snap</div>
+          <div className="text-main2">메인 페이지로 이동 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-dvh flex flex-col items-center justify-between bg-white max-w-[430px] w-full mx-auto ">
