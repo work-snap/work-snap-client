@@ -88,11 +88,21 @@ export const authApis = {
     console.log("🔍 사업자 등록 요청:", {
       url: `/api/business-owner/register`,
       request: request,
-      token: localStorage.getItem("accessToken") ? "존재함" : "없음"
+      token: localStorage.getItem("accessToken") ? "존재함" : "없음",
     });
     return api.post<ResisterBusinessResponse>(
       `/api/business-owner/register`,
       request
     );
+  },
+
+  // 사업자 검증 상태 확인
+  getVerificationStatus: (): Promise<AxiosResponse<any>> => {
+    return api.get(`/api/business-owner/verification-status`);
+  },
+
+  // 사업자 정보 조회
+  getBusinessOwner: (): Promise<AxiosResponse<any>> => {
+    return api.get(`/api/business-owner/info`);
   },
 };
