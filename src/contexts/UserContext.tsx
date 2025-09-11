@@ -63,7 +63,7 @@ export function UserProvider({ children }: UserProviderProps) {
           // 토큰으로 사용자 정보 API 호출
           try {
             console.log("[WORK-SNAP] 토큰 검증 API 호출 시도:", token?.substring(0, 20) + "...");
-            const userData = await api.get("/auth/me");
+            const userData = await api.get("/api/v1/users/profile");
             console.log("[WORK-SNAP] 토큰 검증 성공:", userData.data);
             setUser(userData.data);
             setIsLoading(false);
