@@ -60,23 +60,21 @@ export function UserProvider({ children }: UserProviderProps) {
           // 실제 토큰이 있으면 API 클라이언트에 설정
           api.setAuthToken(token);
           
-          // 실제로는 토큰으로 사용자 정보 API 호출해야 함
-          // try {
-          //   const userData = await api.get("/auth/me");
-          //   setUser(userData.data);
-          //   setIsLoading(false);
-          //   return;
-          // } catch (error) {
-          //   // 토큰이 유효하지 않으면 제거
-          //   localStorage.removeItem("accessToken");
-          //   api.removeAuthToken();
-          // }
-          
-          // 개발 환경에서는 토큰이 있으면 목 데이터 사용
-          setTimeout(() => {
-            setUser(MOCK_USER);
+          // 토큰으로 사용자 정보 API 호출
+          try {
+            console.log("[WORK-SNAP] 토큰 검증 API 호출 시도:", token?.substring(0, 20) + "...");
+            const userData = await api.get("/auth/me");
+            console.log("[WORK-SNAP] 토큰 검증 성공:", userData.data);
+            setUser(userData.data);
             setIsLoading(false);
-          }, 500);
+            return;
+          } catch (error) {
+            console.error("[WORK-SNAP] 토큰 검증 실패:", error);
+            // 토큰이 유효하지 않으면 제거
+            localStorage.removeItem("accessToken");
+            api.removeAuthToken();
+            setUser(null);
+          }
         } else {
           // 토큰이 없으면 로그인되지 않은 상태
           setUser(null);
