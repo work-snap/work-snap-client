@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { HeroUIProvider } from "@heroui/react";
 import { ThemeProvider } from "./ThemeProvider";
-import { UserProvider } from "@/contexts/UserContext";
+import { UserProvider } from "@/components/UserProvider";
 
 export default function CustomProvider({
   children,

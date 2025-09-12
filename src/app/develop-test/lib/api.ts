@@ -81,29 +81,29 @@ export const authTestApis = {
 
 // User API
 export const userTestApis = {
-  // 내 정보 조회
+  // 내 정보 조회 (새로운 UserProfileRes 구조)
   getMyInfo: () => {
-    return api.get("/api/users/me");
+    return api.get("/api/v1/users/profile");
   },
 
   // 내 정보 수정
   updateMyInfo: (data: UserUpdateForm) => {
-    return api.put("/api/users/me", data);
+    return api.put("/api/v1/users/profile", data);
   },
 
-  // 사용자 타입 선택
+  // 사용자 타입 선택 (새로운 UserProfileRes 구조 반환)
   selectUserType: (userType: string) => {
-    return api.post("/api/v1/users/type", { userType });
+    return api.post("/api/v1/users/select-type", { userType });
   },
 
-  // 사용자 정보 조회
+  // 사용자 정보 조회 (새로운 구조)
   getUserInfo: () => {
-    return api.get("/api/user/info");
+    return api.get("/api/v1/users/profile");
   },
 
-  // 사용자 정보 수정
+  // 사용자 정보 수정 (새로운 구조)
   updateUserInfo: (data: any) => {
-    return api.put("/api/user/info", data);
+    return api.put("/api/v1/users/profile", data);
   },
 };
 
@@ -369,6 +369,13 @@ export const testApis = {
       return response;
     },
   },
+  
+  user: userTestApis,
+  businessOwner: businessOwnerTestApis,
+  workplace: workplaceTestApis,
+  workSchedule: workScheduleTestApis,
+  partTime: partTimeTestApis,
+  attendance: attendanceTestApis,
 };
 
 // 기타 테스트 API들도 필요하면 추가

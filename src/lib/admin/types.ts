@@ -25,6 +25,7 @@ export interface PaginationResponse<T> {
 
 export interface VerificationStats {
   total: number;
+  notRequested: number;
   pending: number;
   reviewing: number;
   approved: number;

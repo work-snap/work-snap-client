@@ -7,14 +7,14 @@ import AttendanceCard from "./components/AttendanceCard";
 import { ScedulesProps } from "./components/types";
 import { format, addDays, subDays } from "date-fns";
 import { ko } from "date-fns/locale";
-import { useUser } from "@/contexts/UserContext";
+import { useUserStore } from "@/stores/userStore";
 import { useDailySchedules } from "@/hooks/useAttendanceQuery";
 import Image from "next/image";
 
 export default function AttendancePage() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const { user, isLoading: userLoading } = useUser();
+  const { user, isLoading: userLoading } = useUserStore();
 
   // 실제 API 연동 - 사용자의 모든 사업장 스케줄 조회
   const {

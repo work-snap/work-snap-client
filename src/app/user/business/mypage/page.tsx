@@ -9,8 +9,19 @@ import { useRouter } from "next/navigation";
 
 export default function MyPage() {
   const router = useRouter();
-  const { data: user } = useUser();
+  const { data: user, isLoading } = useUser();
   const { mutate: deleteUser } = useDeleteUser();
+
+  if (isLoading) {
+    return (
+      <div className="h-dvh mx-auto w-full bg-white max-w-[430px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-500">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleDelete = () => {
     const confirmDelete = window.confirm("정말 회원 탈퇴하시겠습니까?");
@@ -42,21 +53,21 @@ export default function MyPage() {
 
         <div className="flex items-center gap-4 p-4 rounded-xl border">
           <Image
-            src={user?.data.profileImageUrl || "/default-profile.jpg"}
+            src={user?.data?.profileImageUrl || "/default-profile.jpg"}
             alt="profile"
             width={48}
             height={48}
             className="rounded-full object-cover"
           />
           <div className="flex-1">
-            <p className="font-semibold">{user?.data.nickname || "사용자"}</p>
+            <p className="font-semibold">{user?.data?.nickname || "사용자"}</p>
             <p className="text-sm text-gray-400">
-              {user?.data.email || "이메일 없음"}
+              {user?.data?.email || "이메일 없음"}
             </p>
-            {user?.data.phoneNumber && (
+            {user?.data?.phoneNumber && (
               <div className="flex items-center gap-1 mt-1">
-                <p className="text-sm text-gray-400">{user.data.phoneNumber}</p>
-                {user.data.phoneNumber.startsWith("010-1234-") && (
+                <p className="text-sm text-gray-400">{user?.data?.phoneNumber}</p>
+                {user?.data?.phoneNumber.startsWith("010-1234-") && (
                   <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
                     임시번호
                   </span>
@@ -82,7 +93,7 @@ export default function MyPage() {
             className="w-full flex justify-between items-center p-3 border rounded-xl"
           >
             <span>
-              {user?.data.userType === "BUSINESS_OWNER"
+              {user?.data?.userType === "BUSINESS_OWNER"
                 ? "알바님으로 변경"
                 : "사업자로 변경"}
             </span>

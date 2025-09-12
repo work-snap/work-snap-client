@@ -1,20 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useUser } from "@/contexts/UserContext";
+import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoading } = useUser();
+  const { user, isLoading } = useUserStore();
 
-  // 자동 로그인 시 메인 페이지로 리디렉션
-  useEffect(() => {
-    if (!isLoading && user) {
-      console.log("[WORK-SNAP] 사용자 인증됨, 메인 페이지로 이동:", user);
-      router.replace("/user/business/mainpage");
-    }
-  }, [user, isLoading, router]);
+  // 메인 페이지는 비로그인 사용자만 보여줌 (로그인된 사용자는 자동 라우팅에 맡김)
+  // useAutoRouting이 알아서 올바른 페이지로 리다이렉트 처리
 
   const handleKakaoLogin = () => {
     // Next.js API 라우트로 리다이렉트
@@ -33,13 +28,13 @@ export default function Home() {
     );
   }
 
-  // 이미 로그인된 상태면 메인 페이지로 리디렉션 중
+  // 이미 로그인된 상태면 자동 라우팅 처리 중
   if (user) {
     return (
       <div className="h-dvh flex items-center justify-center bg-white">
         <div className="text-center">
           <div className="text-main text-2xl font-bold mb-2">Work Snap</div>
-          <div className="text-main2">메인 페이지로 이동 중...</div>
+          <div className="text-main2">적절한 페이지로 이동 중...</div>
         </div>
       </div>
     );

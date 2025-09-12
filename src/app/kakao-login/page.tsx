@@ -23,6 +23,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useKakaoLogin } from "@/src/lib/auth/auth.query";
 import { KakaoLoginRequest, LoginResponse } from "@/src/lib/auth/types";
 import { AxiosError } from "axios";
+import { useUserStore } from "@/stores/userStore";
 
 export default function KakaoLogin() {
   const router = useRouter();
@@ -31,6 +32,7 @@ export default function KakaoLogin() {
   const hasExecuted = useRef(false);
   // StrictMode로 인한 컴포넌트 재마운트 시에도 중복 호출을 막기 위한 전역 키
   const EXECUTION_FLAG_PREFIX = "kakao_login_";
+  const { setUser } = useUserStore();
 
   // 카카오 로그인 mutation 훅 사용
   const kakaoLoginMutation = useKakaoLogin({
@@ -42,18 +44,15 @@ export default function KakaoLogin() {
         nickname: data.user.nickname,
       });
       localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("user", JSON.stringify(data.user));
       // RefreshToken은 HTTP-only 쿠키로 자동 설정됨 (서버에서 처리)
       console.log("🍪 RefreshToken이 HTTP-only 쿠키로 자동 설정되었습니다.");
 
-      // 사용자 타입에 따른 리다이렉트 처리
-      if (data.isNewUser || data.user.userType === "PENDING") {
-        router.push("/signup");
-      } else if (data.user.userType === "BUSINESS_OWNER") {
-        router.push("/signup/business/signup-1");
-      } else if (data.user.userType === "PART_TIME_WORKER") {
-        router.push("/attendance");
-      }
+      // Zustand 스토어에 사용자 정보 설정 (즉시 반영, persist 미들웨어가 localStorage 관리)
+      setUser(data.user);
+      console.log("🔄 Zustand 스토어 업데이트 완료:", data.user);
+      
+      // 자동 라우팅은 useAutoRouting 훅에서 처리됨
+      console.log("⚡ 자동 라우팅이 처리할 예정");
     },
     onError: (error: AxiosError) => {
       console.error("❌ 카카오 로그인 실패:", error);

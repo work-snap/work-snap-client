@@ -4,7 +4,7 @@ import { useUser } from "@/lib/queries/useUser";
 
 export default function Header() {
   const { data: user } = useUser();
-  const userType = user?.data.userType ?? "PART_TIME_WORKER"; // 기본값 PARTIME_WORKER
+  const userType = user?.userType ?? "PART_TIME_WORKER"; // 기본값 PARTIME_WORKER
   const roleLabel = userType === "PART_TIME_WORKER" ? "알바님" : "사장님";
   const roleBgClass = userType === "PART_TIME_WORKER" ? "bg-main2" : "bg-main";
 
@@ -15,7 +15,7 @@ export default function Header() {
       </h1>
       <div className="flex items-center gap-2">
         <span className="text-[18px] font-bold text-gray5">
-          {user?.data.nickname}
+          {user?.nickname}
         </span>
         <span
           className={`${roleBgClass} text-gray1 text-xs font-semibold rounded-full px-2 py-1`}

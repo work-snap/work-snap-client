@@ -102,15 +102,19 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 디버깅을 위한 상세 로그
-    console.error("❌ API 응답 오류:", {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      url: error.config?.url,
-      method: error.config?.method,
-      data: error.response?.data,
-      headers: error.response?.headers,
-    });
+    // 디버깅을 위한 상세 로그 (개발 환경에서만)
+    if (process.env.NODE_ENV === "development") {
+      console.error("❌ API 응답 오류:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.response?.data,
+        message: error.message,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : undefined,
+      });
+    }
 
     // 토큰 갱신이 실패한 경우에도 새로운 토큰이 있는지 확인
     if (error.response) {

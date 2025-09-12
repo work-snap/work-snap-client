@@ -9,11 +9,11 @@ export default function Navigation() {
   const pathname = usePathname();
 
   // 로딩 중이거나 에러가 있거나 사용자 데이터가 없으면 네비게이션 숨김
-  if (isLoading || error || !user?.data) {
+  if (isLoading || error || !user) {
     return null;
   }
 
-  const userType = user.data.userType ?? "PART_TIME_WORKER";
+  const userType = user.userType ?? "PART_TIME_WORKER";
 
   // PENDING 상태인 경우 기본적으로 PART_TIME_WORKER로 처리
   const effectiveUserType =

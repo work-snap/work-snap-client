@@ -68,6 +68,8 @@ export default function VerificationItem({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "NOT_REQUESTED":
+        return "default";
       case "PENDING":
         return "warning";
       case "REVIEWING":

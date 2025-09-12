@@ -3,12 +3,20 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
+import { useUserStore } from "@/stores/userStore";
+import { useChangeUserType } from "@/lib/queries/changeUserType";
+import { useLogout } from "@/lib/auth/auth.query";
+import { getUser } from "@/lib/api/user";
 import { IoArrowBack } from "react-icons/io5";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { setUser, clearUser } = useUserStore();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // React Query hooks
+  const changeUserTypeMutation = useChangeUserType();
+  const logoutMutation = useLogout();
 
   const handleUserTypeSelect = async (
     userType: "BUSINESS_OWNER" | "PART_TIME_WORKER"
@@ -16,31 +24,38 @@ export default function SignupPage() {
     try {
       setIsLoading(true);
 
-      const response = await api.post("/api/v1/users/select-type", { userType });
+      console.log("✅ 사용자 타입 선택 시작:", userType);
       
-      // 서버에서 반환하는 실제 사용자 정보로 업데이트
-      if (response.data && response.data.data) {
-        const updatedUser = response.data.data;
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        console.log("✅ 서버에서 반환된 사용자 정보로 업데이트:", updatedUser);
-      } else {
-        // 서버 응답이 없는 경우 기존 방식으로 업데이트
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          user.userType = userType;
-          localStorage.setItem("user", JSON.stringify(user));
-        }
-      }
-
+      // React Query를 사용하여 사용자 타입 업데이트
+      await new Promise<void>((resolve, reject) => {
+        changeUserTypeMutation.mutate(
+          { userType },
+          {
+            onSuccess: async (data) => {
+              console.log("✅ 사용자 타입 변경 성공:", data);
+              
+              // 최신 사용자 정보를 다시 로드하여 Zustand 스토어 업데이트
+              try {
+                const userData = await getUser();
+                setUser(userData);
+                console.log("🔄 Zustand 스토어 업데이트 완료:", userData);
+                resolve();
+              } catch (error) {
+                console.error("사용자 정보 다시 로드 실패:", error);
+                reject(error);
+              }
+            },
+            onError: (error) => {
+              console.error("사용자 타입 변경 실패:", error);
+              reject(error);
+            }
+          }
+        );
+      });
+      
       console.log("✅ 사용자 타입 선택 완료:", userType);
-
-      // 타입에 따른 환영 페이지로 이동
-      if (userType === "BUSINESS_OWNER") {
-        router.push("/signup/business/signup-1");
-      } else {
-        router.push("/signup/ptjob");
-      }
+      
+      // 자동 라우팅은 useAutoRouting 훅에서 처리됨
     } catch (error) {
       console.error("❌ 사용자 타입 선택 실패:", error);
       alert("사용자 타입 선택에 실패했습니다. 다시 시도해주세요.");
@@ -50,11 +65,13 @@ export default function SignupPage() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    alert("로그아웃되었습니다.");
-    router.push("/");
+    logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        // API 호출 성공/실패와 관계없이 Zustand 스토어도 정리
+        clearUser();
+        alert("로그아웃되었습니다.");
+      }
+    });
   };
 
   return (
