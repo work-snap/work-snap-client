@@ -6,12 +6,12 @@ const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
-  
+
   // 개발 환경에서는 기본값 사용
   if (process.env.NODE_ENV === "development") {
-    return "http://localhost:8080";
+    return "https://89a8626716db.ngrok.app";
   }
-  
+
   // 프로덕션에서는 빈 문자열 (상대 경로 사용)
   return "";
 };

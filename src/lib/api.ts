@@ -6,12 +6,12 @@ const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
-  
+
   // 개발 환경에서는 기본값 사용
   if (process.env.NODE_ENV === "development") {
-    return "http://localhost:8080";
+    return "https://89a8626716db.ngrok.app";
   }
-  
+
   // 프로덕션에서는 빈 문자열 (상대 경로 사용)
   return "";
 };
@@ -128,13 +128,13 @@ api.interceptors.response.use(
       removeAuthToken();
       window.location.href = "/login";
     }
-    
+
     // 403 에러 시 권한 문제 로깅
     if (error.response?.status === 403) {
       console.error("🚫 403 Forbidden - 권한이 없습니다:", {
         url: error.config?.url,
         method: error.config?.method,
-        token: localStorage.getItem("accessToken") ? "존재함" : "없음"
+        token: localStorage.getItem("accessToken") ? "존재함" : "없음",
       });
     }
 
@@ -144,10 +144,10 @@ api.interceptors.response.use(
         url: error.config?.url,
         baseURL: error.config?.baseURL,
         fullURL: `${error.config?.baseURL}${error.config?.url}`,
-        message: "서버가 실행 중인지 확인하거나 API URL을 확인해주세요."
+        message: "서버가 실행 중인지 확인하거나 API URL을 확인해주세요.",
       });
     }
-    
+
     return Promise.reject(error);
   }
 );

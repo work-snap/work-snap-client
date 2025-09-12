@@ -9,6 +9,7 @@ import { format, addDays, subDays } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useUser } from "@/contexts/UserContext";
 import { useDailySchedules } from "@/hooks/useAttendanceQuery";
+import Image from "next/image";
 
 export default function AttendancePage() {
   const router = useRouter();
@@ -148,15 +149,19 @@ export default function AttendancePage() {
                 )}
               </div>
               <div className="text-xs text-gray-400 mt-2">
-                API:{" "}
-                {process.env.NEXT_PUBLIC_API_BASE_URL || "API URL 미설정"}
+                API: {process.env.NEXT_PUBLIC_API_BASE_URL || "API URL 미설정"}
               </div>
             </div>
           ) : workplaceGroups.length === 0 ? (
-            <div className="flex flex-1 justify-center items-center">
-              <div className="text-gray-500">
-                해당 날짜에 스케줄이 없습니다.
-              </div>
+            <div className="flex flex-col flex-1 justify-center items-center">
+              <Image
+                src="/holiday.png"
+                alt="휴일 일러스트"
+                width={240}
+                height={240}
+                priority
+              />
+              <span>오늘은 업무가 없는 날이에요!</span>
             </div>
           ) : (
             workplaceGroups.map((workplace) => (
