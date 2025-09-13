@@ -104,6 +104,18 @@ export const useUserStore = create<UserState>()(
               try {
                 const userData = await getUser();
                 console.log("[ZUSTAND] ✅ 최신 사용자 정보 동기화 완료:", userData);
+                
+                // 사업자 인증 상태가 변경된 경우 즉시 업데이트
+                const currentUser = get().user;
+                const businessStatusChanged = currentUser?.businessVerificationStatus !== userData.businessVerificationStatus;
+                
+                if (businessStatusChanged) {
+                  console.log("[ZUSTAND] 🔄 사업자 인증 상태 변경 감지:", {
+                    이전: currentUser?.businessVerificationStatus,
+                    현재: userData.businessVerificationStatus
+                  });
+                }
+                
                 set({ user: userData });
                 // 백그라운드 동기화 후 localStorage 캐시도 업데이트
                 localStorage.setItem("user", JSON.stringify(userData));
@@ -367,7 +379,7 @@ export const useUserStore = create<UserState>()(
             if (user.businessVerificationStatus === "APPROVED" || 
                 user.businessVerificationStatus === "VERIFIED") {
               console.log("[ZUSTAND] ✅ 사업자 인증 완료 → 사업자 대시보드");
-              return "/user/business";
+              return "/user/business/mainpage";
             }
 
             if (user.businessVerificationStatus === "REVIEWING") {

@@ -49,8 +49,8 @@ export default function BusinessSignupStep1() {
           verificationResponse?.data &&
           verificationResponse.data.verificationStatus === "APPROVED"
         ) {
-          console.log("✅ 사업자 검증 상태 승인됨 - 메인페이지로 리다이렉트");
-          router.replace("/user/business/add-business");
+          console.log("✅ 사업자 검증 상태 승인됨 - 사업자 대시보드로 리다이렉트");
+          router.replace("/user/business");
           return;
         } else if (verificationResponse?.data) {
           console.log(
