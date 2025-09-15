@@ -225,12 +225,31 @@ export const useUserStore = create<UserState>()(
       },
 
       handleRouting: (pathname: string, router: any) => {
+        console.log("[ZUSTAND] 🚦 handleRouting 시작!");
+
         const { user, isLoading, lastRedirectTime } = get();
-        
+
+        console.log("[ZUSTAND] 📊 현재 상태:", {
+          hasUser: !!user,
+          isLoading,
+          lastRedirectTime,
+          pathname,
+          userInfo: user ? {
+            id: user.id,
+            userType: user.userType,
+            businessStatus: user.businessVerificationStatus
+          } : null
+        });
+
         // 로딩 중이면 중단
         if (isLoading) {
           console.log("[ZUSTAND] 🔄 라우팅 대기: 로딩 중");
           return;
+        }
+
+        // 사용자 정보가 없는 경우에도 라우팅 체크 (비로그인 페이지로 리다이렉트)
+        if (!user) {
+          console.log("[ZUSTAND] 👤 사용자 정보 없음 - 비로그인 상태 라우팅 체크");
         }
 
         // 디바운싱: 300ms 내 중복 실행 방지
@@ -248,13 +267,15 @@ export const useUserStore = create<UserState>()(
           businessStatus: user?.businessVerificationStatus,
           isLoading
         });
-        
-        const requiredRoute = get().getRequiredRoute();
+
+        console.log("[ZUSTAND] 🔍 getRequiredRoute 호출 전");
+        const requiredRoute = get().getRequiredRoute(pathname);
+        console.log("[ZUSTAND] 🔍 getRequiredRoute 호출 후");
         console.log("[ZUSTAND] 🎯 필요한 경로:", requiredRoute);
-        console.log("[ZUSTAND] 🔍 경로 비교:", { 
-          current: pathname, 
-          required: requiredRoute, 
-          needsRedirect: pathname !== requiredRoute 
+        console.log("[ZUSTAND] 🔍 경로 비교:", {
+          current: pathname,
+          required: requiredRoute,
+          needsRedirect: pathname !== requiredRoute
         });
 
         // 경로가 같은 경우 리다이렉트하지 않음
@@ -268,7 +289,7 @@ export const useUserStore = create<UserState>()(
           console.log("[ZUSTAND] ✅ 현재 경로가 필요한 경로의 하위 경로:", { current: pathname, required: requiredRoute });
           return;
         }
-        
+
         // 필요한 경로가 현재 경로의 하위인 경우 리다이렉트 필요
         if (requiredRoute.startsWith(pathname + '/')) {
           console.log("[ZUSTAND] 🔄 필요한 경로가 현재 경로의 하위 경로 → 리다이렉트 필요:", { current: pathname, required: requiredRoute });
@@ -276,9 +297,11 @@ export const useUserStore = create<UserState>()(
 
         // 리다이렉트 실행
         console.log("[ZUSTAND] 🔀 리다이렉트 실행:", pathname, "→", requiredRoute);
+        console.log("[ZUSTAND] 🚀 router.push 호출 직전!");
         set({ lastRedirectTime: now });
-        
+
         router.push(requiredRoute);
+        console.log("[ZUSTAND] 🚀 router.push 호출 완료!");
       },
 
       // User type and logout - now with actual implementations
@@ -338,13 +361,14 @@ export const useUserStore = create<UserState>()(
       isBusinessReviewing: () => get().user?.businessVerificationStatus === "REVIEWING",
       isBusinessNotRequested: () => get().user?.businessVerificationStatus === "NOT_REQUESTED",
 
-      getRequiredRoute: (): string => {
+      getRequiredRoute: (currentPath?: string): string => {
         const user = get().user;
         console.log("[ZUSTAND] 🛣️ getRequiredRoute 호출됨");
         console.log("[ZUSTAND] 👤 현재 user 상태:", {
           hasUser: !!user,
           userType: user?.userType,
           businessVerificationStatus: user?.businessVerificationStatus,
+          currentPath,
           fullUser: user
         });
 
@@ -363,8 +387,8 @@ export const useUserStore = create<UserState>()(
           case "BUSINESS_OWNER":
             console.log("[ZUSTAND] 🏢 BUSINESS_OWNER 감지");
             console.log("[ZUSTAND] 📋 사업자 인증 상태:", user.businessVerificationStatus);
-            
-            if (user.businessVerificationStatus === null || 
+
+            if (user.businessVerificationStatus === null ||
                 user.businessVerificationStatus === "NOT_REQUESTED" ||
                 user.businessVerificationStatus === "PENDING") {
               console.log("[ZUSTAND] ⏳ 사업자 인증 신청 전/대기 → signup-1");
@@ -376,23 +400,44 @@ export const useUserStore = create<UserState>()(
               return "/signup/business/re-authentication";
             }
 
-            if (user.businessVerificationStatus === "APPROVED" || 
-                user.businessVerificationStatus === "VERIFIED") {
-              console.log("[ZUSTAND] ✅ 사업자 인증 완료 → 사업자 대시보드");
-              return "/user/business/mainpage";
-            }
-
             if (user.businessVerificationStatus === "REVIEWING") {
               console.log("[ZUSTAND] 🔄 사업자 인증 검토 중 → 성공 페이지");
               return "/signup/business/success-signup";
+            }
+
+            if (user.businessVerificationStatus === "APPROVED" ||
+                user.businessVerificationStatus === "VERIFIED") {
+              console.log("[ZUSTAND] ✅ 사업자 인증 완료");
+
+              // 현재 경로가 /user/business/** 인 경우 리다이렉트하지 않음
+              if (currentPath?.startsWith("/user/business/")) {
+                console.log("[ZUSTAND] ✅ 사업자 허용 경로에 있음 → 리다이렉트 안함");
+                return currentPath;
+              }
+
+              console.log("[ZUSTAND] 🔄 사업자 허용 경로 밖 → add-business로 리다이렉트");
+              return "/user/business/add-business";
             }
 
             console.log("[ZUSTAND] 🔄 사업자 기본값 → signup-1");
             return "/signup/business/signup-1";
 
           case "PART_TIME_WORKER":
-            console.log("[ZUSTAND] 👷 PART_TIME_WORKER → 알바생 대시보드");
-            return "/user/ptjob";
+            console.log("[ZUSTAND] 👷 PART_TIME_WORKER 감지");
+
+            // 허용된 경로: /user/ptjob/**, /signup/ptjob
+            const allowedPaths = ["/user/ptjob/", "/signup/ptjob"];
+            const isAllowedPath = allowedPaths.some(path =>
+              currentPath?.startsWith(path) || currentPath === path.slice(0, -1)
+            );
+
+            if (currentPath && isAllowedPath) {
+              console.log("[ZUSTAND] ✅ 알바생 허용 경로에 있음 → 리다이렉트 안함");
+              return currentPath;
+            }
+
+            console.log("[ZUSTAND] 🔄 알바생 허용 경로 밖 → job-list로 리다이렉트");
+            return "/user/ptjob/job-list";
 
           default:
             console.log("[ZUSTAND] ❓ 알 수 없는 userType → 홈으로");
