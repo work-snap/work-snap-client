@@ -23,7 +23,7 @@ export default function Navigation() {
 
   return (
     <nav className=" max-w-[430px] w-full bg-white border-t border-gray2 py-3">
-      <div className="flex justify-around items-center h-[64px]">
+      <div className="flex justify-around items-center h-[50px]">
         {/* 알바 */}
         <Link
           href={

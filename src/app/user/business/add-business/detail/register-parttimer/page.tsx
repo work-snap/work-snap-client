@@ -411,42 +411,42 @@ export default function RegisterParttimer() {
   };
 
   // ✨ 직접 신규 등록: 모든 플래그 무시하고 강제로 신규 등록
-  const handleDirectNewRegistration = async () => {
-    try {
-      console.log("🆕 직접 신규 등록 시작 (백엔드 이슈 우회)");
+  // const handleDirectNewRegistration = async () => {
+  //   try {
+  //     console.log("🆕 직접 신규 등록 시작 (백엔드 이슈 우회)");
 
-      // 완전히 새로운 등록으로 처리 (모든 백엔드 체크 우회)
-      const res = await joinUserMutation.mutateAsync({
-        workplaceId,
-        inviteCode: code,
-        schedules,
-        contractStartDate,
-        contractEndDate,
-        hourlyWage: Number(hourlyWage),
-        // 두 플래그 모두 false로 설정하여 신규 등록 강제
-        forceCreate: false,
-        restoreExisting: false,
-      });
+  //     // 완전히 새로운 등록으로 처리 (모든 백엔드 체크 우회)
+  //     const res = await joinUserMutation.mutateAsync({
+  //       workplaceId,
+  //       inviteCode: code,
+  //       schedules,
+  //       contractStartDate,
+  //       contractEndDate,
+  //       hourlyWage: Number(hourlyWage),
+  //       // 두 플래그 모두 false로 설정하여 신규 등록 강제
+  //       forceCreate: false,
+  //       restoreExisting: false,
+  //     });
 
-      console.log("✅ 직접 신규 등록 성공:", res);
-      setShowConfirmModal(false);
-      handleRegistrationSuccess(res.data);
+  //     console.log("✅ 직접 신규 등록 성공:", res);
+  //     setShowConfirmModal(false);
+  //     handleRegistrationSuccess(res.data);
 
-      toast({
-        title: "등록 완료",
-        description: "새로운 계약으로 등록되었습니다.",
-      });
-    } catch (error: any) {
-      console.error("❌ 직접 신규 등록도 실패:", error);
+  //     toast({
+  //       title: "등록 완료",
+  //       description: "새로운 계약으로 등록되었습니다.",
+  //     });
+  //   } catch (error: any) {
+  //     console.error("❌ 직접 신규 등록도 실패:", error);
 
-      toast({
-        title: "등록 실패",
-        description:
-          "시스템 오류로 등록에 실패했습니다. 관리자에게 문의해주세요.",
-        variant: "destructive",
-      });
-    }
-  };
+  //     toast({
+  //       title: "등록 실패",
+  //       description:
+  //         "시스템 오류로 등록에 실패했습니다. 관리자에게 문의해주세요.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   // 등록 성공 처리
   const handleRegistrationSuccess = (data: any) => {
@@ -675,7 +675,7 @@ export default function RegisterParttimer() {
             }}
             onRestore={handleRestoreExisting}
             onRegisterNew={handleForceRegistration}
-            onDirectNew={handleDirectNewRegistration}
+            // onDirectNew={handleDirectNewRegistration}
             onCancel={() => setShowConfirmModal(false)}
           />
         )}
@@ -699,7 +699,7 @@ interface ConfirmModalProps {
   newEmployeeInfo: NewEmployeeInfo;
   onRestore: () => void;
   onRegisterNew: () => void;
-  onDirectNew: () => void;
+  // onDirectNew: () => void;
   onCancel: () => void;
 }
 
@@ -708,7 +708,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   newEmployeeInfo,
   onRestore,
   onRegisterNew,
-  onDirectNew,
+  // onDirectNew,
   onCancel,
 }) => {
   // 스케줄을 읽기 쉬운 형태로 변환
@@ -779,7 +779,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
         <div className="p-4">
           {/* ✨ 정보 비교 테이블 */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="flex flex-col gap-4 mb-6">
             {/* 기존 정보 */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="font-bold text-blue-800 mb-3 flex items-center">
@@ -926,10 +926,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 • <strong>새로 입력한 정보로 등록:</strong> 방금 입력한 정보로
                 새 계약을 생성합니다
               </p>
-              <p>
-                • <strong>직접 신규 등록:</strong> 시스템 검증을 우회하여 강제로
-                신규 등록합니다
-              </p>
             </div>
           </div>
 
@@ -959,7 +955,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             </div>
 
             {/* 두 번째 줄: 고급 옵션 */}
-            <button
+            {/* <button
               onClick={onDirectNew}
               className="w-full bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm"
             >
@@ -967,7 +963,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
               <span className="ml-2 text-xs opacity-90">
                 (시스템 검증 우회)
               </span>
-            </button>
+            </button> */}
 
             {/* 세 번째 줄: 취소 */}
             <button

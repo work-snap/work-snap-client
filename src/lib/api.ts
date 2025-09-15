@@ -9,7 +9,7 @@ const getBaseUrl = () => {
 
   // 개발 환경에서는 기본값 사용
   if (process.env.NODE_ENV === "development") {
-    return "https://89a8626716db.ngrok.app";
+    return "http://localhost:8080";
   }
 
   // 프로덕션에서는 빈 문자열 (상대 경로 사용)
@@ -112,7 +112,9 @@ api.interceptors.response.use(
         data: error.response?.data,
         message: error.message,
         baseURL: error.config?.baseURL,
-        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : undefined,
+        fullURL: error.config
+          ? `${error.config.baseURL}${error.config.url}`
+          : undefined,
       });
     }
 
