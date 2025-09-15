@@ -62,7 +62,7 @@ export default function Navigation() {
                 : "text-gray3"
             }`}
           >
-            알바
+            {effectiveUserType === "BUSINESS_OWNER" ? "사업장" : "알바"}
           </span>
         </Link>
 
