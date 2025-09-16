@@ -7,18 +7,20 @@ import { useChangeToPartTimeWorker } from "@/src/lib/queries/changeUserType";
 import { useHasAnyWorkplace } from "@/src/lib/queries/getBusinessOwnerWorkplaces";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { useUserStore } from "@/src/stores/userStore";
 
 export default function UserTypePage() {
   const router = useRouter();
   const { data: user } = useUser();
   const changeToPartTimeWorker = useChangeToPartTimeWorker();
   const { toast } = useToast();
+  const { updateUserType } = useUserStore();
 
   // 확인 상태 관리
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   // 사업자인지 확인
-  const isBusinessOwner = user?.data.userType === "BUSINESS_OWNER";
+  const isBusinessOwner = user?.userType === "BUSINESS_OWNER";
 
   // 사업장 보유 여부 확인 (사업자인 경우에만)
   const { data: hasWorkplace, isLoading: isCheckingWorkplace } =
@@ -57,30 +59,33 @@ export default function UserTypePage() {
     });
   };
 
-  const executeUserTypeChange = () => {
-    // 사업자 → 알바님으로 변경
-    changeToPartTimeWorker.mutate(
-      "사용자 요청에 의한 파트타임 근무자 타입 변경",
-      {
-        onSuccess: (data) => {
-          toast({
-            title: "변경 완료",
-            description: data.message || "알바님 타입으로 변경되었습니다!",
-          });
-          setTimeout(() => {
-            router.push("/user/ptjob/mypage");
-          }, 2000); // 토스트가 보인 후 이동
-        },
-        onError: (error) => {
-          console.error("알바님 타입 변경 오류:", error);
-          toast({
-            title: "변경 실패",
-            description: error.message || "타입 변경 중 오류가 발생했습니다.",
-            variant: "destructive",
-          });
-        },
-      }
-    );
+  const executeUserTypeChange = async () => {
+    try {
+      // 사업자 → 알바님으로 변경
+      const data = await changeToPartTimeWorker.mutateAsync(
+        "사용자 요청에 의한 파트타임 근무자 타입 변경"
+      );
+
+      // Zustand store 업데이트
+      await updateUserType("PART_TIME_WORKER");
+
+      toast({
+        title: "변경 완료",
+        description: data.message || "알바님 타입으로 변경되었습니다!",
+      });
+
+      // 잠시 후 알바생 페이지로 이동
+      setTimeout(() => {
+        router.push("/user/ptjob/job-list");
+      }, 2000);
+    } catch (error: any) {
+      console.error("알바님 타입 변경 오류:", error);
+      toast({
+        title: "변경 실패",
+        description: error.message || "타입 변경 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGoBack = () => {

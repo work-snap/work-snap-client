@@ -7,15 +7,17 @@ import { useChangeToBusinessOwner } from "@/src/lib/queries/changeUserType";
 import { useHasAnyActiveWorkplace } from "@/src/lib/queries/getPartTimeWorkerWorkplaces";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { useUserStore } from "@/src/stores/userStore";
 
 export default function UserTypePage() {
   const router = useRouter();
   const { data: user } = useUser();
   const changeToBusinessOwner = useChangeToBusinessOwner();
   const { toast } = useToast();
+  const { updateUserType } = useUserStore();
 
   // 알바님인지 확인
-  const isPartTimeWorker = user?.data.userType === "PART_TIME_WORKER";
+  const isPartTimeWorker = user?.userType === "PART_TIME_WORKER";
 
   // 활성 사업장 보유 여부 확인 (알바님인 경우에만)
   const { data: hasActiveWorkplace, isLoading: isCheckingWorkplace } =
@@ -54,27 +56,33 @@ export default function UserTypePage() {
     });
   };
 
-  const executeUserTypeChange = () => {
-    // 알바님 → 사장님으로 변경
-    changeToBusinessOwner.mutate("사용자 요청에 의한 사업자 타입 변경", {
-      onSuccess: (data) => {
-        toast({
-          title: "변경 완료",
-          description: data.message || "사장님 타입으로 변경되었습니다!",
-        });
-        setTimeout(() => {
-          router.push("/user/business/mypage");
-        }, 2000); // 토스트가 보인 후 이동
-      },
-      onError: (error) => {
-        console.error("사장님 타입 변경 오류:", error);
-        toast({
-          title: "변경 실패",
-          description: error.message || "타입 변경 중 오류가 발생했습니다.",
-          variant: "destructive",
-        });
-      },
-    });
+  const executeUserTypeChange = async () => {
+    try {
+      // 알바님 → 사장님으로 변경
+      const data = await changeToBusinessOwner.mutateAsync(
+        "사용자 요청에 의한 사업자 타입 변경"
+      );
+
+      // Zustand store 업데이트
+      await updateUserType("BUSINESS_OWNER");
+
+      toast({
+        title: "변경 완료",
+        description: data.message || "사장님 타입으로 변경되었습니다!",
+      });
+
+      // 잠시 후 사업자 페이지로 이동
+      setTimeout(() => {
+        router.push("/user/business/add-business");
+      }, 2000);
+    } catch (error: any) {
+      console.error("사장님 타입 변경 오류:", error);
+      toast({
+        title: "변경 실패",
+        description: error.message || "타입 변경 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGoBack = () => {
