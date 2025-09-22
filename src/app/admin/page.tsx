@@ -29,11 +29,15 @@ import {
   Brain,
   FileText,
   TrendingUp,
+  Cog,
+  Globe,
 } from "lucide-react";
 import {
   useAdminDashboardData,
-  useProcessVerification,
-  useBulkProcessVerifications,
+  useBusinessVerifications,
+  useBusinessVerificationStats,
+  useProcessBusinessVerificationAction,
+  useBulkProcessBusinessVerifications,
   useRetrainModel,
   useIncrementalLearning,
   useDownloadDailyReport,
@@ -47,6 +51,8 @@ import type {
   FeedbackAnalytics,
   BusinessVerificationRequest,
   BulkVerificationRequest,
+  BusinessVerificationParams,
+  BusinessVerificationStatsResponse,
 } from "@/src/lib/admin/types";
 import {
   StatCard,
@@ -59,6 +65,9 @@ import {
   LearningEffectivenessCard,
   ModelManagementCard,
   BulkActionModal,
+  SchedulerManagementCard,
+  DataCleanupCard,
+  PageNavigationCard,
 } from "./components";
 
 // 모든 타입은 types.ts에서 import
@@ -74,19 +83,42 @@ export default function AdminDashboard() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // TanStack Query 훅들 사용
+  // 사이드바에서 탭 변경 이벤트 리스너
+  useEffect(() => {
+    const handleTabChange = (event: CustomEvent) => {
+      setActiveTab(event.detail);
+    };
+
+    window.addEventListener("adminTabChange", handleTabChange as EventListener);
+    return () => {
+      window.removeEventListener("adminTabChange", handleTabChange as EventListener);
+    };
+  }, []);
+
+  // TanStack Query 훅들 사용 - 새로운 API
+  const businessVerifications = useBusinessVerifications({
+    page: 0,
+    size: 10,
+    status: 'PENDING'
+  });
+
+  const verificationStats = useBusinessVerificationStats();
+
+  // 기존 대시보드 데이터도 유지 (고급 분석용) - 존재하지 않는 API 제거
   const {
-    dashboard,
+    // dashboard, // 서버에 엔드포인트 없음
     metrics,
-    feedback,
-    isLoading,
-    isError,
-    error,
+    // feedback, // 서버에 엔드포인트 없음
+    isLoading: dashboardLoading,
+    isError: dashboardError,
     refetchAll,
   } = useAdminDashboardData();
 
-  // Mutation 훅들
-  const processVerificationMutation = useProcessVerification({
+  const isLoading = businessVerifications.isLoading || verificationStats.isLoading || dashboardLoading;
+  const isError = businessVerifications.isError || verificationStats.isError || dashboardError;
+
+  // Mutation 훅들 - 새로운 API 사용
+  const processVerificationMutation = useProcessBusinessVerificationAction({
     onSuccess: () => {
       alert("검증이 처리되었습니다 ✅");
     },
@@ -96,7 +128,7 @@ export default function AdminDashboard() {
     },
   });
 
-  const bulkProcessMutation = useBulkProcessVerifications({
+  const bulkProcessMutation = useBulkProcessBusinessVerifications({
     onSuccess: () => {
       setSelectedItems([]);
       setBulkAction(null);
@@ -142,28 +174,33 @@ export default function AdminDashboard() {
   const downloadWeeklyReportMutation = useDownloadWeeklyReport();
   const downloadMonthlyReportMutation = useDownloadMonthlyReport();
 
-  // 데이터 추출
-  const stats = dashboard.data?.data?.statistics || {
-    total: 0,
-    pending: 0,
-    reviewing: 0,
+  // 데이터 추출 - 새로운 API 사용
+  const stats = verificationStats.data || {
+    totalApplications: 0,
+    pendingReview: 0,
     approved: 0,
     rejected: 0,
-    verified: 0,
+    approvalRate: 0,
+    averageProcessingTime: 0,
+    todaySubmissions: 0,
   };
 
-  const pendingVerifications =
-    dashboard.data?.data?.pendingVerifications?.items || [];
+  const pendingVerifications = businessVerifications.data?.data?.items || [];
 
   // 디버깅을 위한 로깅 추가
   console.log("pendingVerifications:", pendingVerifications);
   console.log("First verification item:", pendingVerifications[0]);
+  console.log("verificationStats:", stats);
+
   const advancedMetrics = metrics.data;
-  const feedbackAnalytics = feedback.data;
+  // const feedbackAnalytics = feedback.data; // 서버에 엔드포인트 없음
+  const feedbackAnalytics = null; // 임시로 null 설정
 
   // 액션 핸들러들
   const handleRefresh = () => {
     refetchAll();
+    businessVerifications.refetch();
+    verificationStats.refetch();
   };
 
   const handleBulkAction = () => {
@@ -175,15 +212,12 @@ export default function AdminDashboard() {
     }
 
     const requestData = {
-      businessOwnerIds: selectedItems,
-      decision: bulkAction === "approve" ? "APPROVE" : "REJECT",
+      ids: selectedItems,
+      action: bulkAction,
       reason: bulkAction === "approve" ? "관리자 일괄 승인" : bulkReason,
     };
 
-    bulkProcessMutation.mutate({
-      action: bulkAction,
-      request: requestData,
-    });
+    bulkProcessMutation.mutate(requestData);
   };
 
   const handleSingleAction = (
@@ -201,17 +235,11 @@ export default function AdminDashboard() {
       return;
     }
 
-    const requestData = {
-      businessOwnerId: id,
-      decision: action === "approve" ? "APPROVE" : "REJECT",
+    processVerificationMutation.mutate({
+      id,
+      action,
       reason: reason || "관리자 처리",
       adminNote: action === "approve" ? "관리자 승인" : undefined,
-    };
-
-    processVerificationMutation.mutate({
-      businessOwnerId: id,
-      action,
-      request: requestData,
     });
   };
 
@@ -264,12 +292,6 @@ export default function AdminDashboard() {
 
   // TanStack Query가 자동으로 데이터를 관리하므로 수동 useEffect는 불필요
 
-  // 승인률 계산
-  const getApprovalRate = (stats: VerificationStats) => {
-    if (!stats || stats.total === 0) return 0;
-    return ((stats.approved / stats.total) * 100).toFixed(1);
-  };
-
   if (isLoading && !stats) {
     return (
       <div className="h-full bg-gray-50 flex items-center justify-center">
@@ -282,10 +304,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="h-full bg-gray-50">
+    <>
       {/* 헤더 */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -307,7 +329,15 @@ export default function AdminDashboard() {
               >
                 새로고침
               </Button>
-              <Dropdown>
+              <Dropdown
+                // HeroUI 안정성 최적화 적용
+                placement="bottom-end"
+                disableAnimation={true}
+                classNames={{
+                  base: "before:bg-default-200",
+                  content: "py-1 px-1 border border-default-200 bg-gradient-to-br from-white to-default-200 dark:from-default-50 dark:to-black"
+                }}
+              >
                 <DropdownTrigger>
                   <Button
                     variant="bordered"
@@ -316,7 +346,10 @@ export default function AdminDashboard() {
                     리포트
                   </Button>
                 </DropdownTrigger>
-                <DropdownMenu>
+                <DropdownMenu
+                  aria-label="리포트 다운로드 메뉴"
+                  disableAnimation={true}
+                >
                   <DropdownItem
                     key="daily"
                     onClick={() => downloadReport("daily")}
@@ -349,7 +382,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      {/* 메인 콘텐츠 */}
+      <div className="flex-1 px-6 py-6 overflow-y-auto">
         {/* 에러 표시 */}
         {isError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -361,11 +395,11 @@ export default function AdminDashboard() {
         )}
 
         {/* 주요 지표 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
           <StatCard
             key="total-applications"
             title="총 신청"
-            value={stats?.total || 0}
+            value={stats?.totalApplications || 0}
             icon={Users}
             iconColor="text-blue-600"
             iconBgColor="bg-blue-50"
@@ -373,7 +407,7 @@ export default function AdminDashboard() {
           <StatCard
             key="pending-applications"
             title="대기 중"
-            value={(stats?.pending || 0) + (stats?.reviewing || 0)}
+            value={stats?.pendingReview || 0}
             icon={Clock}
             iconColor="text-orange-600"
             iconBgColor="bg-orange-50"
@@ -382,7 +416,7 @@ export default function AdminDashboard() {
           <StatCard
             key="approval-rate"
             title="승인률"
-            value={`${stats ? getApprovalRate(stats) : 0}%`}
+            value={`${stats?.approvalRate?.toFixed(1) || 0}%`}
             icon={CheckCircle}
             iconColor="text-green-600"
             iconBgColor="bg-green-50"
@@ -409,6 +443,15 @@ export default function AdminDashboard() {
             iconColor="text-red-600"
             iconBgColor="bg-red-50"
             valueColor="text-red-600"
+          />
+          <StatCard
+            key="today-submissions"
+            title="오늘 신청"
+            value={stats?.todaySubmissions || 0}
+            icon={TrendingUp}
+            iconColor="text-indigo-600"
+            iconBgColor="bg-indigo-50"
+            valueColor="text-indigo-600"
           />
         </div>
 
@@ -492,11 +535,12 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     {pendingVerifications
                       .filter((verification) => {
-                        // 유효하지 않은 데이터 필터링 - businessOwnerId 사용
+                        // 유효하지 않은 데이터 필터링 - id 또는 businessOwnerId 사용
+                        const validId = verification.id || verification.businessOwnerId;
                         if (
                           !verification ||
-                          !verification.businessOwnerId ||
-                          typeof verification.businessOwnerId !== "number"
+                          !validId ||
+                          typeof validId !== "number"
                         ) {
                           console.warn(
                             "Invalid verification item filtered out:",
@@ -506,51 +550,65 @@ export default function AdminDashboard() {
                         }
                         return true;
                       })
-                      .map((verification) => (
-                        <VerificationItem
-                          key={verification.businessOwnerId}
-                          verification={verification}
-                          isSelected={selectedItems.includes(
-                            verification.businessOwnerId
-                          )}
-                          onSelect={(id) => {
-                            if (typeof id !== "number") {
-                              console.error(
-                                "Invalid id passed to onSelect:",
-                                id
-                              );
-                              return;
-                            }
-                            if (selectedItems.includes(id)) {
-                              setSelectedItems(
-                                selectedItems.filter((item) => item !== id)
-                              );
-                            } else {
-                              setSelectedItems([...selectedItems, id]);
-                            }
-                          }}
-                          onApprove={(id) => {
-                            if (typeof id !== "number") {
-                              console.error(
-                                "Invalid id passed to onApprove:",
-                                id
-                              );
-                              return;
-                            }
-                            handleSingleAction(id, "approve");
-                          }}
-                          onReject={(id, reason) => {
-                            if (typeof id !== "number") {
-                              console.error(
-                                "Invalid id passed to onReject:",
-                                id
-                              );
-                              return;
-                            }
-                            handleSingleReject(id, reason);
-                          }}
-                        />
-                      ))}
+                      .map((verification) => {
+                        // BusinessVerification 타입에서는 id를 주키로 사용하고,
+                        // VerificationItem은 businessOwnerId를 기대하므로 매핑
+                        const mappedVerification = {
+                          ...verification,
+                          businessOwnerId: verification.businessOwnerId || verification.id,
+                          verificationStatus: verification.status || verification.verificationStatus || 'PENDING',
+                          businessRegistrationNumber: verification.businessNumber || verification.businessRegistrationNumber,
+                          submittedAt: verification.submittedAt || verification.createdAt,
+                          priority: verification.priority || 'MEDIUM',
+                          riskScore: verification.riskScore || 0,
+                        };
+
+                        const itemId = mappedVerification.businessOwnerId;
+
+                        return (
+                          <VerificationItem
+                            key={itemId}
+                            verification={mappedVerification}
+                            isSelected={selectedItems.includes(itemId)}
+                            onSelect={(id) => {
+                              if (typeof id !== "number") {
+                                console.error(
+                                  "Invalid id passed to onSelect:",
+                                  id
+                                );
+                                return;
+                              }
+                              if (selectedItems.includes(id)) {
+                                setSelectedItems(
+                                  selectedItems.filter((item) => item !== id)
+                                );
+                              } else {
+                                setSelectedItems([...selectedItems, id]);
+                              }
+                            }}
+                            onApprove={(id) => {
+                              if (typeof id !== "number") {
+                                console.error(
+                                  "Invalid id passed to onApprove:",
+                                  id
+                                );
+                                return;
+                              }
+                              handleSingleAction(id, "approve");
+                            }}
+                            onReject={(id, reason) => {
+                              if (typeof id !== "number") {
+                                console.error(
+                                  "Invalid id passed to onReject:",
+                                  id
+                                );
+                                return;
+                              }
+                              handleSingleReject(id, reason);
+                            }}
+                          />
+                        );
+                      })}
                   </div>
                 )}
               </CardBody>
@@ -592,6 +650,35 @@ export default function AdminDashboard() {
               />
             </div>
           </Tab>
+
+          <Tab
+            key="system"
+            title={
+              <span className="flex items-center gap-2">
+                <Cog className="w-4 h-4" />
+                시스템 관리
+              </span>
+            }
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <SchedulerManagementCard />
+              <DataCleanupCard />
+            </div>
+          </Tab>
+
+          <Tab
+            key="navigation"
+            title={
+              <span className="flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                페이지 이동
+              </span>
+            }
+          >
+            <div className="mt-6">
+              <PageNavigationCard />
+            </div>
+          </Tab>
         </Tabs>
       </div>
 
@@ -605,6 +692,6 @@ export default function AdminDashboard() {
         setBulkReason={setBulkReason}
         onConfirm={handleBulkAction}
       />
-    </div>
+    </>
   );
 }

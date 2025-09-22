@@ -25,26 +25,7 @@
   --z-maximum: 9999;
 }
 
-/* HeroUI 컴포넌트 z-index 오버라이드 */
-.heroui-dropdown-content {
-  z-index: var(--z-dropdown) !important;
-}
-
-.heroui-modal-backdrop {
-  z-index: var(--z-modal-backdrop) !important;
-}
-
-.heroui-modal-wrapper {
-  z-index: var(--z-modal) !important;
-}
-
-.heroui-popover-content {
-  z-index: var(--z-popover) !important;
-}
-
-.heroui-tooltip {
-  z-index: var(--z-tooltip) !important;
-}
+/* HeroUI 컴포넌트 z-index 오버라이드 제거됨 - 라이브러리 기본값 사용 */
 
 /* Utility classes */
 .z-dropdown {

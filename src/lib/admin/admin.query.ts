@@ -23,20 +23,24 @@ import {
   ABTestResponse,
   ReportRequest,
   BusinessOwnerProfile,
+  BusinessVerificationParams,
+  BusinessVerificationResponse,
+  BusinessVerificationStatsResponse,
 } from "./types";
 
 // ==================== 대시보드 관련 훅 ====================
 
-export function useAdminDashboard(params?: PaginationRequest, options = {}) {
-  return useQuery({
-    queryKey: ["adminDashboard", params],
-    queryFn: () =>
-      adminApis.dashboard.getDashboard(params).then((res) => res.data),
-    staleTime: 5 * 60 * 1000, // 5분
-    refetchInterval: 60 * 1000, // 1분마다 자동 갱신
-    ...options,
-  });
-}
+// 서버에 해당 엔드포인트가 없어 주석 처리
+// export function useAdminDashboard(params?: PaginationRequest, options = {}) {
+//   return useQuery({
+//     queryKey: ["adminDashboard", params],
+//     queryFn: () =>
+//       adminApis.dashboard.getDashboard(params).then((res) => res.data),
+//     staleTime: 5 * 60 * 1000, // 5분
+//     refetchInterval: 60 * 1000, // 1분마다 자동 갱신
+//     ...options,
+//   });
+// }
 
 export function useAdvancedMetrics(options = {}) {
   return useQuery({
@@ -49,21 +53,22 @@ export function useAdvancedMetrics(options = {}) {
   });
 }
 
-export function useFeedbackAnalytics(
-  includeTrends: boolean = false,
-  options = {}
-) {
-  return useQuery({
-    queryKey: ["feedbackAnalytics", includeTrends],
-    queryFn: () =>
-      adminApis.dashboard
-        .getFeedbackAnalytics(includeTrends)
-        .then((res) => res.data),
-    staleTime: 5 * 60 * 1000, // 5분
-    refetchInterval: 5 * 60 * 1000, // 5분마다 자동 갱신
-    ...options,
-  });
-}
+// 서버에 해당 엔드포인트가 없어 주석 처리
+// export function useFeedbackAnalytics(
+//   includeTrends: boolean = false,
+//   options = {}
+// ) {
+//   return useQuery({
+//     queryKey: ["feedbackAnalytics", includeTrends],
+//     queryFn: () =>
+//       adminApis.dashboard
+//         .getFeedbackAnalytics(includeTrends)
+//         .then((res) => res.data),
+//     staleTime: 5 * 60 * 1000, // 5분
+//     refetchInterval: 5 * 60 * 1000, // 5분마다 자동 갱신
+//     ...options,
+//   });
+// }
 
 export function useRiskMonitoring(options = {}) {
   return useQuery({
@@ -109,7 +114,113 @@ export function usePredictiveAnalysis(options = {}) {
   });
 }
 
+// 개별 사업자 위험 평가 (계획서 API)
+export function useRiskAssessment(businessOwnerId: number, options = {}) {
+  return useMutation({
+    mutationFn: () =>
+      adminApis.dashboard.getRiskAssessment(businessOwnerId).then((res) => res.data),
+    ...options,
+  });
+}
+
 // ==================== 사업자 검증 관련 훅 ====================
+
+// 사업자 검증 목록 조회 (계획서 API)
+export function useBusinessVerifications(
+  params?: BusinessVerificationParams,
+  options = {}
+) {
+  return useQuery({
+    queryKey: ["businessVerifications", params],
+    queryFn: () =>
+      adminApis.verification
+        .getBusinessVerifications(params)
+        .then((res) => res.data),
+    staleTime: 2 * 60 * 1000, // 2분
+    refetchInterval: 30 * 1000, // 30초마다 자동 갱신
+    ...options,
+  });
+}
+
+// 사업자 검증 통계 조회 (계획서 API)
+export function useBusinessVerificationStats(options = {}) {
+  return useQuery({
+    queryKey: ["businessVerificationStats"],
+    queryFn: () =>
+      adminApis.verification
+        .getBusinessVerificationStats()
+        .then((res) => res.data),
+    staleTime: 1 * 60 * 1000, // 1분
+    refetchInterval: 30 * 1000, // 30초마다 자동 갱신
+    ...options,
+  });
+}
+
+// 개별 사업자 검증 정보 조회 (계획서 API)
+export function useBusinessVerificationById(id: number, options = {}) {
+  return useQuery({
+    queryKey: ["businessVerification", id],
+    queryFn: () =>
+      adminApis.verification
+        .getBusinessVerificationById(id)
+        .then((res) => res.data),
+    enabled: !!id,
+    staleTime: 2 * 60 * 1000, // 2분
+    ...options,
+  });
+}
+
+// 사업자 검증 승인/거부 처리 (계획서 API)
+export function useProcessBusinessVerificationAction(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+      reason,
+      adminNote,
+    }: {
+      id: number;
+      action: "approve" | "reject";
+      reason?: string;
+      adminNote?: string;
+    }) =>
+      adminApis.verification
+        .processBusinessVerificationAction(id, action, { reason, adminNote })
+        .then((res) => res.data),
+    onSuccess: () => {
+      // 검증 목록 갱신
+      queryClient.invalidateQueries({ queryKey: ["businessVerifications"] });
+      // 검증 통계 갱신
+      queryClient.invalidateQueries({ queryKey: ["businessVerificationStats"] });
+      // 대시보드 데이터 갱신
+      queryClient.invalidateQueries({ queryKey: ["adminDashboard"] });
+    },
+    ...options,
+  });
+}
+
+// 일괄 사업자 검증 처리 (계획서 API)
+export function useBulkProcessBusinessVerifications(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: { ids: number[]; action: "approve" | "reject"; reason: string }) =>
+      adminApis.verification
+        .bulkProcessBusinessVerifications(request)
+        .then((res) => res.data),
+    onSuccess: () => {
+      // 검증 목록 갱신
+      queryClient.invalidateQueries({ queryKey: ["businessVerifications"] });
+      // 검증 통계 갱신
+      queryClient.invalidateQueries({ queryKey: ["businessVerificationStats"] });
+      // 대시보드 데이터 갱신
+      queryClient.invalidateQueries({ queryKey: ["adminDashboard"] });
+    },
+    ...options,
+  });
+}
 
 export function useBusinessNumberTest(options = {}) {
   return useMutation({
@@ -429,6 +540,53 @@ export function useRunABTest(options = {}) {
   });
 }
 
+// ML 증분 학습 (계획서 API)
+export function useTrainIncrementalModel(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      adminApis.model.trainIncrementalModel().then((res) => res.data),
+    onSuccess: () => {
+      // 모델 성능 정보 갱신
+      queryClient.invalidateQueries({ queryKey: ["modelPerformance"] });
+      // 피드백 분석 갱신
+      queryClient.invalidateQueries({ queryKey: ["feedbackAnalytics"] });
+    },
+    ...options,
+  });
+}
+
+// ML 모델 상태 조회 (계획서 API)
+export function useMLStatus(options = {}) {
+  return useQuery({
+    queryKey: ["mlStatus"],
+    queryFn: () => adminApis.model.getMLStatus().then((res) => res.data),
+    staleTime: 1 * 60 * 1000, // 1분
+    refetchInterval: 30 * 1000, // 30초마다 자동 갱신
+    ...options,
+  });
+}
+
+// 모델 초기화 (계획서 API)
+export function useInitializeModel(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      adminApis.model.initializeModel().then((res) => res.data),
+    onSuccess: () => {
+      // 모델 성능 정보 갱신
+      queryClient.invalidateQueries({ queryKey: ["modelPerformance"] });
+      // 피드백 분석 갱신
+      queryClient.invalidateQueries({ queryKey: ["feedbackAnalytics"] });
+      // ML 상태 갱신
+      queryClient.invalidateQueries({ queryKey: ["mlStatus"] });
+    },
+    ...options,
+  });
+}
+
 // ==================== 리포트 관련 훅 ====================
 
 export function useDownloadDailyReport(options = {}) {
@@ -455,41 +613,90 @@ export function useDownloadMonthlyReport(options = {}) {
   });
 }
 
+// ==================== 사용자 관리 관련 훅 ====================
+
+// 사용자 목록 조회
+export function useUsers(params?: {
+  page?: number;
+  size?: number;
+  role?: string;
+  search?: string;
+}, options = {}) {
+  return useQuery({
+    queryKey: ["users", params],
+    queryFn: () =>
+      adminApis.users.getUsers(params).then((res) => res.data),
+    staleTime: 5 * 60 * 1000, // 5분
+    ...options,
+  });
+}
+
+// 사용자 상세 정보 조회
+export function useUserDetail(userId: number, options = {}) {
+  return useQuery({
+    queryKey: ["userDetail", userId],
+    queryFn: () =>
+      adminApis.users.getUserDetail(userId).then((res) => res.data),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5분
+    ...options,
+  });
+}
+
+// 사용자 역할 변경
+export function useUpdateUserRole(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: {
+      userId: number;
+      role: 'ADMIN' | 'BUSINESS_OWNER' | 'PART_TIME_WORKER';
+      reason?: string;
+    }) =>
+      adminApis.users.updateUserRole(request).then((res) => res.data),
+    onSuccess: () => {
+      // 사용자 목록 갱신
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    ...options,
+  });
+}
+
 // ==================== 통합 대시보드 훅 ====================
 
-// 대시보드에 필요한 모든 데이터를 한번에 가져오는 커스텀 훅
+// 대시보드에 필요한 모든 데이터를 한번에 가져오는 커스텀 훅 - 존재하지 않는 API 제거
 export function useAdminDashboardData(params?: PaginationRequest) {
-  const dashboard = useAdminDashboard(params);
+  // const dashboard = useAdminDashboard(params); // 서버에 엔드포인트 없음
   const metrics = useAdvancedMetrics();
-  const feedback = useFeedbackAnalytics();
+  // const feedback = useFeedbackAnalytics(); // 서버에 엔드포인트 없음
 
   return {
-    dashboard,
+    // dashboard,
     metrics,
-    feedback,
-    isLoading: dashboard.isLoading || metrics.isLoading || feedback.isLoading,
-    isError: dashboard.isError || metrics.isError || feedback.isError,
-    error: dashboard.error || metrics.error || feedback.error,
+    // feedback,
+    isLoading: metrics.isLoading,
+    isError: metrics.isError,
+    error: metrics.error,
     refetchAll: () => {
-      dashboard.refetch();
+      // dashboard.refetch();
       metrics.refetch();
-      feedback.refetch();
+      // feedback.refetch();
     },
   };
 }
 
-// 실시간 모니터링을 위한 커스텀 훅
+// 실시간 모니터링을 위한 커스텀 훅 - 존재하지 않는 API 제거
 export function useRealTimeMonitoring() {
   const riskMonitoring = useRiskMonitoring();
-  const dashboard = useAdminDashboard(undefined, {
-    refetchInterval: 30 * 1000,
-  });
+  // const dashboard = useAdminDashboard(undefined, {
+  //   refetchInterval: 30 * 1000,
+  // }); // 서버에 엔드포인트 없음
 
   return {
     riskMonitoring,
-    dashboard,
-    isLoading: riskMonitoring.isLoading || dashboard.isLoading,
-    isError: riskMonitoring.isError || dashboard.isError,
+    // dashboard,
+    isLoading: riskMonitoring.isLoading,
+    isError: riskMonitoring.isError,
     alertLevel: riskMonitoring.data?.alertLevel || "NORMAL",
   };
 }

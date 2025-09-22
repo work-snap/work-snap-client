@@ -29,7 +29,27 @@ export default function BulkActionModal({
   onConfirm,
 }: BulkActionModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      // HeroUI 안정성 최적화 적용
+      disableAnimation={true}
+      hideCloseButton={false}
+      isDismissable={true}
+      isKeyboardDismissDisabled={false}
+      motionProps={{
+        variants: {
+          enter: { opacity: 1, scale: 1, transition: { duration: 0 } },
+          exit: { opacity: 1, scale: 1, transition: { duration: 0 } }
+        }
+      }}
+      classNames={{
+        wrapper: "z-[9999]",
+        backdrop: "z-[9998] bg-black/50",
+        base: "z-[9999] bg-white"
+      }}
+    >
       <ModalContent>
         <ModalHeader>
           {bulkAction === "approve" ? "일괄 승인" : "일괄 거부"}

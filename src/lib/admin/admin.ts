@@ -24,6 +24,9 @@ import {
   ABTestResponse,
   ReportRequest,
   BusinessOwnerProfile,
+  BusinessVerificationResponse,
+  BusinessVerificationParams,
+  BusinessVerificationStatsResponse,
 } from "./types";
 
 const BASE_URL = "/api/admin";
@@ -31,28 +34,38 @@ const BASE_URL = "/api/admin";
 // ==================== 대시보드 API ====================
 
 export const adminDashboardApi = {
-  // 대시보드 데이터 조회
-  getDashboard: (
-    params?: PaginationRequest
-  ): Promise<AxiosResponse<ApiResponse<DashboardData>>> => {
-    return api.get<ApiResponse<DashboardData>>(
-      `${BASE_URL}/business-verification/dashboard`,
-      { params }
-    );
-  },
+  // 대시보드 데이터 조회 - 서버에 해당 엔드포인트가 없어 주석 처리
+  // getDashboard: (
+  //   params?: PaginationRequest
+  // ): Promise<AxiosResponse<ApiResponse<DashboardData>>> => {
+  //   return api.get<ApiResponse<DashboardData>>(
+  //     `${BASE_URL}/business-verification/dashboard`,
+  //     { params }
+  //   );
+  // },
 
   // 고급 메트릭 조회
   getAdvancedMetrics: (): Promise<AxiosResponse<AdvancedMetrics>> => {
     return api.get<AdvancedMetrics>(`${BASE_URL}/analytics/advanced-metrics`);
   },
 
-  // 피드백 분석 조회
-  getFeedbackAnalytics: (
-    includeTrends: boolean = false
-  ): Promise<AxiosResponse<FeedbackAnalytics>> => {
-    return api.get<FeedbackAnalytics>(`${BASE_URL}/feedback/analytics`, {
-      params: { includeTrends },
-    });
+  // 피드백 분석 조회 - 서버에 해당 엔드포인트가 없어 주석 처리
+  // getFeedbackAnalytics: (
+  //   includeTrends: boolean = false
+  // ): Promise<AxiosResponse<FeedbackAnalytics>> => {
+  //   return api.get<FeedbackAnalytics>(`${BASE_URL}/feedback/analytics`, {
+  //     params: { includeTrends },
+  //   });
+  // },
+
+  // 피드백 통계 조회 (계획서 API)
+  getFeedbackStats: (): Promise<AxiosResponse<any>> => {
+    return api.get<any>(`/api/v1/feedback/stats`);
+  },
+
+  // 피드백 트렌드 조회 (계획서 API)
+  getFeedbackTrends: (): Promise<AxiosResponse<any>> => {
+    return api.get<any>(`/api/v1/feedback/trends`);
   },
 
   // 실시간 위험도 모니터링
@@ -80,11 +93,66 @@ export const adminDashboardApi = {
       `${BASE_URL}/analytics/predictive-analysis`
     );
   },
+
+  // 개별 사업자 위험 평가 - 계획서 API
+  getRiskAssessment: (businessOwnerId: number): Promise<AxiosResponse<any>> => {
+    return api.post<any>(
+      `${BASE_URL}/analytics/risk-assessment/${businessOwnerId}`
+    );
+  },
 };
 
 // ==================== 사업자 검증 관리 API ====================
 
 export const businessVerificationApi = {
+  // 검증 요청 목록 (페이지네이션, 필터링) - 계획서 API
+  getBusinessVerifications: (
+    params?: BusinessVerificationParams
+  ): Promise<AxiosResponse<BusinessVerificationResponse>> => {
+    return api.get<BusinessVerificationResponse>(
+      `${BASE_URL}/business-verification`,
+      { params }
+    );
+  },
+
+  // 검증 통계 - 계획서 API
+  getBusinessVerificationStats: (): Promise<AxiosResponse<BusinessVerificationStatsResponse>> => {
+    return api.get<BusinessVerificationStatsResponse>(
+      `${BASE_URL}/business-verification/stats`
+    );
+  },
+
+  // 개별 검증 정보 상세 조회 - 계획서 API
+  getBusinessVerificationById: (
+    id: number
+  ): Promise<AxiosResponse<ApiResponse<any>>> => {
+    return api.get<ApiResponse<any>>(
+      `${BASE_URL}/business-verification/${id}`
+    );
+  },
+
+  // 승인/거부 처리 - 계획서 API
+  processBusinessVerificationAction: (
+    id: number,
+    action: "approve" | "reject",
+    request: { reason?: string; adminNote?: string }
+  ): Promise<AxiosResponse<ApiResponse<any>>> => {
+    return api.post<ApiResponse<any>>(
+      `${BASE_URL}/business-verification/${id}/action`,
+      { action, ...request }
+    );
+  },
+
+  // 일괄 승인/거부 처리 - 계획서 API
+  bulkProcessBusinessVerifications: (
+    request: { ids: number[]; action: "approve" | "reject"; reason: string }
+  ): Promise<AxiosResponse<ApiResponse<any>>> => {
+    return api.post<ApiResponse<any>>(
+      `${BASE_URL}/business-verification/bulk-action`,
+      request
+    );
+  },
+
   // 사업자등록번호 검증 테스트
   testBusinessNumber: (
     request: BusinessNumberTestRequest
@@ -274,6 +342,21 @@ export const modelLearningApi = {
       { params: { testDuration: request.testDuration || 7 } }
     );
   },
+
+  // ML 증분 학습 실행 (계획서 API)
+  trainIncrementalModel: (): Promise<AxiosResponse<ModelTrainingResponse>> => {
+    return api.post<ModelTrainingResponse>(`/api/v1/feedback/ml/train`);
+  },
+
+  // ML 모델 상태 확인 (계획서 API)
+  getMLStatus: (): Promise<AxiosResponse<any>> => {
+    return api.get<any>(`/api/v1/feedback/ml/status`);
+  },
+
+  // 모델 초기화 (계획서 API)
+  initializeModel: (): Promise<AxiosResponse<ModelTrainingResponse>> => {
+    return api.post<ModelTrainingResponse>(`/api/v1/feedback/ml/initialize`);
+  },
 };
 
 // ==================== 리포트 다운로드 API ====================
@@ -310,6 +393,42 @@ export const reportApi = {
   },
 };
 
+// ==================== 사용자 관리 API ====================
+
+export const userManagementApi = {
+  // 사용자 역할 변경 (계획서 API)
+  updateUserRole: (request: {
+    userId: number;
+    role: 'ADMIN' | 'BUSINESS_OWNER' | 'PART_TIME_WORKER';
+    reason?: string;
+  }): Promise<AxiosResponse<ApiResponse<any>>> => {
+    return api.post<ApiResponse<any>>(
+      `/api/v1/users/admin/update-role`,
+      request
+    );
+  },
+
+  // 사용자 목록 조회
+  getUsers: (params?: {
+    page?: number;
+    size?: number;
+    role?: string;
+    search?: string;
+  }): Promise<AxiosResponse<ApiResponse<any>>> => {
+    return api.get<ApiResponse<any>>(
+      `/api/v1/users/admin/list`,
+      { params }
+    );
+  },
+
+  // 사용자 상세 정보 조회
+  getUserDetail: (userId: number): Promise<AxiosResponse<ApiResponse<any>>> => {
+    return api.get<ApiResponse<any>>(
+      `/api/v1/users/admin/${userId}`
+    );
+  },
+};
+
 // ==================== 전체 관리자 API 통합 ====================
 
 export const adminApis = {
@@ -318,4 +437,5 @@ export const adminApis = {
   feedback: feedbackManagementApi,
   model: modelLearningApi,
   reports: reportApi,
+  users: userManagementApi,
 };

@@ -33,6 +33,51 @@ export interface VerificationStats {
   verified: number;
 }
 
+// 사업자 검증 목록 응답 (계획서 API 기반)
+export interface BusinessVerificationResponse {
+  data: {
+    items: BusinessVerification[];
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+  };
+}
+
+// 사업자 검증 정보 (실제 서버 구조)
+export interface BusinessVerification {
+  id: number;
+  businessOwnerId: number;
+  businessNumber: string;
+  businessName: string;
+  ownerName: string;
+  status: 'PENDING' | 'REVIEWING' | 'APPROVED' | 'REJECTED';
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  riskScore: number;
+  submittedAt: string;
+  reviewedAt?: string;
+  adminNote?: string;
+  reason?: string;
+}
+
+// 사업자 검증 필터 파라미터
+export interface BusinessVerificationParams extends PaginationRequest {
+  status?: 'PENDING' | 'REVIEWING' | 'APPROVED' | 'REJECTED';
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+  sortBy?: 'submittedAt' | 'riskScore' | 'priority';
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+// 사업자 검증 통계 (계획서 API 기반)
+export interface BusinessVerificationStatsResponse {
+  totalApplications: number;
+  pendingReview: number;
+  approved: number;
+  rejected: number;
+  approvalRate: number;
+  averageProcessingTime: number;
+  todaySubmissions: number;
+}
+
 export interface PendingVerification {
   id?: number; // 선택적 필드로 변경
   businessOwnerId: number; // 실제 서버에서 전송되는 필드
