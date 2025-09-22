@@ -51,7 +51,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     // 환경 변수 기반 API URL 설정 (기본값 제공)
     const apiUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+      process.env.NEXT_PUBLIC_API_BASE_URL || "https://89a8626716db.ngrok.app";
 
     console.log("🔧 Next.js Rewrites 설정:");
     console.log(
@@ -114,7 +114,7 @@ const nextConfig: NextConfig = {
                     "font-src 'self' https://cdn.jsdelivr.net",
                     `connect-src 'self' ${
                       process.env.NEXT_PUBLIC_API_BASE_URL ||
-                      "http://localhost:8080"
+                      "https://89a8626716db.ngrok.app"
                     } https://*.ngrok-free.app https://*.ngrok.io`,
                     "object-src 'none'",
                     "base-uri 'self'",

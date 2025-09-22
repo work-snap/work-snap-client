@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { workplaceTestApis } from "@/app/develop-test/lib/api";
 import { useGetDailyTimeLine } from "@/lib/queries/getDailyTimeLine";
 import { useUserStore } from "@/stores/userStore";
+import Loading from "@/app/components/loading";
 
 interface WorkplaceSummary {
   id: number;
@@ -30,7 +31,7 @@ interface AddWorkForm {
 
 export default function MainPage() {
   const { user, isLoading, isBusinessVerified } = useUserStore();
-  
+
   const [form, setForm] = useState<AddWorkForm>({
     date: getTodayDate(),
     workplaceId: null,
@@ -39,23 +40,6 @@ export default function MainPage() {
     notes: "",
   });
   const [currentDay, setCurrentDay] = useState(new Date());
-
-  // 로딩 중이거나 인증되지 않은 사업자일 경우 접근 제한
-  if (isLoading) {
-    return (
-      <div className="h-dvh flex items-center justify-center">
-        <p>로딩 중...</p>
-      </div>
-    );
-  }
-
-  if (!user || user.userType !== "BUSINESS_OWNER" || !isBusinessVerified()) {
-    return (
-      <div className="h-dvh flex items-center justify-center">
-        <p>접근 권한이 없습니다. 사업자 인증을 완료해주세요.</p>
-      </div>
-    );
-  }
 
   // 하루 단위 이전/다음
   const prevDay = () => {
@@ -94,17 +78,34 @@ export default function MainPage() {
       })) as WorkplaceSummary[];
     },
   });
-  const { data: timelineData } = useGetDailyTimeLine(
-    form.workplaceId,
-    form.date
-  );
+
+  const { data: timelineData, isLoading: isTimelineLoading } =
+    useGetDailyTimeLine(form.workplaceId, form.date);
+
+  // 전체 로딩 상태 통합
+  const isPageLoading = isLoading || isWorkplacesLoading || isTimelineLoading;
+
+  // 로딩 중이거나 인증되지 않은 사업자일 경우 접근 제한
+  if (isPageLoading) {
+    return (
+      <div className="h-dvh flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
+
+  if (!user || user.userType !== "BUSINESS_OWNER" || !isBusinessVerified()) {
+    return (
+      <div className="h-dvh flex items-center justify-center">
+        <p>접근 권한이 없습니다. 사업자 인증을 완료해주세요.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-dvh flex flex-col bg-white p-4 rounded-2xl">
       {/* 사업장 드롭다운 */}
-      {isWorkplacesLoading ? (
-        <p>로딩중...</p>
-      ) : isWorkplacesError ? (
+      {isWorkplacesError ? (
         <p>사업장 조회 실패</p>
       ) : (
         <WorkplaceDropdown
@@ -145,11 +146,7 @@ export default function MainPage() {
 
       {/* 직원별 출퇴근 기록 */}
       <div className="mt-6 space-y-4">
-        {isWorkplacesLoading ? (
-          <p>출퇴근 기록 불러오는 중...</p>
-        ) : isWorkplacesError ? (
-          <p>출퇴근 기록 조회 실패</p>
-        ) : timelineData?.data.employees?.length ? (
+        {timelineData?.data.employees?.length ? (
           timelineData.data.employees.map((emp) => (
             <div key={emp.userId} className="flex flex-col gap-2 border-b pb-2">
               <div className="bg-gray2 p-2">

@@ -6,6 +6,7 @@ import { useGetWP } from "@/src/lib/queries/getWP";
 import { useDeleteWP } from "@/src/lib/queries/useDeleteWP";
 import { useState } from "react";
 import ToastModal from "@/app/components/ToastModal";
+import Loading from "@/app/components/loading";
 
 export default function AddBusiness() {
   const router = useRouter();
@@ -35,7 +36,12 @@ export default function AddBusiness() {
       },
     });
   };
-  if (isLoading) return <div className="text-center mt-8">로딩중...</div>;
+  if (isLoading)
+    return (
+      <div className="text-center mt-8">
+        <Loading />
+      </div>
+    );
   if (isError)
     return (
       <div className="text-center mt-8 text-red-500">
@@ -45,7 +51,10 @@ export default function AddBusiness() {
 
   return (
     <div className="h-dvh min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
-      <Benner />
+      {/* 배너 영역 - 고정 높이 */}
+      <div className="flex-shrink-0">
+        <Benner />
+      </div>
       {/* 메인 컨텐츠 영역 - 스크롤 가능 */}
       <div
         className={`flex-1 overflow-y-auto ${

@@ -21,7 +21,7 @@ export default function LoadingAuthentication() {
           사업자 등록증을
         </span>
         <span className="text-[24px] font-extrabold text-main leading-tight mb-4 ">
-          확인중입니다.
+          검토중입니다.
         </span>
       </div>
       {/* 로딩 스피너 */}

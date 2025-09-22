@@ -23,10 +23,7 @@ export default function Loading() {
           />
         </svg>
       </div>
-      <div className="flex flex-col items-center text-center">
-        <span className="text-[18px] font-semibold text-gray5 leading-tight mb-2">
-          정보를 확인하고 있습니다
-        </span>
+      <div className="flex items-center text-center">
         <span className="text-[14px] text-gray-400">잠시만 기다려주세요</span>
       </div>
     </div>
