@@ -204,7 +204,26 @@ export default function VerificationItem({
       </Card>
 
       {/* 거부 사유 입력 모달 */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        // HeroUI 안정성 최적화 적용
+        disableAnimation={true}
+        hideCloseButton={false}
+        isDismissable={true}
+        isKeyboardDismissDisabled={false}
+        motionProps={{
+          variants: {
+            enter: { opacity: 1, scale: 1, transition: { duration: 0 } },
+            exit: { opacity: 1, scale: 1, transition: { duration: 0 } }
+          }
+        }}
+        classNames={{
+          wrapper: "z-[9999]",
+          backdrop: "z-[9998] bg-black/50",
+          base: "z-[9999] bg-white"
+        }}
+      >
         <ModalContent>
           <ModalHeader>검증 거부</ModalHeader>
           <ModalBody>

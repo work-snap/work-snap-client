@@ -33,6 +33,7 @@ interface UserState {
   isPending: () => boolean;
   isBusinessOwner: () => boolean;
   isPartTimeWorker: () => boolean;
+  isAdmin: () => boolean;
   isBusinessVerified: () => boolean;
   isBusinessPending: () => boolean;
   isBusinessRejected: () => boolean;
@@ -291,13 +292,14 @@ export const useUserStore = create<UserState>()(
           isLoading,
           lastRedirectTime,
           pathname,
-          userInfo: user
-            ? {
-                id: user.id,
-                userType: user.userType,
-                businessStatus: user.businessVerificationStatus,
-              }
-            : null,
+
+          userInfo: user ? {
+            id: user.id,
+            userType: user.userType,
+            userRole: user.userRole,
+            businessStatus: user.businessVerificationStatus
+          } : null
+
         });
 
         // 로딩 중이면 중단
@@ -325,6 +327,7 @@ export const useUserStore = create<UserState>()(
         console.log("[ZUSTAND] 👤 사용자 상태:", {
           userId: user?.id,
           userType: user?.userType,
+          userRole: user?.userRole,
           businessStatus: user?.businessVerificationStatus,
           isLoading,
         });
@@ -420,6 +423,10 @@ export const useUserStore = create<UserState>()(
       isPending: () => get().user?.userType === "PENDING",
       isBusinessOwner: () => get().user?.userType === "BUSINESS_OWNER",
       isPartTimeWorker: () => get().user?.userType === "PART_TIME_WORKER",
+      isAdmin: () => {
+        const user = get().user;
+        return user?.userRole === "ADMIN" || user?.userRole === "SUPER_ADMIN";
+      },
 
       isBusinessVerified: () => {
         const user = get().user;
@@ -444,6 +451,7 @@ export const useUserStore = create<UserState>()(
         console.log("[ZUSTAND] 👤 현재 user 상태:", {
           hasUser: !!user,
           userType: user?.userType,
+          userRole: user?.userRole,
           businessVerificationStatus: user?.businessVerificationStatus,
           currentPath,
           fullUser: user,
@@ -452,6 +460,21 @@ export const useUserStore = create<UserState>()(
         if (!user) {
           console.log("[ZUSTAND] 🔓 사용자 없음 → 홈으로");
           return "/";
+        }
+
+        // 관리자 권한 확인 (ADMIN 또는 SUPER_ADMIN)
+        const isAdminUser = user.userRole === "ADMIN" || user.userRole === "SUPER_ADMIN";
+
+        if (isAdminUser) {
+          console.log("[ZUSTAND] 👑 관리자 권한 확인됨 (" + user.userRole + ") → 모든 페이지 접근 가능");
+          // 관리자는 현재 경로를 그대로 유지 (모든 페이지 접근 가능)
+          if (currentPath) {
+            console.log("[ZUSTAND] ✅ 관리자 - 현재 경로 유지:", currentPath);
+            return currentPath;
+          }
+          // 현재 경로가 없는 경우 관리자 대시보드로 이동
+          console.log("[ZUSTAND] 🔄 관리자 - 기본 대시보드로 이동");
+          return "/admin";
         }
 
         console.log("[ZUSTAND] 🔀 userType에 따른 라우팅:", user.userType);
