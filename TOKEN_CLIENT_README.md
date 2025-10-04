@@ -224,7 +224,8 @@ WorkSnap은 **JWT 기반의 이중 토큰 시스템**을 사용합니다:
 class WorkSnapApiClient {
   constructor() {
     this.accessToken = localStorage.getItem("accessToken");
-    this.baseURL = process.env.REACT_APP_API_URL || "http://localhost:8080";
+    this.baseURL =
+      process.env.REACT_APP_API_URL || "https://89a8626716db.ngrok.app";
   }
 
   /**
@@ -600,7 +601,7 @@ class ErrorHandler {
 #### 로그인 테스트
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/kakao/login \
+curl -X POST https://89a8626716db.ngrok.app/api/auth/kakao/login \
   -H "Content-Type: application/json" \
   -d '{"code":"test_code","userType":"BUSINESS_OWNER"}' \
   -c cookies.txt \
@@ -610,7 +611,7 @@ curl -X POST http://localhost:8080/api/auth/kakao/login \
 #### 토큰 갱신 테스트
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/refresh \
+curl -X POST https://89a8626716db.ngrok.app/api/auth/refresh \
   -H "Authorization: Bearer YOUR_EXPIRED_TOKEN" \
   -b cookies.txt \
   -c cookies.txt \
@@ -620,7 +621,7 @@ curl -X POST http://localhost:8080/api/auth/refresh \
 #### API 요청 테스트 (자동 갱신 확인)
 
 ```bash
-curl -X GET http://localhost:8080/api/users/me \
+curl -X GET https://89a8626716db.ngrok.app/api/users/me \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -b cookies.txt \
   -v

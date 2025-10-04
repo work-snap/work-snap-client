@@ -12,7 +12,7 @@ import { useResisterBusiness } from "@/src/lib/auth/auth.query";
 import { authApis } from "@/src/lib/auth/auth";
 import LoadingAuthentication from "@/src/app/components/loadingAuthentication";
 import Loading from "@/src/app/components/loading";
-import { BusinessInfoDisplay, ImageUploadSection } from "./components";
+import { ImageUploadSection } from "./components";
 
 export default function BusinessSignupStep1() {
   const router = useRouter();
@@ -47,10 +47,13 @@ export default function BusinessSignupStep1() {
         // 검증 상태가 존재하고 승인된 경우에만 리다이렉트
         if (
           verificationResponse?.data &&
-          verificationResponse.data.verificationStatus === "APPROVED"
+          (verificationResponse.data.verificationStatus === "APPROVED" ||
+            verificationResponse.data.verificationStatus === "VERIFIED")
         ) {
-          console.log("✅ 사업자 검증 상태 승인됨 - 사업자 대시보드로 리다이렉트");
-          router.replace("/user/business");
+          console.log(
+            "✅ 사업자 검증 상태 승인됨 - 사업자 정보 확인 페이지로 리다이렉트"
+          );
+          router.replace("/signup/business/info");
           return;
         } else if (verificationResponse?.data) {
           console.log(
@@ -174,7 +177,6 @@ export default function BusinessSignupStep1() {
 
   const {
     mutate: ResisterBusiness,
-    data: resisterBusinessData,
     isPending, // ✅ 업로드 & 분석 중 상태
     error: resisterBusinessError,
   }: UseMutationResult<
@@ -183,13 +185,6 @@ export default function BusinessSignupStep1() {
     ResisterBusinessRequest
   > = useResisterBusiness();
 
-  // 서버 응답 확인용
-  useEffect(() => {
-    if (resisterBusinessData !== undefined) {
-      console.log("✅ 서버 응답:", resisterBusinessData);
-    }
-  }, [resisterBusinessData]);
-
   // 에러 확인용
   useEffect(() => {
     if (resisterBusinessError) {
@@ -197,7 +192,19 @@ export default function BusinessSignupStep1() {
     }
   }, [resisterBusinessError]);
 
-  const businessInfo = resisterBusinessData;
+  // 사업자 등록 성공 시 info 페이지로 리다이렉트
+  const handleBusinessRegistration = (request: ResisterBusinessRequest) => {
+    ResisterBusiness(request, {
+      onSuccess: () => {
+        console.log("✅ 사업자 등록 성공 - info 페이지로 이동");
+        router.push("/signup/business/info");
+      },
+      onError: (error) => {
+        console.error("❌ 사업자 등록 실패:", error);
+        handleError(error);
+      },
+    });
+  };
 
   return (
     <>
@@ -236,19 +243,15 @@ export default function BusinessSignupStep1() {
               </div>
             </div>
 
-            {/* 조건부 렌더링: 사업자 정보 표시 또는 이미지 업로드 */}
-            {businessInfo ? (
-              <BusinessInfoDisplay businessInfo={businessInfo} />
-            ) : (
-              <ImageUploadSection
-                imageFile={imageFile}
-                imagePreview={imagePreview}
-                onImageUpload={handleImageUpload}
-                onRemoveImage={handleRemoveImage}
-                onComplete={ResisterBusiness}
-                toBase64={toBase64}
-              />
-            )}
+            {/* 이미지 업로드 섹션 */}
+            <ImageUploadSection
+              imageFile={imageFile}
+              imagePreview={imagePreview}
+              onImageUpload={handleImageUpload}
+              onRemoveImage={handleRemoveImage}
+              onComplete={handleBusinessRegistration}
+              toBase64={toBase64}
+            />
           </div>
         </div>
       )}
