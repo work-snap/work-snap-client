@@ -7,7 +7,7 @@
 ### 기본 설정
 
 - **프론트엔드**: `http://localhost:3000`
-- **백엔드**: `https://89a8626716db.ngrok.app`
+- **백엔드**: `http://localhost:8080
 - **카카오 리다이렉트**: `http://localhost:3000/kakao-login`
 
 ## 🚀 시작하기
@@ -35,8 +35,8 @@ npm run dev
 
 브라우저에서 다음 URL을 확인하세요:
 
-- `https://89a8626716db.ngrok.app/swagger-ui/index.html` - API 문서
-- `https://89a8626716db.ngrok.app/api/auth/kakao/login` - 카카오 로그인 엔드포인트
+- `http://localhost:8080/swagger-ui/index.html` - API 문서
+- `http://localhost:8080/api/auth/kakao/login` - 카카오 로그인 엔드포인트
 
 ## 🚨 문제 해결
 

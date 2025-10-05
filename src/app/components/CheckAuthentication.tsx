@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export default function LoadingAuthentication() {
+export default function CheckAuthentication() {
   return (
     <div className="h-dvh flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
       {/* 임시 체크리스트 일러스트 */}
@@ -21,7 +21,7 @@ export default function LoadingAuthentication() {
           사업자 등록증을
         </span>
         <span className="text-[24px] font-extrabold text-main leading-tight mb-4 ">
-          확인중입니다.
+          검토중입니다.
         </span>
       </div>
       {/* 로딩 스피너 */}
