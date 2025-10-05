@@ -65,7 +65,7 @@ NODE_ENV=production
 
 ```typescript
 async rewrites() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://89a8626716db.ngrok.app";
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
   return [
     {

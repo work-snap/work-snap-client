@@ -95,7 +95,10 @@ export default function MyPage() {
             <span>사업자등록증 관리</span>
             <span className="text-xl text-gray-400">›</span>
           </button>
-          <button className="w-full flex justify-between items-center p-3 border rounded-xl">
+          <button
+            disabled
+            className="w-full flex justify-between items-center p-3 border rounded-xl disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
             <span>알림설정</span>
             <span className="text-xl text-gray-400">›</span>
           </button>

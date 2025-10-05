@@ -1,9 +1,9 @@
-import LoadingAuthentication from "@/app/components/loadingAuthentication";
+import CheckAuthentication from "@/app/components/CheckAuthentication";
 
 export default function BusinessReviewingPage() {
   return (
     <div>
-      <LoadingAuthentication />
+      <CheckAuthentication />
     </div>
   );
 }
