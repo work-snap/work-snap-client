@@ -10,6 +10,7 @@ import {
 } from "@/src/lib/auth/types";
 import { useResisterBusiness } from "@/src/lib/auth/auth.query";
 import { authApis } from "@/src/lib/auth/auth";
+import { useUserStore } from "@/src/stores/userStore";
 import LoadingAuthentication from "@/src/app/components/loadingAuthentication";
 import Loading from "@/src/app/components/loading";
 import { ImageUploadSection } from "./components";
@@ -19,6 +20,9 @@ export default function BusinessSignupStep1() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCheckingBusinessOwner, setIsCheckingBusinessOwner] = useState(false);
+
+  // Zustand 스토어에서 사업자 등록 관련 액션 가져오기
+  const { setBusinessRegistrationResponse } = useUserStore();
 
   // 사업자 정보 확인 및 리다이렉트 로직
   useEffect(() => {
@@ -195,7 +199,10 @@ export default function BusinessSignupStep1() {
   // 사업자 등록 성공 시 info 페이지로 리다이렉트
   const handleBusinessRegistration = (request: ResisterBusinessRequest) => {
     ResisterBusiness(request, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log("✅ 사업자 등록 성공:", data);
+        // Zustand 스토어에 사업자 등록 응답 데이터 저장
+        setBusinessRegistrationResponse(data);
         console.log("✅ 사업자 등록 성공 - info 페이지로 이동");
         router.push("/signup/business/info");
       },

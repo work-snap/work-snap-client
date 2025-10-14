@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { User, getUser } from "@/lib/api/user";
 import { authApis } from "@/lib/auth/auth";
 import { changeUserType } from "@/lib/api/changeUserType";
+import { ResisterBusinessResponse } from "@/lib/auth/types";
 import api from "@/lib/api";
 
 interface UserState {
@@ -11,6 +12,7 @@ interface UserState {
   isLoading: boolean;
   error: string | null;
   lastRedirectTime: number;
+  businessRegistrationResponse: ResisterBusinessResponse | null;
 
   // Actions
   setUser: (user: User | null) => void;
@@ -22,6 +24,12 @@ interface UserState {
   clearUser: () => void;
   setLastRedirectTime: (time: number) => void;
   handleRouting: (pathname: string, router: any) => void;
+
+  // Business registration actions
+  setBusinessRegistrationResponse: (
+    response: ResisterBusinessResponse | null
+  ) => void;
+  clearBusinessRegistrationResponse: () => void;
 
   // User type and logout actions (will be called from hooks)
   updateUserType: (
@@ -39,7 +47,7 @@ interface UserState {
   isBusinessRejected: () => boolean;
   isBusinessReviewing: () => boolean;
   isBusinessNotRequested: () => boolean;
-  getRequiredRoute: () => string;
+  getRequiredRoute: (currentPath?: string) => string;
 }
 
 export const useUserStore = create<UserState>()(
@@ -50,6 +58,7 @@ export const useUserStore = create<UserState>()(
       isLoading: true,
       error: null,
       lastRedirectTime: 0,
+      businessRegistrationResponse: null,
 
       // Actions
       setUser: (user: User | null) => {
@@ -275,7 +284,25 @@ export const useUserStore = create<UserState>()(
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
         api.removeAuthToken();
-        set({ user: null, error: null, isLoading: false });
+        set({
+          user: null,
+          error: null,
+          isLoading: false,
+          businessRegistrationResponse: null,
+        });
+      },
+
+      // Business registration actions
+      setBusinessRegistrationResponse: (
+        response: ResisterBusinessResponse | null
+      ) => {
+        console.log("[ZUSTAND] 🏢 사업자 등록 응답 저장:", response);
+        set({ businessRegistrationResponse: response });
+      },
+
+      clearBusinessRegistrationResponse: () => {
+        console.log("[ZUSTAND] 🗑️ 사업자 등록 응답 초기화");
+        set({ businessRegistrationResponse: null });
       },
 
       setLastRedirectTime: (time: number) => {
@@ -293,13 +320,14 @@ export const useUserStore = create<UserState>()(
           lastRedirectTime,
           pathname,
 
-          userInfo: user ? {
-            id: user.id,
-            userType: user.userType,
-            userRole: user.userRole,
-            businessStatus: user.businessVerificationStatus
-          } : null
-
+          userInfo: user
+            ? {
+                id: user.id,
+                userType: user.userType,
+                userRole: user.userRole,
+                businessStatus: user.businessVerificationStatus,
+              }
+            : null,
         });
 
         // 로딩 중이면 중단
@@ -394,8 +422,6 @@ export const useUserStore = create<UserState>()(
 
           set({ user: userData });
           localStorage.setItem("user", JSON.stringify(userData));
-
-          return response;
         } catch (error: any) {
           console.error("[ZUSTAND] ❌ 사용자 타입 변경 실패:", error);
           throw error;
@@ -463,10 +489,15 @@ export const useUserStore = create<UserState>()(
         }
 
         // 관리자 권한 확인 (ADMIN 또는 SUPER_ADMIN)
-        const isAdminUser = user.userRole === "ADMIN" || user.userRole === "SUPER_ADMIN";
+        const isAdminUser =
+          user.userRole === "ADMIN" || user.userRole === "SUPER_ADMIN";
 
         if (isAdminUser) {
-          console.log("[ZUSTAND] 👑 관리자 권한 확인됨 (" + user.userRole + ") → 모든 페이지 접근 가능");
+          console.log(
+            "[ZUSTAND] 👑 관리자 권한 확인됨 (" +
+              user.userRole +
+              ") → 모든 페이지 접근 가능"
+          );
           // 관리자는 현재 경로를 그대로 유지 (모든 페이지 접근 가능)
           if (currentPath) {
             console.log("[ZUSTAND] ✅ 관리자 - 현재 경로 유지:", currentPath);
@@ -545,7 +576,11 @@ export const useUserStore = create<UserState>()(
             console.log("[ZUSTAND] 👷 PART_TIME_WORKER 감지");
 
             // 허용된 경로: /user/ptjob/**, /signup/ptjob
-            const allowedPaths = ["/user/ptjob/", "/signup/ptjob"];
+            const allowedPaths = [
+              "/user/ptjob/",
+              "/signup/ptjob",
+              "/attendance",
+            ];
             const isAllowedPath = allowedPaths.some(
               (path) =>
                 currentPath?.startsWith(path) ||
@@ -575,6 +610,7 @@ export const useUserStore = create<UserState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user, // Only persist user data
+        businessRegistrationResponse: state.businessRegistrationResponse, // 사업자 등록 응답도 저장
         // Don't persist loading, error, lastRedirectTime
       }),
     }

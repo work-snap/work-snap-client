@@ -1,8 +1,11 @@
+"use client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function ReAuthentication() {
+  const router = useRouter();
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
+    <div className="h-dvh flex flex-col items-center justify-center bg-white max-w-[430px] w-full mx-auto px-4">
       {/* 텍스트 */}
       <div className="flex flex-col items-center text-center ">
         <span className="text-[15px] text-gray5 leading-tight mb-4 font-regular">
@@ -33,7 +36,10 @@ export default function ReAuthentication() {
       {/* 하단 버튼 */}
 
       <div className="fixed bottom-0 left-0 right-0 p-4">
-        <button className="w-full py-5 rounded-lg bg-main text-white">
+        <button
+          onClick={() => router.push("/signup/business/signup-1")}
+          className="w-full py-5 rounded-lg bg-main text-white"
+        >
           사업자등록증 확인 바로가기
         </button>
       </div>
