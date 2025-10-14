@@ -496,7 +496,15 @@ export const useUserStore = create<UserState>()(
               user.businessVerificationStatus === "NOT_REQUESTED" ||
               user.businessVerificationStatus === "PENDING"
             ) {
-              console.log("[ZUSTAND] ⏳ 사업자 인증 신청 전/대기 → signup-1");
+              console.log("[ZUSTAND] ⏳ 사업자 인증 신청 전/대기");
+
+              // 현재 경로가 사업자 등록 플로우 경로면 그대로 유지
+              if (currentPath?.startsWith("/signup/business/")) {
+                console.log("[ZUSTAND] ✅ 사업자 등록 플로우 경로 → 현재 경로 유지:", currentPath);
+                return currentPath;
+              }
+
+              console.log("[ZUSTAND] 🔄 기본 경로로 리다이렉트 → signup-1");
               return "/signup/business/signup-1";
             }
 

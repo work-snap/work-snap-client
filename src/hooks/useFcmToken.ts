@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getFCMToken } from "@/services/firebaseConfig";
-import api from "@/services/api";
+import { api } from "@/services/api";
 
 /**
  * FCM 토큰 자동 등록 훅

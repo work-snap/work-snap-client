@@ -81,11 +81,11 @@ export function useAutoRouting() {
 
       prevUserRef.current = user;
 
-      // 항상 현재 경로가 올바른지 체크
-      console.log("[AUTO-ROUTING] ⏰ 즉시 라우팅 체크 실행");
-      handleRouting();
-
       if (shouldRoute) {
+        // 라우팅이 필요한 경우에만 체크
+        console.log("[AUTO-ROUTING] ⏰ 즉시 라우팅 체크 실행");
+        handleRouting();
+
         // 추가적인 디바운싱을 위해 500ms 후 한번 더 체크
         console.log("[AUTO-ROUTING] ⏰ 500ms 후 재체크 타이머 설정");
         const timer = setTimeout(() => {
@@ -97,6 +97,8 @@ export function useAutoRouting() {
           console.log("[AUTO-ROUTING] 🗑️ 재체크 타이머 정리");
           clearTimeout(timer);
         };
+      } else {
+        console.log("[AUTO-ROUTING] ⏭️ shouldRoute=false, 라우팅 체크 스킵");
       }
     } else {
       console.log("[AUTO-ROUTING] ⏳ 라우팅 체크 조건 미충족", {
