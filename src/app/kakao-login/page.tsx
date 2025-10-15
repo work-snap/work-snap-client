@@ -38,7 +38,7 @@ export default function KakaoLogin() {
 
   // 카카오 로그인 mutation 훅 사용
   const kakaoLoginMutation = useKakaoLogin({
-    onSuccess: (data: LoginResponse) => {
+    onSuccess: async (data: LoginResponse) => {
       console.log("✅ 로그인 성공:", {
         isNewUser: data.isNewUser,
         userType: data.user.userType,
@@ -49,25 +49,10 @@ export default function KakaoLogin() {
       // RefreshToken은 HTTP-only 쿠키로 자동 설정됨 (서버에서 처리)
       console.log("🍪 RefreshToken이 HTTP-only 쿠키로 자동 설정되었습니다.");
 
-      // Zustand 스토어에 사용자 정보 설정 (즉시 반영, persist 미들웨어가 localStorage 관리)
-      // auth/types의 User를 api/user의 User로 변환 (businessVerificationStatus 추가)
-      const userWithBusinessStatus = {
-        ...data.user,
-        profileImageUrl: data.user.profileImageUrl || null, // undefined를 null로 변환
-        phoneNumber: data.user.phoneNumber || null, // undefined를 null로 변환
-        userRole:
-          data.user.userRole === "BUSINESS_OWNER" ? "USER" : data.user.userRole, // BUSINESS_OWNER를 USER로 변환
-        businessVerificationStatus: null, // PENDING 사용자는 아직 사업자 인증 상태가 없음
-      };
-      setUser(userWithBusinessStatus);
-      console.log("🔄 Zustand 스토어 업데이트 완료:", userWithBusinessStatus);
-
-      // PENDING 사용자의 경우 즉시 /signup으로 리다이렉트
-      // if (data.user.userType === "PENDING") {
-      //   console.log("⚡ PENDING 사용자 감지 - 즉시 /signup으로 리다이렉트");
-      //   router.push("/signup");
-      //   return;
-      // }
+      // 로그인 성공 후 최신 사용자 정보를 가져오기 위해 loadUser 호출
+      console.log("📡 최신 사용자 정보 로드 시작");
+      await useUserStore.getState().loadUser();
+      console.log("✅ 최신 사용자 정보 로드 완료");
 
       // 자동 라우팅은 useAutoRouting 훅에서 처리됨
       console.log("⚡ 자동 라우팅이 처리할 예정");

@@ -37,6 +37,16 @@ export interface WorkPlacesResponse {
 // 사업장 목록 조회 API 함수
 export const getWorkPlaces = async (): Promise<WorkPlacesResponse> => {
   const res = await api.get("/api/business-owner/workplaces");
-  console.log("👀 응답 데이터:", res.data);
+
+  // 개발 환경에서만 성능 측정
+  if (process.env.NODE_ENV === "development") {
+    const duration = performance.now();
+    console.log("📊 API:", {
+      endpoint: "/api/business-owner/workplaces",
+      duration: `${duration.toFixed(0)}ms`,
+      count: res.data.workplaces?.length || 0,
+    });
+  }
+
   return res.data;
 };

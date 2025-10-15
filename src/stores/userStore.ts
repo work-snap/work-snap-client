@@ -296,7 +296,7 @@ export const useUserStore = create<UserState>()(
           user: null,
           error: null,
           isLoading: false,
-          businessRegistrationResponse: null,
+          // businessRegistrationResponse는 로그아웃 시에도 유지 (회원가입 플로우에서 사용)
         });
       },
 
@@ -527,10 +527,9 @@ export const useUserStore = create<UserState>()(
 
             if (
               user.businessVerificationStatus === null ||
-              user.businessVerificationStatus === "NOT_REQUESTED" ||
-              user.businessVerificationStatus === "PENDING"
+              user.businessVerificationStatus === "NOT_REQUESTED"
             ) {
-              console.log("[ZUSTAND] ⏳ 사업자 인증 신청 전/대기");
+              console.log("[ZUSTAND] ⏳ 사업자 인증 신청 전");
 
               // 현재 경로가 사업자 등록 플로우 경로면 그대로 유지
               if (currentPath?.startsWith("/signup/business/")) {
@@ -554,6 +553,26 @@ export const useUserStore = create<UserState>()(
               return "/signup/business/signup-1";
             }
 
+            if (user.businessVerificationStatus === "PENDING") {
+              console.log("[ZUSTAND] ⏳ 사업자 인증 대기 중");
+
+              // 현재 경로가 사업자 허용 경로에 있으면 그대로 유지
+              if (currentPath?.startsWith("/user/business/")) {
+                console.log(
+                  "[ZUSTAND] ✅ 사업자 허용 경로에 있음 → 현재 경로 유지:",
+                  currentPath
+                );
+                return currentPath;
+              }
+
+              // PENDING 상태에서는 /user/business/add-business로 이동
+              // (이미 등록을 완료한 상태이므로)
+              console.log(
+                "[ZUSTAND] 🔄 사업자 인증 대기 → add-business로 리다이렉트"
+              );
+              return "/user/business/add-business";
+            }
+
             if (user.businessVerificationStatus === "REJECTED") {
               console.log("[ZUSTAND] ❌ 사업자 인증 거부 → 재인증 페이지");
               return "/signup/business/re-authentication";
@@ -570,20 +589,20 @@ export const useUserStore = create<UserState>()(
             ) {
               console.log("[ZUSTAND] ✅ 사업자 인증 완료");
 
+              // 현재 경로가 회원가입 플로우 경로인 경우 메인으로 리다이렉트
+              if (currentPath?.startsWith("/signup/business")) {
+                console.log(
+                  "[ZUSTAND] 🔄 인증 완료된 사용자가 회원가입 플로우에 접근 → add-business로 리다이렉트"
+                );
+                return "/user/business/add-business";
+              }
+
               // 현재 경로가 /user/business/** 인 경우 리다이렉트하지 않음
               if (currentPath?.startsWith("/user/business/")) {
                 console.log(
                   "[ZUSTAND] ✅ 사업자 허용 경로에 있음 → 리다이렉트 안함"
                 );
                 return currentPath;
-              }
-
-              // 성공 페이지에서 메인으로 버튼을 누른 경우 add-business로 이동
-              if (currentPath === "/signup/business/success-signup") {
-                console.log(
-                  "[ZUSTAND] 🎉 성공 페이지에서 메인으로 → add-business로 리다이렉트"
-                );
-                return "/user/business/add-business";
               }
 
               console.log(

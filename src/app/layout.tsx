@@ -6,11 +6,15 @@ import CustomProvider from "./components/customProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap", // 폰트 로딩 최적화
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap", // 폰트 로딩 최적화
+  preload: true,
 });
 
 export const metadata: Metadata = {

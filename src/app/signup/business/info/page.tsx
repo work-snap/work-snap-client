@@ -9,11 +9,23 @@ export default function BusinessInfoDisplay() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Zustand 스토어에서 사업자 등록 응답 데이터 가져오기
-  const { businessRegistrationResponse, clearBusinessRegistrationResponse } =
-    useUserStore();
+  // Zustand 스토어에서 사업자 등록 응답 데이터 및 사용자 정보 가져오기
+  const { businessRegistrationResponse, user } = useUserStore();
 
   useEffect(() => {
+    // 이미 인증 완료된 사용자는 메인 페이지로 리다이렉트
+    if (
+      user?.userType === "BUSINESS_OWNER" &&
+      (user?.businessVerificationStatus === "APPROVED" ||
+        user?.businessVerificationStatus === "VERIFIED")
+    ) {
+      console.log(
+        "✅ 이미 인증 완료된 사용자 감지 → /user/business/add-business로 리다이렉트"
+      );
+      router.replace("/user/business/add-business");
+      return;
+    }
+
     // Zustand 스토어에서 사업자 등록 응답 데이터 확인
     if (businessRegistrationResponse) {
       console.log(
@@ -26,7 +38,7 @@ export default function BusinessInfoDisplay() {
       setError("사업자 정보를 찾을 수 없습니다.");
       setIsLoading(false);
     }
-  }, [businessRegistrationResponse]);
+  }, [businessRegistrationResponse, user, router]);
 
   // 로딩 상태 표시
   if (isLoading) {
@@ -114,12 +126,8 @@ export default function BusinessInfoDisplay() {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white max-w-[430px] mx-auto">
         <button
           onClick={() => {
-            // 가입 완료 시 즉시 페이지 이동
+            // 가입 완료 페이지로 이동
             router.push("/signup/business/success-signup");
-            // 페이지 이동 후 스토어에서 사업자 등록 응답 데이터 제거
-            // setTimeout(() => {
-            //   clearBusinessRegistrationResponse();
-            // }, 100);
           }}
           className="w-full py-5 rounded-lg bg-main text-white"
         >

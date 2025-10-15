@@ -9,9 +9,13 @@ export default function Benner() {
         src="/benner.png"
         alt="배너 일러스트"
         width={400}
-        height={128}
+        height={160}
         priority
-        className="w-full h-full"
+        quality={75}
+        fetchPriority="high"
+        loading="eager"
+        sizes="(max-width: 430px) 100vw, 430px"
+        className="w-full h-full object-cover"
       />
     </div>
   );
