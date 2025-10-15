@@ -63,7 +63,15 @@ export const useUserStore = create<UserState>()(
       // Actions
       setUser: (user: User | null) => {
         console.log("[ZUSTAND] 🔄 setUser:", user);
+        console.log("[ZUSTAND] 📊 setUser 상세 정보:", {
+          hasUser: !!user,
+          userType: user?.userType,
+          businessVerificationStatus: user?.businessVerificationStatus,
+          id: user?.id,
+          timestamp: new Date().toISOString(),
+        });
         set({ user, isLoading: false });
+        console.log("[ZUSTAND] ✅ setUser 완료 - 상태 업데이트됨");
       },
 
       setLoading: (loading: boolean) => {
@@ -343,10 +351,10 @@ export const useUserStore = create<UserState>()(
           );
         }
 
-        // 디바운싱: 300ms 내 중복 실행 방지
+        // 디바운싱: 1초 내 중복 실행 방지 (강화)
         const now = Date.now();
-        if (now - lastRedirectTime < 300) {
-          console.log("[ZUSTAND] ⏱️ 디바운싱: 300ms 대기 중");
+        if (now - lastRedirectTime < 1000) {
+          console.log("[ZUSTAND] ⏱️ 디바운싱: 1초 대기 중");
           return;
         }
 
@@ -393,6 +401,12 @@ export const useUserStore = create<UserState>()(
           );
         }
 
+        // 경로가 다른 경우 무조건 리다이렉트 (간단하고 확실한 방법)
+        console.log("[ZUSTAND] 🔄 경로가 다름 → 리다이렉트 필요:", {
+          current: pathname,
+          required: requiredRoute,
+        });
+
         // 리다이렉트 실행
         console.log(
           "[ZUSTAND] 🔀 리다이렉트 실행:",
@@ -401,10 +415,19 @@ export const useUserStore = create<UserState>()(
           requiredRoute
         );
         console.log("[ZUSTAND] 🚀 router.push 호출 직전!");
+        console.log("[ZUSTAND] 📊 현재 사용자 상태:", {
+          userType: user?.userType,
+          businessVerificationStatus: user?.businessVerificationStatus,
+          userId: user?.id,
+        });
         set({ lastRedirectTime: now });
 
-        router.push(requiredRoute);
-        console.log("[ZUSTAND] 🚀 router.push 호출 완료!");
+        try {
+          router.push(requiredRoute);
+          console.log("[ZUSTAND] 🚀 router.push 호출 완료!");
+        } catch (error) {
+          console.error("[ZUSTAND] ❌ router.push 실패:", error);
+        }
       },
 
       // User type and logout - now with actual implementations
@@ -488,26 +511,6 @@ export const useUserStore = create<UserState>()(
           return "/";
         }
 
-        // 관리자 권한 확인 (ADMIN 또는 SUPER_ADMIN)
-        const isAdminUser =
-          user.userRole === "ADMIN" || user.userRole === "SUPER_ADMIN";
-
-        if (isAdminUser) {
-          console.log(
-            "[ZUSTAND] 👑 관리자 권한 확인됨 (" +
-              user.userRole +
-              ") → 모든 페이지 접근 가능"
-          );
-          // 관리자는 현재 경로를 그대로 유지 (모든 페이지 접근 가능)
-          if (currentPath) {
-            console.log("[ZUSTAND] ✅ 관리자 - 현재 경로 유지:", currentPath);
-            return currentPath;
-          }
-          // 현재 경로가 없는 경우 관리자 대시보드로 이동
-          console.log("[ZUSTAND] 🔄 관리자 - 기본 대시보드로 이동");
-          return "/admin";
-        }
-
         console.log("[ZUSTAND] 🔀 userType에 따른 라우팅:", user.userType);
 
         switch (user.userType) {
@@ -531,7 +534,19 @@ export const useUserStore = create<UserState>()(
 
               // 현재 경로가 사업자 등록 플로우 경로면 그대로 유지
               if (currentPath?.startsWith("/signup/business/")) {
-                console.log("[ZUSTAND] ✅ 사업자 등록 플로우 경로 → 현재 경로 유지:", currentPath);
+                console.log(
+                  "[ZUSTAND] ✅ 사업자 등록 플로우 경로 → 현재 경로 유지:",
+                  currentPath
+                );
+                return currentPath;
+              }
+
+              // 현재 경로가 사업자 허용 경로에 있으면 그대로 유지
+              if (currentPath?.startsWith("/user/business/")) {
+                console.log(
+                  "[ZUSTAND] ✅ 사업자 허용 경로에 있음 → 현재 경로 유지:",
+                  currentPath
+                );
                 return currentPath;
               }
 
@@ -563,12 +578,21 @@ export const useUserStore = create<UserState>()(
                 return currentPath;
               }
 
+              // 성공 페이지에서 메인으로 버튼을 누른 경우 add-business로 이동
+              if (currentPath === "/signup/business/success-signup") {
+                console.log(
+                  "[ZUSTAND] 🎉 성공 페이지에서 메인으로 → add-business로 리다이렉트"
+                );
+                return "/user/business/add-business";
+              }
+
               console.log(
                 "[ZUSTAND] 🔄 사업자 허용 경로 밖 → add-business로 리다이렉트"
               );
               return "/user/business/add-business";
             }
 
+            // 기본값: 사업자 인증 신청 전 상태
             console.log("[ZUSTAND] 🔄 사업자 기본값 → signup-1");
             return "/signup/business/signup-1";
 
@@ -594,10 +618,19 @@ export const useUserStore = create<UserState>()(
               return currentPath;
             }
 
-            console.log(
-              "[ZUSTAND] 🔄 알바생 허용 경로 밖 → job-list로 리다이렉트"
-            );
-            return "/user/ptjob/job-list";
+            // 현재 경로가 /signup에서 온 경우에만 환영 페이지로 이동
+            // 그 외의 경우(로그인 후)에는 바로 메인 페이지로 이동
+            if (currentPath === "/signup") {
+              console.log(
+                "[ZUSTAND] 🔄 알바생 가입 중 → signup/ptjob으로 리다이렉트"
+              );
+              return "/signup/ptjob";
+            } else {
+              console.log(
+                "[ZUSTAND] 🔄 알바생 로그인 후 → job-list로 리다이렉트"
+              );
+              return "/user/ptjob/job-list";
+            }
 
           default:
             console.log("[ZUSTAND] ❓ 알 수 없는 userType → 홈으로");

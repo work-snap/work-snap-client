@@ -21,7 +21,7 @@ export default function SignupPtjobPage() {
 
         {/* 하단 버튼 */}
         <div className="p-4 w-full">
-          <Link href="/attendance">
+          <Link href="/user/ptjob/job-list">
             <button className="w-full py-5 rounded-xl bg-main text-white">
               메인으로
             </button>

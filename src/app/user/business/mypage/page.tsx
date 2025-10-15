@@ -3,6 +3,8 @@
 
 import { useDeleteUser } from "@/src/lib/queries/deleteUser";
 import { useUser } from "@/src/lib/queries/useUser";
+import { useUserStore } from "@/src/stores/userStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -12,6 +14,8 @@ export default function MyPage() {
   const router = useRouter();
   const { data: user, isLoading } = useUser();
   const { mutate: deleteUser } = useDeleteUser();
+  const { clearUser } = useUserStore();
+  const queryClient = useQueryClient();
 
   // 모달 상태 관리
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -37,6 +41,9 @@ export default function MyPage() {
       onSuccess: () => {
         setShowDeleteModal(false);
         alert("회원 탈퇴가 완료되었습니다.");
+        // Zustand 스토어 및 React Query 캐시 초기화
+        queryClient.clear();
+        clearUser();
         router.push("/");
       },
       onError: (error) => {
@@ -51,11 +58,11 @@ export default function MyPage() {
   };
 
   const confirmLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
     setShowLogoutModal(false);
     alert("로그아웃되었습니다.");
+    // Zustand 스토어 및 React Query 캐시 초기화
+    queryClient.clear();
+    clearUser();
     router.push("/");
   };
 

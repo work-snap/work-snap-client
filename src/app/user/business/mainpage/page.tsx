@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { workplaceTestApis } from "@/app/develop-test/lib/api";
 import { useGetDailyTimeLine } from "@/lib/queries/getDailyTimeLine";
 import { useUserStore } from "@/stores/userStore";
+import { useUser } from "@/lib/queries/useUser";
 import Loading from "@/app/components/loading";
 
 interface WorkplaceSummary {
@@ -30,7 +31,12 @@ interface AddWorkForm {
 }
 
 export default function MainPage() {
-  const { user, isLoading, isBusinessVerified } = useUserStore();
+  const {
+    user: storeUser,
+    isLoading: storeIsLoading,
+    isBusinessVerified,
+  } = useUserStore();
+  const { data: user, isLoading: userIsLoading, error: userError } = useUser();
 
   const [form, setForm] = useState<AddWorkForm>({
     date: getTodayDate(),
@@ -83,10 +89,11 @@ export default function MainPage() {
     useGetDailyTimeLine(form.workplaceId, form.date);
 
   // 전체 로딩 상태 통합
-  const isPageLoading = isLoading || isWorkplacesLoading || isTimelineLoading;
+  const isPageLoading =
+    storeIsLoading || userIsLoading || isWorkplacesLoading || isTimelineLoading;
 
-  // 로딩 중이거나 인증되지 않은 사업자일 경우 접근 제한
-  if (isPageLoading) {
+  // 로딩 중이거나 사용자 정보가 아직 로드되지 않은 경우 로딩 표시
+  if (isPageLoading || !user) {
     return (
       <div className="h-dvh flex items-center justify-center">
         <Loading />
@@ -94,7 +101,29 @@ export default function MainPage() {
     );
   }
 
-  if (!user || user.userType !== "BUSINESS_OWNER" || !isBusinessVerified()) {
+  // 사용자 에러가 있는 경우
+  if (userError) {
+    return (
+      <div className="h-dvh flex items-center justify-center">
+        <p>사용자 정보를 불러오는데 실패했습니다.</p>
+      </div>
+    );
+  }
+
+  // 사용자 타입이 사업자가 아닌 경우 접근 제한
+  if (user.userType !== "BUSINESS_OWNER") {
+    return (
+      <div className="h-dvh flex items-center justify-center">
+        <p>접근 권한이 없습니다. 사업자 계정으로 로그인해주세요.</p>
+      </div>
+    );
+  }
+
+  // 사업자 인증이 완료되지 않은 경우 접근 제한
+  const isVerified =
+    user.businessVerificationStatus === "APPROVED" ||
+    user.businessVerificationStatus === "VERIFIED";
+  if (!isVerified) {
     return (
       <div className="h-dvh flex items-center justify-center">
         <p>접근 권한이 없습니다. 사업자 인증을 완료해주세요.</p>

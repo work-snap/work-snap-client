@@ -8,15 +8,19 @@ import { useChangeUserType } from "@/lib/queries/changeUserType";
 import { useLogout } from "@/lib/auth/auth.query";
 import { getUser } from "@/lib/api/user";
 import { IoArrowBack } from "react-icons/io5";
+import { useAutoRouting } from "@/hooks/useAutoRouting";
 
 export default function SignupPage() {
   const router = useRouter();
   const { setUser, clearUser } = useUserStore();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // React Query hooks
   const changeUserTypeMutation = useChangeUserType();
   const logoutMutation = useLogout();
+
+  // 자동 라우팅 훅 (useEffect가 실행되도록 훅을 호출)
+  useAutoRouting();
 
   const handleUserTypeSelect = async (
     userType: "BUSINESS_OWNER" | "PART_TIME_WORKER"
@@ -25,7 +29,7 @@ export default function SignupPage() {
       setIsLoading(true);
 
       console.log("✅ 사용자 타입 선택 시작:", userType);
-      
+
       // React Query를 사용하여 사용자 타입 업데이트
       await new Promise<void>((resolve, reject) => {
         changeUserTypeMutation.mutate(
@@ -33,12 +37,34 @@ export default function SignupPage() {
           {
             onSuccess: async (data) => {
               console.log("✅ 사용자 타입 변경 성공:", data);
-              
+
               // 최신 사용자 정보를 다시 로드하여 Zustand 스토어 업데이트
               try {
                 const userData = await getUser();
                 setUser(userData);
                 console.log("🔄 Zustand 스토어 업데이트 완료:", userData);
+
+                // 사용자 타입 변경 후 즉시 라우팅 체크 실행
+                console.log("🚀 사용자 타입 변경 후 라우팅 체크 실행");
+                console.log("📊 변경된 사용자 정보:", {
+                  userType: userData.userType,
+                  businessVerificationStatus:
+                    userData.businessVerificationStatus,
+                  id: userData.id,
+                });
+
+                // useAutoRouting 훅이 자동으로 감지하도록 함
+                // setUser 호출로 인해 useAutoRouting의 useEffect가 트리거됨
+                console.log(
+                  "🔄 setUser 호출 완료 - useAutoRouting이 자동으로 처리할 예정"
+                );
+                console.log("📊 setUser 호출 후 사용자 상태:", {
+                  userType: userData.userType,
+                  businessVerificationStatus:
+                    userData.businessVerificationStatus,
+                  id: userData.id,
+                });
+
                 resolve();
               } catch (error) {
                 console.error("사용자 정보 다시 로드 실패:", error);
@@ -48,13 +74,13 @@ export default function SignupPage() {
             onError: (error) => {
               console.error("사용자 타입 변경 실패:", error);
               reject(error);
-            }
+            },
           }
         );
       });
-      
+
       console.log("✅ 사용자 타입 선택 완료:", userType);
-      
+
       // 자동 라우팅은 useAutoRouting 훅에서 처리됨
     } catch (error) {
       console.error("❌ 사용자 타입 선택 실패:", error);
@@ -70,7 +96,8 @@ export default function SignupPage() {
         // API 호출 성공/실패와 관계없이 Zustand 스토어도 정리
         clearUser();
         alert("로그아웃되었습니다.");
-      }
+        router.push("/");
+      },
     });
   };
 

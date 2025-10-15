@@ -24,6 +24,7 @@ import { useKakaoLogin } from "@/src/lib/auth/auth.query";
 import { KakaoLoginRequest, LoginResponse } from "@/src/lib/auth/types";
 import { AxiosError } from "axios";
 import { useUserStore } from "@/stores/userStore";
+import { useAutoRouting } from "@/hooks/useAutoRouting";
 
 export default function KakaoLogin() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function KakaoLogin() {
   // StrictMode로 인한 컴포넌트 재마운트 시에도 중복 호출을 막기 위한 전역 키
   const EXECUTION_FLAG_PREFIX = "kakao_login_";
   const { setUser } = useUserStore();
+  useAutoRouting();
 
   // 카카오 로그인 mutation 훅 사용
   const kakaoLoginMutation = useKakaoLogin({
@@ -48,9 +50,25 @@ export default function KakaoLogin() {
       console.log("🍪 RefreshToken이 HTTP-only 쿠키로 자동 설정되었습니다.");
 
       // Zustand 스토어에 사용자 정보 설정 (즉시 반영, persist 미들웨어가 localStorage 관리)
-      setUser(data.user);
-      console.log("🔄 Zustand 스토어 업데이트 완료:", data.user);
-      
+      // auth/types의 User를 api/user의 User로 변환 (businessVerificationStatus 추가)
+      const userWithBusinessStatus = {
+        ...data.user,
+        profileImageUrl: data.user.profileImageUrl || null, // undefined를 null로 변환
+        phoneNumber: data.user.phoneNumber || null, // undefined를 null로 변환
+        userRole:
+          data.user.userRole === "BUSINESS_OWNER" ? "USER" : data.user.userRole, // BUSINESS_OWNER를 USER로 변환
+        businessVerificationStatus: null, // PENDING 사용자는 아직 사업자 인증 상태가 없음
+      };
+      setUser(userWithBusinessStatus);
+      console.log("🔄 Zustand 스토어 업데이트 완료:", userWithBusinessStatus);
+
+      // PENDING 사용자의 경우 즉시 /signup으로 리다이렉트
+      // if (data.user.userType === "PENDING") {
+      //   console.log("⚡ PENDING 사용자 감지 - 즉시 /signup으로 리다이렉트");
+      //   router.push("/signup");
+      //   return;
+      // }
+
       // 자동 라우팅은 useAutoRouting 훅에서 처리됨
       console.log("⚡ 자동 라우팅이 처리할 예정");
     },
@@ -219,7 +237,10 @@ export default function KakaoLogin() {
         console.log("카카오 로그인 URL:", kakaoAuthUrl);
         console.log("클라이언트 ID:", KAKAO_CLIENT_ID);
         console.log("리다이렉트 URI:", REDIRECT_URI);
-        console.log("요청 scope:", "profile_nickname,profile_image,account_email (전화번호 제외 - 임시)");
+        console.log(
+          "요청 scope:",
+          "profile_nickname,profile_image,account_email (전화번호 제외 - 임시)"
+        );
         console.log("📞 전화번호는 임시로 010-1234-XXXX 형태로 생성됩니다.");
         console.log("현재 환경:", process.env.NODE_ENV);
         console.log("현재 도메인:", window.location.hostname);
