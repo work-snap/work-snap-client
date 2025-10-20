@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
@@ -111,22 +112,16 @@ export default function Home() {
       <div className="w-full flex flex-col items-center gap-4 justify-center pb-8">
         <button
           onClick={handleKakaoLogin}
-          className="w-[90%] max-w-[340px] h-12 bg-[#FFE812] rounded-xl flex items-center shadow font-semibold text-main2 text-base"
+          className="w-[90%] max-w-[340px] cursor-pointer"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="ml-4"
-          >
-            <ellipse cx="12" cy="12" rx="12" ry="12" fill="#3C1E1E" />
-            <path
-              d="M12 6.5C8.41015 6.5 5.5 8.63401 5.5 11.25C5.5 13.0732 7.01213 14.6092 9.17013 15.3382L8.5 17.5L11.0112 15.7892C11.3292 15.8182 11.6612 15.8332 12 15.8332C15.5899 15.8332 18.5 13.6992 18.5 11.0832C18.5 8.4672 15.5899 6.5 12 6.5Z"
-              fill="#FFE812"
-            />
-          </svg>
-          <span className="flex-1 text-center">카카오로 계속하기</span>
+          <Image
+            src="/kakao_login_large_wide.png"
+            alt="카카오 로그인"
+            width={340}
+            height={48}
+            className="w-full h-auto"
+            priority
+          />
         </button>
       </div>
     </div>

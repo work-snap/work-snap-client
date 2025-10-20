@@ -11,6 +11,8 @@ import {
 import { useResisterBusiness } from "@/src/lib/auth/auth.query";
 import { authApis } from "@/src/lib/auth/auth";
 import { useUserStore } from "@/src/stores/userStore";
+import { useChangeUserType } from "@/lib/queries/changeUserType";
+import { getUser } from "@/lib/api/user";
 import LoadingAuthentication from "@/src/app/components/loadingAuthentication";
 import Loading from "@/src/app/components/loading";
 import { ImageUploadSection } from "./components";
@@ -22,7 +24,10 @@ export default function BusinessSignupStep1() {
   const [isCheckingBusinessOwner, setIsCheckingBusinessOwner] = useState(false);
 
   // Zustand 스토어에서 사업자 등록 관련 액션 가져오기
-  const { setBusinessRegistrationResponse } = useUserStore();
+  const { setBusinessRegistrationResponse, setUser } = useUserStore();
+
+  // 사용자 타입 변경 훅
+  const changeUserTypeMutation = useChangeUserType();
 
   // 사업자 정보 확인 및 리다이렉트 로직
   useEffect(() => {
@@ -213,6 +218,46 @@ export default function BusinessSignupStep1() {
     });
   };
 
+  // 뒤로가기 버튼 핸들러: userType을 PENDING으로 변경
+  const handleBackToSignup = async () => {
+    try {
+      console.log("🔄 사용자 타입을 PENDING으로 변경 중...");
+
+      await new Promise<void>((resolve, reject) => {
+        changeUserTypeMutation.mutate(
+          { userType: "PENDING" },
+          {
+            onSuccess: async () => {
+              console.log("✅ 사용자 타입 PENDING으로 변경 성공");
+
+              // 최신 사용자 정보를 다시 로드하여 Zustand 스토어 업데이트
+              try {
+                const userData = await getUser();
+                setUser(userData);
+                console.log("✅ 사용자 정보 업데이트 완료");
+
+                // /signup 페이지로 이동
+                router.push("/signup");
+                resolve();
+              } catch (error) {
+                console.error("❌ 사용자 정보 로드 실패:", error);
+                reject(error);
+              }
+            },
+            onError: (error) => {
+              console.error("❌ 사용자 타입 변경 실패:", error);
+              reject(error);
+            },
+          }
+        );
+      });
+    } catch (error) {
+      console.error("❌ 뒤로가기 처리 중 오류:", error);
+      // 실패해도 페이지 이동은 시도
+      router.push("/signup");
+    }
+  };
+
   return (
     <>
       {isPending ? (
@@ -226,7 +271,11 @@ export default function BusinessSignupStep1() {
         <div className="h-dvh flex flex-col bg-white max-w-[430px] w-full mx-auto">
           {/* 헤더 */}
           <div className="flex items-center py-4 px-2 flex-shrink-0">
-            <button onClick={() => router.push("/signup")} className="p-2">
+            <button
+              onClick={handleBackToSignup}
+              className="p-2"
+              disabled={changeUserTypeMutation.isPending}
+            >
               <IoArrowBack size={24} />
             </button>
           </div>

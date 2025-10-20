@@ -43,10 +43,6 @@ export default function MyPage() {
     deleteUser(undefined, {
       onSuccess: () => {
         setShowDeleteModal(false);
-        toast({
-          title: "회원 탈퇴 완료",
-          description: "회원 탈퇴가 완료되었습니다.",
-        });
         // Zustand 스토어 및 React Query 캐시 초기화
         queryClient.clear();
         clearUser();
@@ -69,10 +65,6 @@ export default function MyPage() {
 
   const confirmLogout = () => {
     setShowLogoutModal(false);
-    toast({
-      title: "로그아웃 완료",
-      description: "로그아웃되었습니다.",
-    });
     // Zustand 스토어 및 React Query 캐시 초기화
     queryClient.clear();
     clearUser();

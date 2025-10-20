@@ -43,9 +43,12 @@ export default function BusinessInfoDisplay() {
   // 로딩 상태 표시
   if (isLoading) {
     return (
-      <div className="w-full pb-24">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">사업자 정보를 불러오는 중...</div>
+      <div className="w-full flex justify-center items-center mt-6">
+        <div className="relative">
+          <div className="w-12 h-12 border-4 border-gray2 border-t-main rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-6 h-6 bg-white rounded-full" />
+          </div>
         </div>
       </div>
     );

@@ -4,7 +4,7 @@ import { ApiResponse } from "@/src/types/api";
 import api from "../api"; // axios instance
 
 export interface UserTypeChangeRequest {
-  userType: "BUSINESS_OWNER" | "PART_TIME_WORKER";
+  userType: "BUSINESS_OWNER" | "PART_TIME_WORKER" | "PENDING";
   additionalInfo?: string;
 }
 

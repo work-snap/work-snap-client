@@ -1,0 +1,110 @@
+"use client";
+
+interface SignupFormProps {
+  onUserTypeSelect: (userType: "BUSINESS_OWNER" | "PART_TIME_WORKER") => void;
+  isLoading: boolean;
+}
+
+/**
+ * 회원가입 폼 컴포넌트
+ * - 사용자 타입 선택 버튼 UI
+ * - 정적 컨텐츠는 SSR로 렌더링 가능
+ */
+export default function SignupForm({
+  onUserTypeSelect,
+  isLoading,
+}: SignupFormProps) {
+  return (
+    <div className="flex flex-col items-start px-4 pt-2 w-full">
+      {/* 타이틀 */}
+      <div className="mb-1 w-full">
+        <span className="text-4xl font-extrabold text-main">Work Snap</span>
+        <span className="text-2xl font-extrabold text-gray5 ml-1">
+          을 어떻게 이용하실 예정이신가요?
+        </span>
+      </div>
+      <div className="text-gray3 text-sm mb-10 mt-2 w-full">
+        사용자 유형을 선택해 주세요.
+      </div>
+
+      {/* 선택 버튼 */}
+      <div className="w-full flex flex-col gap-4">
+        <button
+          onClick={() => onUserTypeSelect("PART_TIME_WORKER")}
+          disabled={isLoading}
+          className="w-full bg-gray2 rounded-xl py-7 flex flex-col items-center justify-center hover:bg-gray3 transition-colors disabled:opacity-50"
+          aria-label="알바님으로 가입"
+        >
+          <WorkerIcon />
+          <span className="mt-2 text-gray5 font-semibold">알바님</span>
+        </button>
+
+        <button
+          onClick={() => onUserTypeSelect("BUSINESS_OWNER")}
+          disabled={isLoading}
+          className="w-full bg-gray2 rounded-xl py-7 flex flex-col items-center justify-center hover:bg-gray3 transition-colors disabled:opacity-50"
+          aria-label="사장님으로 가입"
+        >
+          <OwnerIcon />
+          <span className="mt-2 text-gray5 font-semibold">사장님</span>
+        </button>
+      </div>
+
+      {/* 로딩 표시 */}
+      {isLoading && (
+        <div className="w-full flex justify-center items-center mt-6">
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-gray2 border-t-main rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-6 h-6 bg-white rounded-full" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 알바님 아이콘
+ */
+function WorkerIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="60"
+      viewBox="0 0 104.689 128.061"
+      aria-hidden="true"
+    >
+      <path
+        id="emoji_people_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24"
+        d="M192.015-751.939v-84.68a40.422,40.422,0,0,1-23.291-16.088A45.946,45.946,0,0,1,160-880h12.806a32.369,32.369,0,0,0,8.564,22.651q8.564,9.364,21.85,9.364h16.008a22.767,22.767,0,0,1,8.964,1.761,23.573,23.573,0,0,1,7.524,5.122l28.974,28.974-8.964,8.964-25.292-25.292v76.516H217.627v-38.418H204.821v38.418Zm19.209-102.448a12.332,12.332,0,0,1-9.044-3.762,12.332,12.332,0,0,1-3.762-9.044,12.331,12.331,0,0,1,3.762-9.044A12.331,12.331,0,0,1,211.224-880a12.331,12.331,0,0,1,9.044,3.762,12.331,12.331,0,0,1,3.762,9.044,12.331,12.331,0,0,1-3.762,9.044A12.332,12.332,0,0,1,211.224-854.388Z"
+        transform="translate(-160 880)"
+        fill="#fa6956"
+      />
+    </svg>
+  );
+}
+
+/**
+ * 사장님 아이콘
+ */
+function OwnerIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="50"
+      height="60"
+      viewBox="0 0 115.049 103.06"
+      aria-hidden="true"
+    >
+      <path
+        id="storefront_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24"
+        d="M188.177-793.909v45.518a11.027,11.027,0,0,1-3.364,8.087,11.027,11.027,0,0,1-8.087,3.364H96.568a11.027,11.027,0,0,1-8.087-3.364,11.027,11.027,0,0,1-3.364-8.087v-45.518a19.706,19.706,0,0,1-5.081-7.73,15.534,15.534,0,0,1-.072-10.306l6.012-19.467a12.65,12.65,0,0,1,4.079-6.155,10.336,10.336,0,0,1,6.8-2.433H176.44a10.246,10.246,0,0,1,6.728,2.362,13.321,13.321,0,0,1,4.151,6.227l6.012,19.467a15.1,15.1,0,0,1-.072,10.163A22.623,22.623,0,0,1,188.177-793.909Zm-38.934-6.012a6.9,6.9,0,0,0,5.869-2.648,7.816,7.816,0,0,0,1.575-5.94l-3.149-20.039H142.372v21.185a7.541,7.541,0,0,0,2,5.225A6.318,6.318,0,0,0,149.243-799.921Zm-25.765,0a7.017,7.017,0,0,0,5.368-2.219,7.4,7.4,0,0,0,2.076-5.225v-21.185H119.756l-3.149,20.039a7.259,7.259,0,0,0,1.5,6.012A6.577,6.577,0,0,0,123.478-799.921Zm-25.479,0a6.3,6.3,0,0,0,4.509-1.861,8,8,0,0,0,2.362-4.724l3.149-22.043H96.854l-5.726,19.181a7.875,7.875,0,0,0,.93,6.155A6.228,6.228,0,0,0,98-799.921Zm77.3,0a6.384,6.384,0,0,0,6.012-3.292,7.276,7.276,0,0,0,.859-6.155l-6.012-19.181H165.275l3.149,22.043a8,8,0,0,0,2.362,4.724A6.3,6.3,0,0,0,175.295-799.921Zm-78.727,51.53h80.158v-40.365a3.457,3.457,0,0,1-.93.286h-.5a16.782,16.782,0,0,1-6.8-1.288,19.327,19.327,0,0,1-5.8-4.151,18.884,18.884,0,0,1-5.869,4.008,17.4,17.4,0,0,1-7.014,1.431,18.268,18.268,0,0,1-7.229-1.431,18.65,18.65,0,0,1-5.94-4.008,17.457,17.457,0,0,1-5.654,4.008,16.9,16.9,0,0,1-6.942,1.431,19.011,19.011,0,0,1-7.515-1.431,18.65,18.65,0,0,1-5.94-4.008,18.817,18.817,0,0,1-5.94,4.223A17.243,17.243,0,0,1,98-788.47h-.644a1.452,1.452,0,0,1-.787-.286Zm80.158,0h0Z"
+        transform="translate(-79.122 840)"
+        fill="#fa6956"
+      />
+    </svg>
+  );
+}
