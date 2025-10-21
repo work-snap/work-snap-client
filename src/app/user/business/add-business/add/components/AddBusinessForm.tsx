@@ -69,7 +69,7 @@ export default function AddBusinessForm() {
         },
         onError: (error) => {
           console.error("❌ 등록 실패:", error);
-          showToast("등록에 실패했습니다. 다시 시도해주세요.");
+          showToast("올바른 전화번호를 입력해주세요.");
         },
       }
     );
