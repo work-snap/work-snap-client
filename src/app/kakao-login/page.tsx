@@ -18,7 +18,7 @@
  * - CSRF 공격 방지 (state 파라미터)
  */
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKakaoLogin } from "@/src/lib/auth/auth.query";
 import { KakaoLoginRequest, LoginResponse } from "@/src/lib/auth/types";
@@ -26,7 +26,34 @@ import { AxiosError } from "axios";
 import { useUserStore } from "@/stores/userStore";
 import { useAutoRouting } from "@/hooks/useAutoRouting";
 
-export default function KakaoLogin() {
+// 로딩 UI 컴포넌트
+function KakaoLoginLoading() {
+  return (
+    <div className="h-dvh flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-main rounded-full mx-auto mb-4 flex items-center justify-center">
+          <svg
+            className="w-8 h-8 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
+          </svg>
+        </div>
+        <p className="text-gray-600">카카오 로그인 준비 중...</p>
+      </div>
+    </div>
+  );
+}
+
+// useSearchParams를 사용하는 실제 컴포넌트
+function KakaoLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -522,5 +549,14 @@ export default function KakaoLogin() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 메인 export 컴포넌트 - Suspense로 감싸기
+export default function KakaoLogin() {
+  return (
+    <Suspense fallback={<KakaoLoginLoading />}>
+      <KakaoLoginContent />
+    </Suspense>
   );
 }
