@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, Suspense } from "react";
 import type { FormEvent } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { useGetWorkplaceDetail } from "@/lib/queries/getWPDetail";
 import { useUpdateEmployee } from "@/lib/queries/updateEmployee";
 import { useDeleteEmployee } from "@/lib/queries/useDeleteEmployee";
 
-export default function EditEmployee() {
+function EditEmployeeContent() {
   const updateEmployeeMutation = useUpdateEmployee();
   const deleteEmployeeMutation = useDeleteEmployee();
   const router = useRouter();
@@ -702,5 +702,17 @@ export default function EditEmployee() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EditEmployee() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-dvh flex items-center justify-center">로딩 중...</div>
+      }
+    >
+      <EditEmployeeContent />
+    </Suspense>
   );
 }

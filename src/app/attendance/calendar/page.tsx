@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, Suspense } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -216,7 +216,7 @@ const getAttendanceTextColor = (status: string, hasRecord: boolean) => {
   }
 };
 
-export default function WorkCalendar() {
+function WorkCalendarContent() {
   const searchParams = useSearchParams();
   const workplaceIdFromQuery = searchParams.get("workplaceId");
 
@@ -669,5 +669,17 @@ export default function WorkCalendar() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function WorkCalendar() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-dvh flex items-center justify-center">로딩 중...</div>
+      }
+    >
+      <WorkCalendarContent />
+    </Suspense>
   );
 }
