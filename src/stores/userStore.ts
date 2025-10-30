@@ -425,8 +425,22 @@ export const useUserStore = create<UserState>()(
         try {
           router.push(requiredRoute);
           console.log("[ZUSTAND] 🚀 router.push 호출 완료!");
+
+          // ✅ 200ms 후에도 경로가 변경되지 않으면 window.location 사용
+          setTimeout(() => {
+            if (window.location.pathname !== requiredRoute) {
+              console.log(
+                "[ZUSTAND] ⚠️ router.push 실패 감지 - window.location.href로 fallback"
+              );
+              window.location.href = requiredRoute;
+            }
+          }, 200);
         } catch (error) {
-          console.error("[ZUSTAND] ❌ router.push 실패:", error);
+          console.error(
+            "[ZUSTAND] ❌ router.push 실패 - 즉시 fallback:",
+            error
+          );
+          window.location.href = requiredRoute;
         }
       },
 

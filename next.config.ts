@@ -90,7 +90,8 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Access-Control-Allow-Headers",
-            value: "Content-Type, Authorization",
+            value:
+              "Content-Type, Authorization, Next-Router-State-Tree, Next-Url, RSC, Next-Router-Prefetch",
           },
           {
             key: "Access-Control-Allow-Credentials",

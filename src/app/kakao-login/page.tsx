@@ -224,6 +224,14 @@ function KakaoLoginContent() {
           return;
         }
 
+        // ✅ 이미 로그인된 사용자 확인 (무한 리다이렉트 방지)
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          console.log("✅ 이미 로그인된 사용자 감지 - 자동 라우팅에 맡김");
+          // useAutoRouting이 적절한 페이지로 이동시킬 것이므로 여기서는 리턴
+          return;
+        }
+
         // 코드가 없으면 즉시 카카오 로그인 페이지로 리다이렉트 (로딩 없이)
         const KAKAO_CLIENT_ID = "f5d47f3b1a3544fbb879afa0f57c2470";
         const REDIRECT_URI = getRedirectUri();
