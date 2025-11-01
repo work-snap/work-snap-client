@@ -1,5 +1,5 @@
 // src/lib/queries/joinUser.ts
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api"; // axios instance
 import { ApiResponse, OnboardResponse } from "@/src/types/api";
 
@@ -21,6 +21,8 @@ export interface JoinUserRequest {
 }
 
 export const useJoinUser = () => {
+  const queryClient = useQueryClient();
+
   return useMutation<ApiResponse<OnboardResponse>, Error, JoinUserRequest>({
     mutationFn: async ({
       workplaceId,
@@ -45,6 +47,12 @@ export const useJoinUser = () => {
         }
       );
       return res.data;
+    },
+    onSuccess: (_data, variables) => {
+      // ✅ 직원 목록 캐시 즉시 무효화 (최신 데이터 강제 재조회)
+      queryClient.invalidateQueries({
+        queryKey: ["employeeList", variables.workplaceId],
+      });
     },
   });
 };

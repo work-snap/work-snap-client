@@ -16,6 +16,7 @@ import { useGetEmployeeDetail } from "@/lib/queries/getEmployeeDetail";
 import { useGetWorkplaceDetail } from "@/lib/queries/getWPDetail";
 import { useUpdateEmployee } from "@/lib/queries/updateEmployee";
 import { useDeleteEmployee } from "@/lib/queries/useDeleteEmployee";
+import Loading from "@/app/components/loading";
 
 function EditEmployeeContent() {
   const updateEmployeeMutation = useUpdateEmployee();
@@ -707,11 +708,7 @@ function EditEmployeeContent() {
 
 export default function EditEmployee() {
   return (
-    <Suspense
-      fallback={
-        <div className="h-dvh flex items-center justify-center">로딩 중...</div>
-      }
-    >
+    <Suspense fallback={<Loading />}>
       <EditEmployeeContent />
     </Suspense>
   );
