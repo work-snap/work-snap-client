@@ -141,20 +141,55 @@ export default function BusinessSignupStep1() {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
+      reader.onload = () => {
+        const result = reader.result as string;
+        if (!result || result.length === 0) {
+          reject(new Error("이미지 변환에 실패했습니다."));
+        } else {
+          resolve(result);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error("❌ FileReader 에러:", error);
+        reject(new Error("이미지 파일을 읽는 중 오류가 발생했습니다."));
+      };
     });
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      // 파일 크기 검증 (10MB)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+      if (file.size > MAX_FILE_SIZE) {
+        alert("파일 크기는 10MB를 초과할 수 없습니다.");
+        return;
+      }
+
+      // 파일 형식 검증
+      const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+      if (!validTypes.includes(file.type)) {
+        alert("JPG, PNG 형식의 이미지만 업로드 가능합니다.");
+        return;
+      }
+
+      console.log("✅ 이미지 파일 검증 통과:", {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      });
+
       setImageFile(file);
 
       // 이미지 미리보기 생성
       const reader = new FileReader();
       reader.onload = (event) => {
         setImagePreview(event.target?.result as string);
+      };
+      reader.onerror = (error) => {
+        console.error("❌ 파일 읽기 오류:", error);
+        alert("이미지 파일을 읽는 중 오류가 발생했습니다.");
       };
       reader.readAsDataURL(file);
     }
@@ -193,13 +228,6 @@ export default function BusinessSignupStep1() {
     Error,
     ResisterBusinessRequest
   > = useResisterBusiness();
-
-  // 에러 확인용
-  useEffect(() => {
-    if (resisterBusinessError) {
-      handleError(resisterBusinessError);
-    }
-  }, [resisterBusinessError]);
 
   // 사업자 등록 성공 시 info 페이지로 리다이렉트
   const handleBusinessRegistration = (request: ResisterBusinessRequest) => {
@@ -307,6 +335,7 @@ export default function BusinessSignupStep1() {
               onRemoveImage={handleRemoveImage}
               onComplete={handleBusinessRegistration}
               toBase64={toBase64}
+              isPending={isPending}
             />
           </div>
         </div>
