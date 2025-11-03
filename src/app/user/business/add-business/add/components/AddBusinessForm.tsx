@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCreateWP } from "@/src/lib/queries/useCreateWP";
 import ToastModal from "@/src/app/components/ToastModal";
 
@@ -24,6 +25,7 @@ const formatPhoneNumber = (value: string): string => {
  */
 export default function AddBusinessForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { mutate: createWorkplace, isPending } = useCreateWP();
 
   // Form State
@@ -61,6 +63,9 @@ export default function AddBusinessForm() {
         onSuccess: (data) => {
           console.log("✅ 등록 성공:", data);
           showToast(`사업장 등록 완료! ${data.workplaceName}`);
+
+          // 🔄 사업장 목록 캐시 무효화 (새로 등록된 사업장이 바로 표시되도록)
+          queryClient.invalidateQueries({ queryKey: ["myWorkplaces"] });
 
           // 1초 후 목록 페이지로 이동
           setTimeout(() => {

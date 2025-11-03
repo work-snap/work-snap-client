@@ -325,3 +325,48 @@ export const checkLocationPermission = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * 월별 출근 캘린더 데이터 조회
+ */
+export interface MonthlyCalendarRequest {
+  workplaceId: number;
+  year: number;
+  month: number;
+}
+
+export interface MonthlyCalendarResponse {
+  workplaceId: number;
+  workplaceName: string;
+  year: number;
+  month: number;
+  dailyRecords: DailyRecord[];
+}
+
+export interface DailyRecord {
+  date: string; // YYYY-MM-DD
+  dayOfWeek: string;
+  schedules: ScheduleItemRes[];
+}
+
+export const fetchMonthlyCalendar = async (
+  params: MonthlyCalendarRequest
+): Promise<MonthlyCalendarResponse> => {
+  try {
+    const response = await api.get<ApiResponse<MonthlyCalendarResponse>>(
+      "/api/v1/attendance/calendar/monthly",
+      { params }
+    );
+
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    } else {
+      throw new Error(
+        response.data.message || "월별 캘린더 조회에 실패했습니다."
+      );
+    }
+  } catch (error) {
+    console.error("월별 캘린더 조회 실패:", error);
+    throw error;
+  }
+};

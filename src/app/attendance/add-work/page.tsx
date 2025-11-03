@@ -79,6 +79,22 @@ export default function AddWorkPage() {
       return;
     }
 
+    // 근무 시간 검증 (1시간 이상)
+    const [startHour, startMinute] = form.startTime.split(":").map(Number);
+    const [endHour, endMinute] = form.endTime.split(":").map(Number);
+    const startTimeInMinutes = startHour * 60 + startMinute;
+    const endTimeInMinutes = endHour * 60 + endMinute;
+    const workDurationInMinutes = endTimeInMinutes - startTimeInMinutes;
+
+    if (workDurationInMinutes < 60) {
+      toast({
+        title: "입력 오류",
+        description: "근무 시간은 1시간 이상이어야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const requestData = {
       workplaceId: form.workplaceId!,
       workDate: form.date,

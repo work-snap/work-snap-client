@@ -22,7 +22,7 @@ import {
   attendanceService,
   AttendanceRecord,
 } from "@/services/attendanceService";
-import { fetchDailySchedules } from "@/api/attendanceApi";
+import { fetchMonthlyCalendar } from "@/api/attendanceApi";
 import {
   ScedulesProps,
   AttendanceRecordProps,
@@ -294,157 +294,155 @@ function WorkCalendarContent() {
       try {
         const year = currentMonth.getFullYear();
         const month = currentMonth.getMonth() + 1;
-        const daysInMonth = getDaysInMonth(currentMonth);
 
-        // 실제 API를 사용해서 월별 데이터 수집
+        // 월별 API 호출 (한 번에 전체 월 데이터 조회)
+        const monthlyData = await fetchMonthlyCalendar({
+          workplaceId: form.workplaceId,
+          year,
+          month,
+        });
+
         const attendanceData: AttendanceRecord[] = [];
 
-        // 각 날짜별로 스케줄 데이터를 가져와서 출근 기록 추출
-        for (let day = 1; day <= daysInMonth; day++) {
-          const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(
-            day
-          ).padStart(2, "0")}`;
+        // 일별 레코드를 순회하며 출근 기록 추출
+        monthlyData.dailyRecords?.forEach((dailyRecord) => {
+          const dateStr = dailyRecord.date;
 
-          try {
-            const dailySchedules = await fetchDailySchedules(dateStr);
+          // 각 날짜의 스케줄 순회
+          dailyRecord.schedules?.forEach((schedule) => {
+            // attendanceRecord가 있고 출근했거나, 직접 actualStartTime이 있는 경우
+            const hasAttendanceRecord = schedule.attendanceId !== null;
+            const hasDirectAttendance = schedule.actualStartTime;
 
-            // 선택된 사업장의 스케줄만 필터링
-            const workplaceSchedules = dailySchedules.filter(
-              (schedule) => schedule.workplaceId === form.workplaceId
+            // attendanceStatus가 null인 경우도 처리 (무단결근)
+            const hasScheduleWithNullStatus =
+              schedule.attendanceStatus === null &&
+              schedule.status === "SCHEDULED";
+
+            // 임시 스케줄 객체 생성 (실시간 무단결근 체크용)
+            const tempSchedule = {
+              id: schedule.id,
+              workplaceId: schedule.workplaceId,
+              workplaceName: schedule.workplaceName,
+              startTime: schedule.startTime,
+              endTime: schedule.endTime,
+              actualStartTime: schedule.actualStartTime,
+              attendanceRecord: hasAttendanceRecord
+                ? {
+                    isCheckedIn: !!schedule.actualStartTime,
+                  }
+                : null,
+              scheduledStartDate: `${dateStr}T${schedule.startTime}:00`,
+            };
+
+            // 실시간 무단결근 체크
+            const isAbsentRealtime = isRealtimeAbsent(
+              tempSchedule as any,
+              currentTime
             );
 
-            // 각 스케줄의 출근 기록 확인
-            workplaceSchedules.forEach((schedule) => {
-              // attendanceRecord가 있고 출근했거나, 직접 actualStartTime이 있는 경우
-              const hasAttendanceRecord =
-                schedule.attendanceRecord &&
-                schedule.attendanceRecord.isCheckedIn;
-              const hasDirectAttendance = (schedule as any).actualStartTime;
+            if (
+              hasAttendanceRecord ||
+              hasDirectAttendance ||
+              hasScheduleWithNullStatus ||
+              isAbsentRealtime
+            ) {
+              // 스케줄 상태에 따른 처리
+              let finalStatus = schedule.attendanceStatus;
 
-              // attendanceStatus가 null인 경우도 처리 (무단결근)
-              const hasScheduleWithNullStatus =
-                (schedule as any).attendanceStatus === null &&
-                (schedule as any).status === "SCHEDULED";
-
-              // 실시간 무단결근 체크
-              const isAbsentRealtime = isRealtimeAbsent(schedule, currentTime);
-
-              if (
-                hasAttendanceRecord ||
-                hasDirectAttendance ||
-                hasScheduleWithNullStatus ||
-                isAbsentRealtime
-              ) {
-                // 스케줄 상태에 따른 처리
-                let finalStatus =
-                  (schedule as any).attendanceStatus ||
-                  schedule.attendanceRecord?.attendanceStatus;
-
-                // 실시간 무단결근 체크 (최우선)
-                if (isAbsentRealtime) {
-                  finalStatus = "ABSENT";
-                  console.log(
-                    `실시간 무단결근 처리: ${dateStr}, 스케줄 ID: ${schedule.id}, 사업장: ${schedule.workplaceName}`
-                  );
-                }
-                // attendanceStatus가 null이고 status가 SCHEDULED인 경우 무단결근으로 처리
-                else if (
-                  finalStatus === null &&
-                  (schedule as any).status === "SCHEDULED"
-                ) {
-                  finalStatus = "ABSENT";
-                  console.log(
-                    `서버 무단결근 처리: ${dateStr}, 스케줄 ID: ${schedule.id}, 사업장: ${schedule.workplaceName}`
-                  );
-                } else if (finalStatus === null || finalStatus === undefined) {
-                  finalStatus = "NORMAL";
-                }
-
-                // 서버 응답에서 직접 시간 정보 가져오기
-                const actualCheckInTime =
-                  (schedule as any).actualStartTime ||
-                  schedule.attendanceRecord?.checkInTime;
-                const actualCheckOutTime =
-                  (schedule as any).actualEndTime ||
-                  schedule.attendanceRecord?.checkOutTime;
-                const isCheckedOut = !!actualCheckOutTime;
-
-                // 임시 attendanceRecord 객체 생성 (기존 함수 호환용)
-                const tempAttendanceRecord = {
-                  checkInTime: actualCheckInTime,
-                  checkOutTime: actualCheckOutTime,
-                  isCheckedIn: !!actualCheckInTime,
-                  isCheckedOut: isCheckedOut,
-                  attendanceStatus: finalStatus,
-                };
-
-                // 무단결근이 아닌 경우에만 조퇴/지각 검사 수행
-                if (finalStatus !== "ABSENT") {
-                  // 조퇴 여부 체크 (가장 우선순위)
-                  const isEarly = isEarlyDeparture(
-                    schedule,
-                    tempAttendanceRecord as any
-                  );
-                  const isLate = isLateArrival(
-                    schedule,
-                    tempAttendanceRecord as any
-                  );
-
-                  if (isEarly) {
-                    finalStatus = "EARLY_DEPARTURE";
-                  }
-                  // 지각 여부 체크 (두 번째 우선순위)
-                  else if (isLate) {
-                    finalStatus = "LATE_ARRIVAL";
-                  }
-                }
-
-                attendanceData.push({
-                  id: (
-                    (schedule as any).attendanceId || schedule.id
-                  ).toString(),
-                  employeeId: (
-                    (schedule as any).userId || "unknown"
-                  ).toString(),
-                  workDate: dateStr,
-                  status: finalStatus as any,
-                  workplaceId: schedule.workplaceId.toString(),
-                  actualStartTime:
-                    finalStatus === "ABSENT"
-                      ? undefined
-                      : actualCheckInTime
-                      ? actualCheckInTime.includes("T")
-                        ? actualCheckInTime.split("T")[1]
-                        : actualCheckInTime
-                      : undefined,
-                  actualEndTime:
-                    finalStatus === "ABSENT"
-                      ? undefined
-                      : actualCheckOutTime
-                      ? actualCheckOutTime.includes("T")
-                        ? actualCheckOutTime.split("T")[1]
-                        : actualCheckOutTime
-                      : undefined,
-                  totalWorkMinutes:
-                    finalStatus === "ABSENT"
-                      ? undefined
-                      : (schedule as any).actualHours
-                      ? Math.round((schedule as any).actualHours * 60)
-                      : undefined,
-                  overtimeMinutes:
-                    finalStatus === "ABSENT"
-                      ? undefined
-                      : (schedule as any).overtimeHours
-                      ? Math.round((schedule as any).overtimeHours * 60)
-                      : undefined,
-                });
+              // 실시간 무단결근 체크 (최우선)
+              if (isAbsentRealtime) {
+                finalStatus = "ABSENT";
+                console.log(
+                  `실시간 무단결근 처리: ${dateStr}, 스케줄 ID: ${schedule.id}, 사업장: ${schedule.workplaceName}`
+                );
               }
-            });
-          } catch (error) {
-            // 특정 날짜에 데이터가 없는 경우는 무시
-            console.debug(`${dateStr} 데이터 없음:`, error);
-          }
-        }
+              // attendanceStatus가 null이고 status가 SCHEDULED인 경우 무단결근으로 처리
+              else if (
+                finalStatus === null &&
+                schedule.status === "SCHEDULED"
+              ) {
+                finalStatus = "ABSENT";
+                console.log(
+                  `서버 무단결근 처리: ${dateStr}, 스케줄 ID: ${schedule.id}, 사업장: ${schedule.workplaceName}`
+                );
+              } else if (finalStatus === null || finalStatus === undefined) {
+                finalStatus = "NORMAL";
+              }
+
+              // 서버 응답에서 직접 시간 정보 가져오기
+              const actualCheckInTime = schedule.actualStartTime;
+              const actualCheckOutTime = schedule.actualEndTime;
+              const isCheckedOut = !!actualCheckOutTime;
+
+              // 임시 attendanceRecord 객체 생성 (기존 함수 호환용)
+              const tempAttendanceRecord = {
+                checkInTime: actualCheckInTime,
+                checkOutTime: actualCheckOutTime,
+                isCheckedIn: !!actualCheckInTime,
+                isCheckedOut: isCheckedOut,
+                attendanceStatus: finalStatus,
+              };
+
+              // 무단결근이 아닌 경우에만 조퇴/지각 검사 수행
+              if (finalStatus !== "ABSENT") {
+                // 조퇴 여부 체크 (가장 우선순위)
+                const isEarly = isEarlyDeparture(
+                  tempSchedule as any,
+                  tempAttendanceRecord as any
+                );
+                const isLate = isLateArrival(
+                  tempSchedule as any,
+                  tempAttendanceRecord as any
+                );
+
+                if (isEarly) {
+                  finalStatus = "EARLY_DEPARTURE";
+                }
+                // 지각 여부 체크 (두 번째 우선순위)
+                else if (isLate) {
+                  finalStatus = "LATE_ARRIVAL";
+                }
+              }
+
+              attendanceData.push({
+                id: (schedule.attendanceId || schedule.id).toString(),
+                employeeId: schedule.userId?.toString() || "unknown",
+                workDate: dateStr,
+                status: finalStatus as any,
+                workplaceId: schedule.workplaceId.toString(),
+                actualStartTime:
+                  finalStatus === "ABSENT"
+                    ? undefined
+                    : actualCheckInTime
+                    ? actualCheckInTime.includes("T")
+                      ? actualCheckInTime.split("T")[1]
+                      : actualCheckInTime
+                    : undefined,
+                actualEndTime:
+                  finalStatus === "ABSENT"
+                    ? undefined
+                    : actualCheckOutTime
+                    ? actualCheckOutTime.includes("T")
+                      ? actualCheckOutTime.split("T")[1]
+                      : actualCheckOutTime
+                    : undefined,
+                totalWorkMinutes:
+                  finalStatus === "ABSENT"
+                    ? undefined
+                    : schedule.actualHours
+                    ? Math.round(schedule.actualHours * 60)
+                    : undefined,
+                overtimeMinutes:
+                  finalStatus === "ABSENT"
+                    ? undefined
+                    : schedule.overtimeHours
+                    ? Math.round(schedule.overtimeHours * 60)
+                    : undefined,
+              });
+            }
+          });
+        });
 
         setAttendanceRecords(attendanceData);
       } catch (error) {

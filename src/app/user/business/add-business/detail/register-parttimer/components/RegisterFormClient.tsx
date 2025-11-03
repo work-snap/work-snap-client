@@ -351,6 +351,15 @@ export default function RegisterFormClient({
     router.push(`/user/business/add-business/detail?idx=${workplaceId}`);
   };
 
+  // ✅ 모든 필수 필드가 입력되었는지 확인
+  const isFormValid =
+    code.trim() !== "" &&
+    name.trim() !== "" &&
+    phone.trim() !== "" &&
+    hourlyWage.trim() !== "" &&
+    Number(hourlyWage) > 0 &&
+    schedules.length > 0;
+
   return (
     <div className="h-dvh min-h-0 flex flex-col max-w-[430px] w-full mx-auto bg-white">
       {/* 상단 네비게이션 */}
@@ -514,7 +523,8 @@ export default function RegisterFormClient({
           <div className="w-full pt-6 pb-8">
             <Button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-lg"
+              disabled={!isFormValid}
+              className="w-full flex items-center justify-center gap-2 bg-main text-gray1 font-semibold rounded-xl h-[60px] text-lg disabled:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
               알바 등록하기
             </Button>

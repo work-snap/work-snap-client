@@ -43,6 +43,11 @@ export default function AttendanceClient() {
     router.push("/attendance/add-work");
   };
 
+  // 캘린더 페이지 이동 핸들러
+  const handleGoToCalendar = () => {
+    router.push("/attendance/calendar");
+  };
+
   // 날짜 포맷팅 함수
   function formatDisplayDate(date: Date) {
     return format(date, "yyyy년 M월 d일", { locale: ko });
@@ -101,9 +106,12 @@ export default function AttendanceClient() {
       <div className="bg-white w-full flex-shrink-0">
         <div className="flex justify-between items-center p-2 w-full space-x-2">
           {/* 왼쪽 고정 박스 */}
-          <div className="w-16 h-16 bg-main rounded-xl flex items-center justify-center">
+          <button
+            onClick={handleGoToCalendar}
+            className="w-16 h-16 bg-main rounded-xl flex items-center justify-center transition-colors hover:bg-opacity-90"
+          >
             <CalenderIcon />
-          </div>
+          </button>
           {/* 가운데 가변 박스 */}
           <div className="flex-1 bg-main rounded-xl p-2 flex items-center justify-between h-16 text-white font-semibold">
             <button onClick={handlePrevDay} className="p-1 rounded">
