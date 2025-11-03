@@ -69,7 +69,7 @@ export default function WorkplaceList() {
             등록된 사업장이 없습니다.
           </div>
         ) : (
-          <div className="flex flex-col gap-4 mt-4 px-4 pb-4">
+          <div className="flex flex-col gap-4 px-4 pb-4">
             {workplaces.map((b, idx) => (
               <div
                 key={b.id}
