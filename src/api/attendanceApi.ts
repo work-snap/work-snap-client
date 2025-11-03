@@ -337,12 +337,18 @@ export interface MonthlyCalendarRequest {
 
 export interface MonthlyCalendarResponse {
   workplaceId: number;
-  workplaceName: string;
   year: number;
   month: number;
-  dailyRecords: DailyRecord[];
+  days: DayStatus[];
 }
 
+export interface DayStatus {
+  date: string; // YYYY-MM-DD
+  statuses: string[]; // ["WORKDAY", "CHECKED_IN", "LATE", "EARLY_LEAVE", "ABSENT", "OFF"]
+  scheduleCount: number;
+}
+
+// 이전 타입 (하위 호환성을 위해 유지)
 export interface DailyRecord {
   date: string; // YYYY-MM-DD
   dayOfWeek: string;
