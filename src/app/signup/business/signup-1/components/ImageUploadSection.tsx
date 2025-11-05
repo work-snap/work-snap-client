@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { ResisterBusinessRequest } from "@/src/lib/auth/types";
 
@@ -23,30 +23,102 @@ export default function ImageUploadSection({
   toBase64,
   isPending = false,
 }: ImageUploadSectionProps) {
-  // Flutter에서 실행 중인지 감지
-  const isFlutterApp =
-    typeof window !== "undefined" &&
-    (window as any).ImagePickerChannel !== undefined;
+  // Flutter에서 실행 중인지 동적으로 감지 (채널이 나중에 등록될 수 있음)
+  const [isFlutterApp, setIsFlutterApp] = useState(false);
+
+  // 채널 존재 여부를 주기적으로 확인
+  useEffect(() => {
+    const checkChannel = () => {
+      const hasChannel =
+        typeof window !== "undefined" &&
+        (window as any).ImagePickerChannel !== undefined;
+
+      if (hasChannel !== isFlutterApp) {
+        console.log(`🔄 [Client] Flutter 앱 감지 상태 변경: ${hasChannel}`);
+        setIsFlutterApp(hasChannel);
+      }
+
+      return hasChannel;
+    };
+
+    // 초기 확인
+    checkChannel();
+
+    // 0.5초, 1초, 2초, 3초 후 재확인 (WebView 초기화 지연 대응)
+    const timeouts = [500, 1000, 2000, 3000].map((delay) =>
+      setTimeout(() => {
+        checkChannel();
+      }, delay)
+    );
+
+    return () => {
+      timeouts.forEach((timeout) => clearTimeout(timeout));
+    };
+  }, [isFlutterApp]);
+
+  // 🔍 디버깅: 채널 존재 여부 로깅
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("🔍 [Client] 채널 감지 상태:");
+      console.log("  - window 객체:", typeof window);
+      console.log("  - ImagePickerChannel:", typeof (window as any).ImagePickerChannel);
+      console.log("  - _hasImagePickerChannel:", (window as any)._hasImagePickerChannel);
+      console.log("  - isFlutterApp:", isFlutterApp);
+
+      // 1초 후 다시 확인 (WebView 초기화 지연 대응)
+      setTimeout(() => {
+        console.log("🔍 [Client] 1초 후 재확인:");
+        console.log("  - ImagePickerChannel:", typeof (window as any).ImagePickerChannel);
+        console.log("  - _hasImagePickerChannel:", (window as any)._hasImagePickerChannel);
+      }, 1000);
+
+      // 3초 후 다시 확인
+      setTimeout(() => {
+        console.log("🔍 [Client] 3초 후 재확인:");
+        console.log("  - ImagePickerChannel:", typeof (window as any).ImagePickerChannel);
+        console.log("  - _hasImagePickerChannel:", (window as any)._hasImagePickerChannel);
+      }, 3000);
+    }
+  }, []);
 
   // Flutter 앱용 이미지 선택 핸들러
   const handleFlutterImagePick = () => {
-    console.log("📸 Flutter 이미지 선택 요청");
-    if ((window as any).ImagePickerChannel) {
-      try {
-        (window as any).ImagePickerChannel.postMessage(
-          JSON.stringify({
-            type: "pickImage",
-            timestamp: new Date().toISOString(),
-          })
-        );
-        console.log("✅ Flutter에 이미지 선택 요청 전송 완료");
-      } catch (error) {
-        console.error("❌ Flutter 이미지 선택 요청 실패:", error);
-        alert("이미지 선택 요청에 실패했습니다.");
-      }
-    } else {
-      console.error("❌ ImagePickerChannel을 찾을 수 없습니다");
-      alert("이미지 선택 기능을 사용할 수 없습니다.");
+    console.log("📸 [Client] Flutter 이미지 선택 요청 시작");
+    console.log("  - ImagePickerChannel 타입:", typeof (window as any).ImagePickerChannel);
+    console.log("  - ImagePickerChannel 값:", (window as any).ImagePickerChannel);
+
+    // ImagePickerChannel 존재 여부 확인
+    if (!(window as any).ImagePickerChannel) {
+      console.error("❌ [Client] ImagePickerChannel을 찾을 수 없습니다");
+      console.error("  - window 객체 키:", Object.keys(window).filter(key => key.includes('Channel')));
+      alert(
+        "이미지 선택 기능을 사용할 수 없습니다.\n" +
+        "앱을 최신 버전으로 업데이트해주세요.\n" +
+        "문제가 지속되면 웹 브라우저에서 이용해주세요."
+      );
+      return;
+    }
+
+    try {
+      const message = JSON.stringify({
+        type: "pickImage",
+        timestamp: new Date().toISOString(),
+      });
+      console.log("📤 [Client] 전송할 메시지:", message);
+
+      (window as any).ImagePickerChannel.postMessage(message);
+      console.log("✅ [Client] Flutter에 이미지 선택 요청 전송 완료");
+    } catch (error) {
+      console.error("❌ [Client] Flutter 이미지 선택 요청 실패:", error);
+      console.error("  - 에러 상세:", {
+        name: (error as Error).name,
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+      });
+      alert(
+        "이미지 선택 요청에 실패했습니다.\n" +
+        "앱을 다시 시작하거나 웹 브라우저에서 이용해주세요."
+      );
     }
   };
 
@@ -59,13 +131,45 @@ export default function ImageUploadSection({
       (window as any).handleNativeImagePicked = async (dataUrl: string) => {
         console.log(
           "📸 Flutter에서 이미지 수신:",
-          dataUrl.substring(0, 50) + "..."
+          `길이: ${dataUrl?.length || 0}, 시작: ${dataUrl?.substring(0, 50) || 'undefined'}...`
         );
 
         try {
-          // Base64 데이터를 Blob으로 변환
-          const response = await fetch(dataUrl);
-          const blob = await response.blob();
+          // Base64 데이터 유효성 검증
+          if (!dataUrl) {
+            throw new Error("이미지 데이터가 비어있습니다.");
+          }
+
+          if (!dataUrl.startsWith("data:image/")) {
+            console.error("❌ 잘못된 데이터 형식:", dataUrl.substring(0, 100));
+            throw new Error("유효하지 않은 이미지 데이터입니다.");
+          }
+
+          console.log("✅ Base64 데이터 유효성 검증 통과");
+
+          // Base64를 Blob으로 변환 (fetch() 대신 직접 변환 - Android WebView CSP 우회)
+          const base64Data = dataUrl.split(',')[1];
+          const mimeType = dataUrl.split(';')[0].split(':')[1];
+
+          console.log("🔄 Base64 디코딩 시작...");
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: mimeType });
+
+          console.log("✅ Blob 변환 완료:", blob.size, "bytes");
+
+          // 파일 크기 검증 (10MB)
+          const MAX_FILE_SIZE = 10 * 1024 * 1024;
+          if (blob.size > MAX_FILE_SIZE) {
+            alert("파일 크기는 10MB를 초과할 수 없습니다.\n더 작은 이미지를 선택해주세요.");
+            return;
+          }
 
           // Blob을 File 객체로 변환
           const file = new File([blob], "business-license.jpg", {
@@ -89,7 +193,10 @@ export default function ImageUploadSection({
           console.log("✅ 이미지 업로드 핸들러 호출 완료");
         } catch (error) {
           console.error("❌ 이미지 변환 실패:", error);
-          alert("이미지 처리에 실패했습니다. 다시 시도해주세요.");
+          alert(
+            "이미지 처리에 실패했습니다.\n" +
+            (error instanceof Error ? error.message : "다시 시도해주세요.")
+          );
         }
       };
 
@@ -101,7 +208,19 @@ export default function ImageUploadSection({
       // 에러 콜백
       (window as any).handleNativeImageError = (error: string) => {
         console.error("❌ 이미지 선택 오류:", error);
-        alert("이미지 선택 중 오류가 발생했습니다. 다시 시도해주세요.");
+
+        // 사용자에게 더 구체적인 에러 메시지 표시
+        let errorMessage = "이미지 선택 중 오류가 발생했습니다.";
+
+        if (error.includes("permission") || error.includes("권한")) {
+          errorMessage = "갤러리 접근 권한이 필요합니다.\n기기 설정에서 Work Snap 앱의 권한을 확인해주세요.";
+        } else if (error.includes("size") || error.includes("크기")) {
+          errorMessage = "이미지 파일이 너무 큽니다.\n더 작은 이미지를 선택해주세요.";
+        } else if (error.includes("format") || error.includes("형식")) {
+          errorMessage = "지원하지 않는 이미지 형식입니다.\nJPG 또는 PNG 파일을 선택해주세요.";
+        }
+
+        alert(errorMessage + "\n\n문제가 지속되면 다시 시도해주세요.");
       };
 
       console.log("✅ Flutter 이미지 콜백 등록 완료");
