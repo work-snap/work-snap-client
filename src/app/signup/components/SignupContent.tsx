@@ -7,6 +7,7 @@ import { useChangeUserType } from "@/lib/queries/changeUserType";
 import { useLogout } from "@/lib/auth/auth.query";
 import { getUser } from "@/lib/api/user";
 import { useAutoRouting } from "@/hooks/useAutoRouting";
+import Modal from "@/src/app/components/Modal";
 import SignupForm from "./SignupForm";
 import SignupHeader from "./SignupHeader";
 
@@ -20,6 +21,35 @@ export default function SignupContent() {
   const { setUser, clearUser } = useUserStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  // 모달 상태 관리
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+
+  // 모달 열기 함수
+  const showModal = (message: string, title?: string) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+    });
+  };
+
+  // 모달 닫기 함수
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      title: "",
+      message: "",
+    });
+  };
 
   // React Query hooks
   const changeUserTypeMutation = useChangeUserType();
@@ -62,7 +92,10 @@ export default function SignupContent() {
         );
       });
     } catch (error) {
-      alert("사용자 타입 선택에 실패했습니다. 다시 시도해주세요.");
+      showModal(
+        "사용자 타입 선택에 실패했습니다.\n다시 시도해주세요.",
+        "선택 실패"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +125,14 @@ export default function SignupContent() {
       <SignupForm
         onUserTypeSelect={handleUserTypeSelect}
         isLoading={isLoading}
+      />
+
+      {/* 에러 모달 */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        message={modalState.message}
       />
     </>
   );

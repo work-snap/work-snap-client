@@ -25,6 +25,7 @@ import { KakaoLoginRequest, LoginResponse } from "@/src/lib/auth/types";
 import { AxiosError } from "axios";
 import { useUserStore } from "@/stores/userStore";
 import { useAutoRouting } from "@/hooks/useAutoRouting";
+import Modal from "@/src/app/components/Modal";
 
 // 로딩 UI 컴포넌트
 function KakaoLoginLoading() {
@@ -62,6 +63,53 @@ function KakaoLoginContent() {
   const EXECUTION_FLAG_PREFIX = "kakao_login_";
   const { setUser } = useUserStore();
   useAutoRouting();
+
+  // 모달 상태 관리
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+
+  // 모달 열기 함수
+  const showModal = (
+    message: string,
+    title?: string,
+    onCloseCallback?: () => void
+  ) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+    });
+
+    // 모달 닫을 때 콜백 실행
+    if (onCloseCallback) {
+      modalCloseCallback.current = onCloseCallback;
+    }
+  };
+
+  // 모달 닫기 콜백 참조
+  const modalCloseCallback = useRef<(() => void) | null>(null);
+
+  // 모달 닫기 함수
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      title: "",
+      message: "",
+    });
+
+    // 콜백 실행 후 초기화
+    if (modalCloseCallback.current) {
+      modalCloseCallback.current();
+      modalCloseCallback.current = null;
+    }
+  };
 
   // 카카오 로그인 mutation 훅 사용
   const kakaoLoginMutation = useKakaoLogin({
@@ -108,10 +156,11 @@ function KakaoLoginContent() {
       // 서버 연결 실패 (네트워크 오류)
       if (!error.response) {
         console.error("🌐 네트워크 연결 실패");
-        alert(
-          "서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해주세요."
+        showModal(
+          "서버에 연결할 수 없습니다.\n네트워크 연결을 확인하고 다시 시도해주세요.",
+          "연결 실패",
+          () => router.push("/")
         );
-        router.push("/");
         return;
       }
 
@@ -151,11 +200,9 @@ function KakaoLoginContent() {
           console.error(`🔥 기타 오류 (${status}):`, errorMessage);
       }
 
-      alert(errorMessage);
-
-      // 에러 발생 시 메인 페이지로 리다이렉트
+      // 에러 메시지를 모달로 표시하고 메인 페이지로 리다이렉트
       console.log("🏠 메인 페이지로 리다이렉트");
-      router.push("/");
+      showModal(errorMessage, "로그인 실패", () => router.push("/"));
     },
     onSettled: () => {
       setIsProcessing(false);
@@ -215,12 +262,13 @@ function KakaoLoginContent() {
 
         if (error) {
           console.error("카카오 인증 에러:", error, errorDescription);
-          alert(
-            `로그인이 취소되었거나 오류가 발생했습니다: ${
+          showModal(
+            `로그인이 취소되었거나 오류가 발생했습니다.\n${
               errorDescription || error
-            }`
+            }`,
+            "인증 실패",
+            () => router.push("/")
           );
-          router.push("/");
           return;
         }
 
@@ -238,7 +286,10 @@ function KakaoLoginContent() {
 
         if (!KAKAO_CLIENT_ID || !REDIRECT_URI) {
           console.error("필수 환경 변수가 설정되지 않았습니다.");
-          alert("로그인 설정에 오류가 있습니다. 관리자에게 문의하세요.");
+          showModal(
+            "로그인 설정에 오류가 있습니다.\n관리자에게 문의하세요.",
+            "설정 오류"
+          );
           return;
         }
 
@@ -371,6 +422,14 @@ function KakaoLoginContent() {
             </div>
           )}
         </div>
+
+        {/* 에러 모달 */}
+        <Modal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          title={modalState.title}
+          message={modalState.message}
+        />
       </div>
     );
   }
@@ -556,6 +615,14 @@ function KakaoLoginContent() {
           </p>
         </div>
       </div>
+
+      {/* 에러 모달 */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        message={modalState.message}
+      />
     </div>
   );
 }

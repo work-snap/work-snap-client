@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { ResisterBusinessRequest } from "@/src/lib/auth/types";
+import Modal from "@/src/app/components/Modal";
 
 interface ImageUploadSectionProps {
   imageFile: File | null;
@@ -25,6 +26,35 @@ export default function ImageUploadSection({
 }: ImageUploadSectionProps) {
   // Flutter에서 실행 중인지 동적으로 감지 (채널이 나중에 등록될 수 있음)
   const [isFlutterApp, setIsFlutterApp] = useState(false);
+
+  // 모달 상태 관리
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+
+  // 모달 열기 함수
+  const showModal = (message: string, title?: string) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+    });
+  };
+
+  // 모달 닫기 함수
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      title: "",
+      message: "",
+    });
+  };
 
   // 채널 존재 여부를 주기적으로 확인
   useEffect(() => {
@@ -61,22 +91,40 @@ export default function ImageUploadSection({
     if (typeof window !== "undefined") {
       console.log("🔍 [Client] 채널 감지 상태:");
       console.log("  - window 객체:", typeof window);
-      console.log("  - ImagePickerChannel:", typeof (window as any).ImagePickerChannel);
-      console.log("  - _hasImagePickerChannel:", (window as any)._hasImagePickerChannel);
+      console.log(
+        "  - ImagePickerChannel:",
+        typeof (window as any).ImagePickerChannel
+      );
+      console.log(
+        "  - _hasImagePickerChannel:",
+        (window as any)._hasImagePickerChannel
+      );
       console.log("  - isFlutterApp:", isFlutterApp);
 
       // 1초 후 다시 확인 (WebView 초기화 지연 대응)
       setTimeout(() => {
         console.log("🔍 [Client] 1초 후 재확인:");
-        console.log("  - ImagePickerChannel:", typeof (window as any).ImagePickerChannel);
-        console.log("  - _hasImagePickerChannel:", (window as any)._hasImagePickerChannel);
+        console.log(
+          "  - ImagePickerChannel:",
+          typeof (window as any).ImagePickerChannel
+        );
+        console.log(
+          "  - _hasImagePickerChannel:",
+          (window as any)._hasImagePickerChannel
+        );
       }, 1000);
 
       // 3초 후 다시 확인
       setTimeout(() => {
         console.log("🔍 [Client] 3초 후 재확인:");
-        console.log("  - ImagePickerChannel:", typeof (window as any).ImagePickerChannel);
-        console.log("  - _hasImagePickerChannel:", (window as any)._hasImagePickerChannel);
+        console.log(
+          "  - ImagePickerChannel:",
+          typeof (window as any).ImagePickerChannel
+        );
+        console.log(
+          "  - _hasImagePickerChannel:",
+          (window as any)._hasImagePickerChannel
+        );
       }, 3000);
     }
   }, []);
@@ -84,17 +132,27 @@ export default function ImageUploadSection({
   // Flutter 앱용 이미지 선택 핸들러
   const handleFlutterImagePick = () => {
     console.log("📸 [Client] Flutter 이미지 선택 요청 시작");
-    console.log("  - ImagePickerChannel 타입:", typeof (window as any).ImagePickerChannel);
-    console.log("  - ImagePickerChannel 값:", (window as any).ImagePickerChannel);
+    console.log(
+      "  - ImagePickerChannel 타입:",
+      typeof (window as any).ImagePickerChannel
+    );
+    console.log(
+      "  - ImagePickerChannel 값:",
+      (window as any).ImagePickerChannel
+    );
 
     // ImagePickerChannel 존재 여부 확인
     if (!(window as any).ImagePickerChannel) {
       console.error("❌ [Client] ImagePickerChannel을 찾을 수 없습니다");
-      console.error("  - window 객체 키:", Object.keys(window).filter(key => key.includes('Channel')));
-      alert(
+      console.error(
+        "  - window 객체 키:",
+        Object.keys(window).filter((key) => key.includes("Channel"))
+      );
+      showModal(
         "이미지 선택 기능을 사용할 수 없습니다.\n" +
-        "앱을 최신 버전으로 업데이트해주세요.\n" +
-        "문제가 지속되면 웹 브라우저에서 이용해주세요."
+          "앱을 최신 버전으로 업데이트해주세요.\n" +
+          "문제가 지속되면 웹 브라우저에서 이용해주세요.",
+        "기능 사용 불가"
       );
       return;
     }
@@ -115,9 +173,10 @@ export default function ImageUploadSection({
         message: (error as Error).message,
         stack: (error as Error).stack,
       });
-      alert(
+      showModal(
         "이미지 선택 요청에 실패했습니다.\n" +
-        "앱을 다시 시작하거나 웹 브라우저에서 이용해주세요."
+          "앱을 다시 시작하거나 웹 브라우저에서 이용해주세요.",
+        "요청 실패"
       );
     }
   };
@@ -131,7 +190,9 @@ export default function ImageUploadSection({
       (window as any).handleNativeImagePicked = async (dataUrl: string) => {
         console.log(
           "📸 Flutter에서 이미지 수신:",
-          `길이: ${dataUrl?.length || 0}, 시작: ${dataUrl?.substring(0, 50) || 'undefined'}...`
+          `길이: ${dataUrl?.length || 0}, 시작: ${
+            dataUrl?.substring(0, 50) || "undefined"
+          }...`
         );
 
         try {
@@ -148,8 +209,8 @@ export default function ImageUploadSection({
           console.log("✅ Base64 데이터 유효성 검증 통과");
 
           // Base64를 Blob으로 변환 (fetch() 대신 직접 변환 - Android WebView CSP 우회)
-          const base64Data = dataUrl.split(',')[1];
-          const mimeType = dataUrl.split(';')[0].split(':')[1];
+          const base64Data = dataUrl.split(",")[1];
+          const mimeType = dataUrl.split(";")[0].split(":")[1];
 
           console.log("🔄 Base64 디코딩 시작...");
           const byteCharacters = atob(base64Data);
@@ -167,7 +228,10 @@ export default function ImageUploadSection({
           // 파일 크기 검증 (10MB)
           const MAX_FILE_SIZE = 10 * 1024 * 1024;
           if (blob.size > MAX_FILE_SIZE) {
-            alert("파일 크기는 10MB를 초과할 수 없습니다.\n더 작은 이미지를 선택해주세요.");
+            showModal(
+              "파일 크기는 10MB를 초과할 수 없습니다.\n더 작은 이미지를 선택해주세요.",
+              "파일 크기 초과"
+            );
             return;
           }
 
@@ -193,9 +257,10 @@ export default function ImageUploadSection({
           console.log("✅ 이미지 업로드 핸들러 호출 완료");
         } catch (error) {
           console.error("❌ 이미지 변환 실패:", error);
-          alert(
+          showModal(
             "이미지 처리에 실패했습니다.\n" +
-            (error instanceof Error ? error.message : "다시 시도해주세요.")
+              (error instanceof Error ? error.message : "다시 시도해주세요."),
+            "처리 실패"
           );
         }
       };
@@ -211,16 +276,26 @@ export default function ImageUploadSection({
 
         // 사용자에게 더 구체적인 에러 메시지 표시
         let errorMessage = "이미지 선택 중 오류가 발생했습니다.";
+        let errorTitle = "오류 발생";
 
         if (error.includes("permission") || error.includes("권한")) {
-          errorMessage = "갤러리 접근 권한이 필요합니다.\n기기 설정에서 Work Snap 앱의 권한을 확인해주세요.";
+          errorMessage =
+            "갤러리 접근 권한이 필요합니다.\n기기 설정에서 Work Snap 앱의 권한을 확인해주세요.";
+          errorTitle = "권한 필요";
         } else if (error.includes("size") || error.includes("크기")) {
-          errorMessage = "이미지 파일이 너무 큽니다.\n더 작은 이미지를 선택해주세요.";
+          errorMessage =
+            "이미지 파일이 너무 큽니다.\n더 작은 이미지를 선택해주세요.";
+          errorTitle = "파일 크기 초과";
         } else if (error.includes("format") || error.includes("형식")) {
-          errorMessage = "지원하지 않는 이미지 형식입니다.\nJPG 또는 PNG 파일을 선택해주세요.";
+          errorMessage =
+            "지원하지 않는 이미지 형식입니다.\nJPG 또는 PNG 파일을 선택해주세요.";
+          errorTitle = "형식 오류";
         }
 
-        alert(errorMessage + "\n\n문제가 지속되면 다시 시도해주세요.");
+        showModal(
+          errorMessage + "\n\n문제가 지속되면 다시 시도해주세요.",
+          errorTitle
+        );
       };
 
       console.log("✅ Flutter 이미지 콜백 등록 완료");
@@ -239,8 +314,10 @@ export default function ImageUploadSection({
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <h2 className="font-medium mb-3 text-lg flex-shrink-0">사업자등록증 확인</h2>
-      
+      <h2 className="font-medium mb-3 text-lg flex-shrink-0">
+        사업자등록증 확인
+      </h2>
+
       <div className="flex-1 overflow-y-auto pb-24">
         {imagePreview ? (
           // 이미지 미리보기 표시
@@ -260,9 +337,7 @@ export default function ImageUploadSection({
             </div>
             <div className="p-4 bg-gray-50">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {imageFile?.name}
-                </span>
+                <span className="text-sm text-gray-600">{imageFile?.name}</span>
                 <label
                   htmlFor="business-license"
                   className="text-sm text-main cursor-pointer hover:underline"
@@ -341,7 +416,7 @@ export default function ImageUploadSection({
           </label>
         )}
       </div>
-      
+
       {/* 하단 고정 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white max-w-[430px] mx-auto">
         <button
@@ -363,13 +438,24 @@ export default function ImageUploadSection({
               }
             } catch (error) {
               console.error("❌ 이미지 변환 실패:", error);
-              alert("이미지 변환에 실패했습니다. 다시 시도해주세요.");
+              showModal(
+                "이미지 변환에 실패했습니다. 다시 시도해주세요.",
+                "변환 실패"
+              );
             }
           }}
         >
           {isPending ? "등록 중..." : "등록하기"}
         </button>
       </div>
+
+      {/* 에러 모달 */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        message={modalState.message}
+      />
     </div>
   );
 }

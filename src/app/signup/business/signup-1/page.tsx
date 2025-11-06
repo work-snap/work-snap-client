@@ -15,6 +15,7 @@ import { useChangeUserType } from "@/lib/queries/changeUserType";
 import { getUser } from "@/lib/api/user";
 import LoadingAuthentication from "@/src/app/components/loadingAuthentication";
 import Loading from "@/src/app/components/loading";
+import Modal from "@/src/app/components/Modal";
 import { ImageUploadSection } from "./components";
 
 export default function BusinessSignupStep1() {
@@ -22,6 +23,35 @@ export default function BusinessSignupStep1() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCheckingBusinessOwner, setIsCheckingBusinessOwner] = useState(false);
+
+  // 모달 상태 관리
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+  });
+
+  // 모달 열기 함수
+  const showModal = (message: string, title?: string) => {
+    setModalState({
+      isOpen: true,
+      title,
+      message,
+    });
+  };
+
+  // 모달 닫기 함수
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      title: "",
+      message: "",
+    });
+  };
 
   // Zustand 스토어에서 사업자 등록 관련 액션 가져오기
   const { setBusinessRegistrationResponse, setUser } = useUserStore();
@@ -163,14 +193,14 @@ export default function BusinessSignupStep1() {
       // 파일 크기 검증 (10MB)
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       if (file.size > MAX_FILE_SIZE) {
-        alert("파일 크기는 10MB를 초과할 수 없습니다.");
+        showModal("파일 크기는 10MB를 초과할 수 없습니다.", "파일 크기 초과");
         return;
       }
 
       // 파일 형식 검증
       const validTypes = ["image/jpeg", "image/jpg", "image/png"];
       if (!validTypes.includes(file.type)) {
-        alert("JPG, PNG 형식의 이미지만 업로드 가능합니다.");
+        showModal("JPG, PNG 형식의 이미지만 업로드 가능합니다.", "형식 오류");
         return;
       }
 
@@ -189,7 +219,10 @@ export default function BusinessSignupStep1() {
       };
       reader.onerror = (error) => {
         console.error("❌ 파일 읽기 오류:", error);
-        alert("이미지 파일을 읽는 중 오류가 발생했습니다.");
+        showModal(
+          "이미지 파일을 읽는 중 오류가 발생했습니다.",
+          "파일 읽기 오류"
+        );
       };
       reader.readAsDataURL(file);
     }
@@ -216,7 +249,10 @@ export default function BusinessSignupStep1() {
       data: error.response?.data,
       headers: error.response?.headers,
     });
-    alert("사업자 등록에 실패했습니다. 다시 시도해주세요.");
+    showModal(
+      "이미 등록된 사업자등록번호입니다. 다시 시도해주세요.",
+      "등록 실패"
+    );
   };
 
   const {
@@ -340,6 +376,14 @@ export default function BusinessSignupStep1() {
           </div>
         </div>
       )}
+
+      {/* 에러 모달 */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        message={modalState.message}
+      />
     </>
   );
 }
